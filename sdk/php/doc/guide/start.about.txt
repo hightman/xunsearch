@@ -51,7 +51,7 @@ API ，在此基础上快速构建自己的全文检索应用。
 您必须有一台（或多台）Unix 类的主机（推荐用各种 Linux、BSD 操作系统）用于安装 Xunsearch 后端服务程序。
 
 *Xunsearch PHP-SDK* 则可以运行在包含 Windows 在内的服务器系统中，只要求 PHP 的
-版本必须在 5.1.0 以上即可。具体运行时根据需求，PHP 还应包含一些扩展，参见本文档中的
+版本必须在 5.2.0 以上即可。具体运行时根据需求，PHP 还应包含一些扩展，参见本文档中的
 [RequiredCheck 运行条件检测](util.check) 。
 
 [1]: http://xapian.org                "Xapian 官网"

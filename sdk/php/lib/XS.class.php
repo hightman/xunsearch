@@ -10,7 +10,7 @@
  *
  * <ul>
  * <li>XS 是 XunSearch 的统一缩写, XS 是解决方案而不仅仅针对搜索, 还包括索引管理等</li>
- * <li>XS 运行环境要求 PHP 5.1.0 及以上版本, 带有 SPL 扩展</li>
+ * <li>XS 运行环境要求 PHP 5.2.0 及以上版本, 带有 SPL 扩展</li>
  * <li>如果您的数据包含 utf-8 以外的编码(如: gbk), 则要求安装 mbstring 或 iconv 以便转换编码</li>
  * <li>对于 bool 类型函数/方法若无特别说明, 均表示成功返回 true, 失败返回 false</li>
  * <li>对于致命的异常情况均抛出类型为 XSException 的异常, 应将 xs 所有操作放入 try/catch 区块</li>

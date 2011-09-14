@@ -21,9 +21,9 @@ XSUtil::setCharset($charset);
 // result number record
 $result = array(
 	'PHP 版本' => array(
-		'type' => (version_compare(PHP_VERSION, '5.1.0', '>=') ? '' : 'ERROR:') . PHP_VERSION,
+		'type' => (version_compare(PHP_VERSION, '5.2.0', '>=') ? '' : 'ERROR:') . PHP_VERSION,
 		'used' => 'XS(core)',
-		'note' => 'PHP 5.1.0 或更高版本是必须的。',
+		'note' => 'PHP 5.2.0 或更高版本是必须的。',
 	),
 	'SPL 扩展' => array(
 		'type' => extension_loaded('spl') ? 'OK' : 'ERROR',
