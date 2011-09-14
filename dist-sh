@@ -1,0 +1,40 @@
+#!/bin/sh
+# $Id: $
+# Distribute hook script, run by make automatically
+
+# get fileinfo & version
+fileinfo=
+devel=`cat config.h | grep PACKAGE_VERSION | cut -d \" -f 2 | grep "dev$"`
+if test -z "$devel" ; then
+  fileinfo=`cat VERSION`
+  git tag $fileinfo -a -m "Release: $fileinfo" 
+  if test $? -ne 0 ; then
+    exit -1
+  fi
+else
+  fileinfo=dev
+fi
+
+# make tar ball
+echo "Creating package file: xunsearch-full-$fileinfo ..."
+ln -s xunsearch-full xunsearch-full-$fileinfo
+tar -cHjf xunsearch-full-$fileinfo.tar.bz2 xunsearch-full-$fileinfo
+rm -f xunsearch-full-$fileinfo
+
+# upload to web server
+echo "Uploading file to web server ..."
+if test "$fileinfo" = "dev" ; then
+  scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download
+  scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch-dev.tar.bz2
+  scp VERSION xunsearch:./web/protected/data
+else
+  scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
+  scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
+  ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
+  scp VERSION xunsearch:./web/protected/data/RELEASE
+fi
+
+# clean local file
+rm -f xunsearch-full-$fileinfo.tar.bz2
+
+exit 0

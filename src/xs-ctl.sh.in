@@ -1,0 +1,86 @@
+#!/bin/sh
+# xunsearch server control script
+# $Id$
+
+prefix=@prefix@
+bind=local
+server=both
+
+# usage
+show_usage()
+{
+  echo "Usage: $0 [-b <local|unix|inet>] [-s <index|search>] COMMAND"
+  echo "COMMAND is one of: {start|stop|restart|faststop|fastrestart|reload}"
+}
+
+# options
+while getopts "hb:s:" opt; do
+  case $opt in
+    b)
+      bind=$OPTARG
+      ;;
+    s)
+      server=$OPTARG
+      ;;
+    h)
+      show_usage
+      exit 0
+      ;;
+    *)
+      show_usage
+      exit 1
+      ;;
+  esac
+done
+
+# command
+if test $OPTIND -gt $# ; then
+  echo "ERROR: No command specified" >&2
+  show_usage
+  exit 2
+fi
+shift `expr $OPTIND - 1`
+cmd=$1
+
+# reset bind
+bindex=
+bsearch=
+case $bind in
+  local)
+    bindex=127.0.0.1:8383
+    bsearch=127.0.0.1:8384
+    ;;
+  unix)
+    bindex=tmp/indexd.sock
+    bsearch=tmp/searchd.sock
+    ;;
+  inet)
+    bindex=8383
+    bsearch=8384
+    ;;
+  *)
+    bindex=$bind:8383
+    bsearch=$bind:8384
+    ;;
+esac
+
+# home
+cd $prefix
+
+# run
+case "$cmd" in
+  start|stop|faststop|fastrestart|restart|reload)
+  # index
+  if test "$server" != "search"; then
+    bin/xs-indexd -l tmp/indexd.log -b $bindex -k $cmd
+  fi
+  # search
+  if test "$server" != "index"; then
+    bin/xs-searchd -l tmp/searchd.log -b $bsearch -k $cmd
+  fi 
+  ;;  
+*)
+  echo "Unknown command: $cmd"
+  show_usage
+  ;;  
+esac

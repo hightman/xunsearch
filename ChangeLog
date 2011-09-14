@@ -1,0 +1,39 @@
+ChangesLog of Xunsearch
+=======================
+
+2011-09-05	hightman
+	* xunsearch-1.0.0a 第一个内测版
+
+2011-07-23	hightman
+	* 完善了 XSSearch, 支持 logQuery 记录净化后的搜索日志用以做相关搜索
+
+2011-07-22	hightman
+	* 修改字段处理方式, 新增 XSFieldScheme 类用于存放字段方案
+	* XS 新增只读属性 defaultCharset, 在 ini 里用 project.default_charset 指定
+	* 修正 XSIndex::del() 以正确支持字符集编码(包含8BIT字符时务必与全局默认字符集一致)
+	* 增加 XSSearch::setCharset() 能正确处理所有输入输出的编码转换
+	* 修正 XSDocument 用 foreach 迭代读取字段时不能正确处理编码的问题
+
+2011-07-21	hightman
+	* 基本完成 XSSearch 代码
+	* 准备编写 PHPUnit 自动单元测试代码
+
+2011-07-20	hightman
+	* 优化改进 CMD_DOC_TERM 指令, 让 arg1 支持 position, check stemmer 标识
+      空内容的 term 则触发 increase_termpos()
+	* 开始着手编写 XSSearch 搜索功能
+
+2011-07-19	hightman
+	* 实现索引平滑重建功能 (指令: CMD_INDEX_REBUILD), 重建过程中不允许 CMD_INDEX_CLEAN_DB
+      注: 重建是针对数据库来设置标识位的, 如果不同连接同时发起重建有可能引起冲突.
+	* 完成 sdk-php 中的索引管理: XSIndex
+
+2011-07-01	hightman
+	* 完成核心 C 代码编写, 含 xs-indexd, xs-import, xs-searchd
+	* 开始着手编写 sdk-php
+	...
+
+2011-04-20	hightman
+--------------------
+	* NEWS: 开始构建本项目，并采用 autoconf 工具来管理和配置
+	* configure.ac, Makefile.am: 开始着手编写

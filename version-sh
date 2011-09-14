@@ -1,0 +1,30 @@
+#!/bin/sh
+# $Id$
+# Generate VERSION file
+
+# package version
+version=`cat config.h | grep PACKAGE_VERSION | cut -d \" -f 2`
+devel=`echo $version | grep "dev$"`
+
+# check git version, devel version
+if test -d ".git" && ! test -z "$devel" ; then
+  branch=`git branch | grep ^\* | cut -d ' ' -f 2` 
+  if test "$branch" = "master" ; then
+    version=`git describe 2> /dev/null`
+    if test -z $version ; then
+	  version="0.0.0"
+    fi
+  else
+    current=`git describe --abbrev=0 2> /dev/null`
+    if test -z $current ; then
+      next="0.0.1"
+    else
+      next=`echo $current | awk -F . '{ $NF=$NF+1; VER=$1; for(i=2;i<=NF;i++) VER=VER"."$i; print VER  }'`
+    fi
+    last=`git log -1 --pretty='format:%h'`
+    version="$next-$branch-g$last"
+  fi
+fi
+
+# output the version
+echo $version

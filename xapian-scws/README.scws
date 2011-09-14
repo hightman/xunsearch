@@ -1,0 +1,17 @@
+README for Xapian integrated with scws engine. 
+Homepage of scws: http://www.ftphp.com/scws
+==============================================
+
+1. sh before_patch.sh 1.x.y
+...
+
+4. patch -p1 < ../patch.xapian-core-scws
+
+5. check the patch result (.rej) & clean the original files (.orig). 
+   find . -name "*.rej"
+   find . -name "*.orig" -exec rm -f {} \;
+   find . -name "*.rej" -exec rm -f {} \;
+
+6. cd ..
+   sh after_patch.sh 1.x.y
+

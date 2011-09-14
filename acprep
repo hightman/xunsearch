@@ -1,0 +1,37 @@
+#!/bin/sh
+# $Id: $
+# This file is intended for developers only and is not included into dist
+# Please RUN this AFTER cvs checkout/update
+# This will re-create all needed stuff
+# (aclocal.m4, config.h.in, Makefile.in, configure)
+# or you may end up with old versions of that.
+#
+
+if test "x-$1" = "x---clean" ; then
+	echo "Cleaning ..."
+	if test -f Makefile ; then
+	  make clean
+    fi
+	find . -name Makefile -exec rm -f {} \;
+	find . -name Makefile.in -exec rm -f {} \;
+	rm -f aclocal.m4 config.* configure depcomp install-sh missing stamp-h1
+	rm -rf autom4te.cache
+	rm -f VERSION src/xs-ctl.sh src/xs-optimize.sh
+	echo "OK, done!"
+	exit
+fi
+
+for cmd in aclocal autoheader \
+		"automake --add-missing --copy --force" autoconf ; do
+	echo "Running command: $cmd ..."
+	$cmd 2>&1 | grep -i -v warning
+done
+echo
+echo "--==*** You can run ./configure now ***==--";
+echo -n "               Happy hacking";
+if test -n $USER; then
+	echo -n ", $USER";
+fi
+echo !
+echo
+

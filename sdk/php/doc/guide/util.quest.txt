@@ -1,0 +1,63 @@
+搜索测试工具
+===========
+
+`Quest` 是搜索测试工具，提供了搜索相关的各项功能，非常适合用于前期测试比较和纠错。
+运行脚本工具的 --help 选项可查看内置的帮助和说明，如乱码可在选项后加入 -c gbk 试试。
+
+~~~
+$prefix/sdk/php/util/Quest.php --help
+~~~
+
+
+主要参数和选项
+-------------
+
+和索引工具类似，使用前必须先指定的项目名称或配置文件，所有的操作都将是作用于该项目，
+主要选项如下：
+
+  * _-p|--project <name|file>_ 指定项目名称或配置文件路径，参数名可以省略不写，
+    如果仅指定项目名称，那么将使用 $prefix/sdk/php/app/<name>.ini 文件。
+
+  * _-c|--charset <gbk|utf-8>_ 指定当前环境、查询语句的字符集，默认情况下，
+    搜索工具输出的字符集为 utf-8，并把搜索语句字符集视为项目的默认字符集。
+
+  * _-q|--query <query>_ 指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来。
+
+  * _--hot[=total|last|cur]_ 用于显示指定项目的热门搜索词，此时 _query_ 参数无意义。
+    选项值含义分别表示总搜索量、上周搜索量、本周搜索量，默认为总搜索量。
+
+  * _--suggest_、_--correct_、_--related_ 是搭配 _query_ 的一些功能选项。
+
+  * _--limit=<num>_ 用于设置各种检索功能的返回数量最大上限，默认值均为 10 个。
+    对于普通搜索模式，还支持用 _--limit=offset,num_ 来同时指定偏移量和上限。
+
+  * _-d|--db <name[,name2 ...]>_ 指定要搜索的数据库名称，默认是名为 db 的库，
+    多个库之间用逗号分隔。
+
+
+经典用法示例
+-----------
+
+以下是一些经典用法举例：
+
+~~~
+# 搜索 demo 中包含 "测试" 的数据
+util/Quest.php demo 测试
+
+# 搜索 demo 中包含 "测试" 的数据，并限制最多返回 2 条结果
+util/Quest.php -p demo -q 测试 --limit=2
+
+# 列出 demo 项目中以 "x" 开头的搜索建议
+util/Quest.php --suggest demo x
+
+# 在 demo 项目中修正搜索词 "xm"
+util/Quest.php --correct demo xm
+
+# 在 demo 中列出和 "测试" 相关的搜索词
+util/Quest.php --related demo 测试
+
+# 查看 demo 项目上周的 5 条最热门搜索词
+util/Quest.php --hot=last --limit=5 demo
+~~~
+
+<div class="revision">$Id$</div>

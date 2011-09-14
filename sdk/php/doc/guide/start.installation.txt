@@ -1,0 +1,169 @@
+安装
+====
+
+Xunsearch PHP-SDK 是与 `xunsearch` 后端服务协同工作的，所以后先必须先在您的服务器
+上安装服务端，服务器操作系统要求必须是 `Linux`、`BSD` 或其它类 `UNIX` 系统，同时安装了
+`gcc`、`make` 等基础编译环境。
+
+安装、升级 Xunsearch
+-------------------
+
+> tip: 即便您之前已经安装过 `xunsearch`，您也可以安装放心的使用该教程进行覆盖安装，会自动
+> 完成升级操作，而**不用担心**会删除任何已存在的数据。我们制作的安装脚本包含了智能检测功能。
+>
+> 此外 `xunsearch` 的安装和运行都不需要 `root` 权限，强烈推荐单独设置一个系统用户用于安装
+> 执行相关指令。
+
+Xunsearch 全部开源，理论上也可以从官方提供的 [git 仓库][1] 获取源码自行构建，但是
+这要求必须有较多的技术基础，在此不打算赘述，有这方面需求的技术人员可以到论坛去交流。
+为方便用户安装，我们提供了一个包含安装所需求的全部组件的完整安装包（含 `xapian/libevent/scws`），
+您只要下载并安装此完整安装包即可，具体操作步骤如下：
+
+1.  运行下面指令[下载][2]、解压安装包
+
+    ~~~
+    wget http://www.xunsearch.com/download/xunsearch-full-latest.tar.bz2
+    tar -xjf xunsearch-full-latest.tar.bz2
+    ~~~
+
+2.  执行安装脚本，根据提示进行操作，主要是输入 `xunsearch` 软件包的安装目录，强烈建议单独
+    规划一个目录，而不是混到别的软件目录中。
+
+    ~~~
+    cd xunsearch-full/
+    sh setup.sh
+    ~~~
+
+    第一次安装的话，过程可能会稍显漫长，请不必着急，您大可泡杯茶一边喝一边等待即可。
+
+3.  待命令运行结束后，如果没有出错中断，则表示顺利安装完成，然后就可以启动/重新启动 `xunsearch`
+    的后台服务，下面命令中的 `$prefix` 请务必替换为您的安装目录，而不是照抄。
+
+    ~~~
+    cd $prefix ; bin/xs-ctl.sh restart
+    ~~~
+ 
+    强烈建议您将此命令添加到开机启动脚本中，以便每次服务器重启后能自动启动搜索服务程序，
+    在 `Linux` 系统中您可以将脚本指令写进 `/etc/rc.local` 即可。
+
+
+4.  有必要指出的是，关于搜索项目的数据目录规划。搜索系统将所有数据保存在 `$prefix/data` 目录中。
+    如果您希望数据目录另行安排或转移至其它分区，请将 `$prefix/data` 作为软链接指向真实目录。
+
+> info: 出于性能和多数需求考虑 `xunsearch` 服务端和 SDK API 通讯时没有加密和验证处理，
+> 并且默认情况 `xs-ctl.sh` 启动的服务程序是绑定并监听在 `127.0.0.1` 上。
+> 
+> 如果您的 SDK 调用和 `xunsearch` 服务端不在同一服务器，请使用 -b inet 方式启动脚本，
+> 并注意借助类似 `iptables` 的防火墙来控制 `xunsearch` 的 `8383/8384` 两个端口的访问权限。
+> 启动脚本用法举例如下，以下均为合法使用方式：
+> ~~~
+> bin/xs-ctl.sh -b local start    // 监听在本地回环地址 127.0.0.1 上
+> bin/xs-ctl.sh -b inet start     // 监听在所有本地 IP 地址上
+> bin/xs-ctl.sh -b a.b.c.d start  // 监听在指定 IP 上
+> bin/xs-ctl.sh -b unix start     // 分别监听在 tmp/indexd.sock 和 tmp/searchd.sock
+> ~~~
+
+
+安装 PHP-SDK
+------------
+
+PHP-SDK 的代码不需要另行下载，已经包含在 `xunsearch` 的安装结果中了，在此假设您将 `xunsearch` 
+安装在 `$prefix` 目录，那么 `$prefix/sdk/php` 即是 PHP-SDK 的代码目录。目录结构及功能逻列如下：
+
+    _
+    |- doc/                    离线 HTML 版相关文档
+    |- app/                    用于存放搜索项目的 ini 文件
+    |- lib/XS.php              入口文件，所有搜索功能必须且只需包含此文件    
+    \- util/                   辅助工具程序目录
+        |- RequireCheck.php    用于检测您的 PHP 环境是否符合运行条件
+        |- IniWizzaard.php     用于帮助您编写 xunsearch 项目配置文件
+        |- Quest.php           搜索测试工具
+        \- Indexer.php         索引管理工具
+
+如果您的搜索应用程序和 `xunsearch` 在同一台服务器，则无需复制任何代码，在开发的时候直接包含
+入口文件 `$prefix/sdk/php/lib/XS.php` 即可。代码如下：
+
+~~~
+[php]
+require_once '$prefix/sdk/php/lib/XS.php';
+~~~
+
+如果您在其它服务器部署前端搜索代码，请将 SDK 代码整个目录复制到相应的服务器上，但并不要求放到
+web 可访问目录，考虑安全性也不推荐这么做。
+
+
+> note: 对于前端和后端分离的用户来说，当 `xunsearch` 升级安装后必须重新复制安装后的 SDK 代码
+> 去覆盖，否则可能造成版本不匹配导致错误。
+
+
+检测 PHP-SDK 的运行条件
+---------------------
+
+从现在开始的文档及示范代码中我们都假定您将 `xunsearch` 安装在 `$prefix` 目录中，而不再另行说明。
+
+基础运行条件要求 PHP 最低版本为 5.1.0，随着功能需求的不同可能还会用到一些其它扩展，具体请在
+命令行环境里运行我们提供的检测脚本。如果您的 `php` 可执行文件不在默认搜索路径中，假设是安装在
+`/path/to/bin/php` 请使用第二种方式运行。运行方式如下：
+
+~~~
+1. $prefix/sdk/php/util/RequiredCheck.php
+2. /path/to/bin/php $prefix/sdk/php/util/RequiredCheck.php
+3. $prefix/sdk/php/util/RequiredCheck.php -c gbk
+~~~
+
+运行结果输出的中文编码默认为 `UTF-8` ，如果您使用 `GBK` 环境请在运行命令最后加上 `-c GBK` 。
+运行结果会给出一个可视化的表格说明检测结果，并在最终给出检测结论，告诉您是否符合运行的基础要求。
+
+至此，安装和准备工作已经完成了，您可以开始使用 *Xunsearch PHP-SDK* 开发自己的搜索应用了。
+
+
+完全删除 Xunsearch
+-----------------
+
+首先欢迎对 `xunsearch` 提出各种修改、改进建议，我们都会认真对待和处理。如果有一天您真的不再需要
+`xunsearch` 了，那么只要停止运行后端服务，然后完全删除它的安装目录 `$prefix` 即可，整个软件包
+所有涉及的文件均在该目录下。
+
+> note: 如果您的安装目录没有单独设置，而是使用公共目录（如：/usr/local），请勿直接删除整个目录。
+
+~~~
+$prefix/bin/xs-ctl.sh faststop
+rm -fr $prefix
+~~~
+
+
+从 Git 源码仓库安装
+------------------
+
+> note: 在开始安装前，无论如何请先安装一次最新发布的完整版本，以便将所有的运行依赖库安装到位。
+
+我们的源代码托管在 github 上。您可以直接[浏览代码仓库][1]，也可以通过以下方式之一取得源代码：
+
+~~~
+git clone git://github.com/hightman/xunsearch.git
+git clone https://github.com/hightman/xunsearch.git
+~~~
+
+如果要编译安装这份源代码，您还必须在主机环境上安装相关的 autoconf, automake 工具，然后运行
+下面指令完成准备工作。
+
+~~~
+cd xunsearch/
+chmod +x acprep
+./acprep
+~~~
+
+在完成上述的准备工作后，接下来编译安装 xunsearch 就和常见的开源软件类似，假设您的安装目录为 
+`$prefix`，然后按以下步骤操作即可：
+
+~~~
+./configure --prefix=$prefix
+make
+make install
+~~~
+
+
+[1]: https://github.com/hightman/xunsearch/                         "Xunsearch 在 github 上的代码仓库"
+[2]: http://www.xunsearch.com/download/xunsearch-full-latest.tar.gz "Xunsearch 最新的完整安装包" 
+
+<div class="revision">$Id$</div>
