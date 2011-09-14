@@ -26,7 +26,7 @@ interface XSTokenizer
 
 	/**
 	 * 执行分词并返回词列表
-	 * @param string $value 待分词的字段值
+	 * @param string $value 待分词的字段值(UTF-8编码)
 	 * @param XSDocument $doc 当前相关的索引文档
 	 * @return array 切好的词组成的数组
 	 */

@@ -14,7 +14,7 @@
 自定义分词器必须实现 [XSTokenizer] 接口。假定您要编写一个名为 `xyz` 的分词器，则您要编写的代码
 文件为 `XSTokenizerXyz.class.php`，请将文件统一放入 `$prefix/sdk/php/lib` 目录。
 
-通常来讲，您只需要实现 [XSTokenizer::getTokens] 即可，该函数接受 2个参数，分别为要分词的值以及
+通常来讲，您只需要实现 [XSTokenizer::getTokens] 即可。该函数接受 2个参数，分别为要分词的值以及
 当前的文档对象；返回值为分好的词汇组成的数组。下面以按 `-` 分割字段为例：
 
 ~~~
@@ -30,6 +30,8 @@ class XSTokenizerXyz implements XSTokenizer
     }
 }
 ~~~
+
+> note: [XSTokenizer::getTokens] 的参数 `$value` 的编码始终为 UTF-8 。
 
 如果您需要编写带有参数支持的分词器，比如让用户传入按什么字符分割，请参照下面写法编写构造函数：
 
