@@ -146,9 +146,13 @@ class XSTokenizerXstep implements XSTokenizer
 	public function getTokens($value, XSDocument $doc)
 	{
 		$terms = array();
-		for ($i = $this->arg; $i <= strlen($value); $i += $this->arg)
+		$i = $this->arg;
+		while (true)
 		{
 			$terms[] = substr($value, 0, $i);
+			if ($i >= strlen($value))
+				break;
+			$i += $this->arg;
 		}
 		return $terms;
 	}
