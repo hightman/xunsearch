@@ -21,9 +21,26 @@ a:hover { text-decoration: underline; }
 /* form */
 form#q-form { margin: 0; }
 #q-input { overflow: hidden; zoom: 1; clear: both; }
-#q-input .text { float: left; height: 26px; width: 324px; font-size: 18px; padding: 0 3px; line-height: 26px; }
+#q-input .text { 
+	float: left; width: 333px;
+	padding: 0 3px; line-height: 26px; 
+    -moz-border-bottom-colors: none;
+    -moz-border-image: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: #9A9A9A #CDCDCD #CDCDCD #9A9A9A;
+    border-style: solid; border-width: 1px;
+    font: 16px arial; height: 22px;
+    padding: 4px 7px; vertical-align: top;
+    background: url("http://su.bdimg.com/static/superpage/img/spis_167a8734.png") no-repeat scroll 0 0 transparent;
+}
+#q-input .button { 
+	float: left; font-size: 14px; margin-left: 10px;
+    background: url("http://su.bdimg.com/static/superpage/img/spis_167a8734.png") repeat scroll 0 -35px #DDDDDD;
+    border: 0 none; cursor: pointer; height: 32px; padding: 0; width: 95px;	
+}
 #q-input .tips { color: #aaa; font-size: 12px; }
-#q-input .button { float: left; height: 28px; font-weight: bold; font-size: 14px; margin-left: 10px; }
 #q-options { overflow: hidden; zoom: 1; margin: 10px 0; font-size: 12px; clear: both; }
 #q-options h4 { font-size: 14px; float: left; margin: 0; }
 #q-options ul { float: left; margin: 0; padding: 0; }
