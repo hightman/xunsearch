@@ -700,7 +700,7 @@ class XSSearch extends XSServer
 						break;
 				}
 				$name = substr($part, $i, $pos - $i);
-				if (($field = $this->xs->getField($name)) !== false
+				if (($field = $this->xs->getField($name, false)) !== false
 					&& $field->vno != XSFieldScheme::MIXED_VNO)
 				{
 					$this->regQueryPrefix($name);
