@@ -611,7 +611,6 @@ class XSSearch extends XSServer
 
 	/**
 	 * 清空默认搜索语句
-	 * @param bool $resetScheme 是否清空字段方案设置
 	 */
 	private function clearQuery()
 	{

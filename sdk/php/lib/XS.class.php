@@ -506,10 +506,10 @@ class XS extends XSComponent
 	{
 		// check cache
 		$cache = false;
+		$cache_write = '';
 		if (strlen($file) < 255 && file_exists($file))
 		{
-			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));
-			$cache_write = '';
+			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));			
 			if (function_exists('apc_fetch'))
 			{
 				$cache = apc_fetch($cache_key);
@@ -538,6 +538,7 @@ class XS extends XSComponent
 		{
 			// parse ini string
 			$data = $file;
+			$file = substr(md5($file), 8, 8) . '.ini';
 		}
 
 		// parse ini file
