@@ -80,9 +80,9 @@ class XSCommand extends XSComponent
 	 * @return string 用于服务端交互的字符串
 	 */
 	public function __toString()
-	{
+	{	
 		if (strlen($this->buf1) > 0xff)
-			throw new XSException('The size of buf1 is too large for {CMD:' . $this->cmd . '}');
+			$this->buf1 = substr($this->buf1, 0, 0xff);
 		return pack('CCCCI', $this->cmd, $this->arg1, $this->arg2, strlen($this->buf1), strlen($this->buf)) . $this->buf . $this->buf1;
 	}
 
