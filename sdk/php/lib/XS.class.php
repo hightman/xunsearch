@@ -79,6 +79,7 @@ class XSException extends Exception
 	public static function getRelPath($file)
 	{
 		$from = getcwd();
+		$file = realpath($file);
 		$pos = strrpos($file, '/');
 		$to = substr($file, 0, $pos);
 		for ($rel = '';; $rel .= '../')

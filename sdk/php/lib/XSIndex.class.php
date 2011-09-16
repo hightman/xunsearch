@@ -139,7 +139,7 @@ class XSIndex extends XSServer
 				}
 			}
 			// process add text
-			if (($text = $doc->getAddText($field)) !== null)
+			if (($text = $doc->getAddIndex($field)) !== null)
 			{
 				if (!$field->hasCustomTokenizer())
 				{

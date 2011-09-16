@@ -179,7 +179,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 		if ($this->_terms === null || !isset($this->_terms[$field]))
 			return null;
 		$terms = array();
-		foreach ($this->_terms as $term => $weight)
+		foreach ($this->_terms[$field] as $term => $weight)
 		{
 			$term = $this->autoConvert($term);
 			$terms[$term] = $weight;
@@ -192,7 +192,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * @param string $field 字段名称
 	 * @return string 文本内容, 若无则返回 null
 	 */
-	public function getAddText($field)
+	public function getAddIndex($field)
 	{
 		$field = strval($field);
 		if ($this->_texts === null || !isset($this->_texts[$field]))
@@ -212,7 +212,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 		if (!is_array($this->_terms))
 			$this->_terms = array();
 		if (!isset($this->_terms[$field]))
-			$this->_terms[$field] = array(array($term => $weight));
+			$this->_terms[$field] = array($term => $weight);
 		else if (!isset($this->_terms[$field][$term]))
 			$this->_terms[$field][$term] = $weight;
 		else
