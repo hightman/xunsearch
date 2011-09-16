@@ -84,7 +84,7 @@ class XSTokenizerSplit implements XSTokenizer
 
 	public function getTokens($value, XSDocument $doc = null)
 	{
-		if (strlen($arg) > 1 && substr($arg, 0, 1) == '/' && substr($arg, -1, 1) == '/')
+		if (strlen($this->arg) > 2 && substr($this->arg, 0, 1) == '/' && substr($this->arg, -1, 1) == '/')
 			return preg_split($this->arg, $value);
 		return explode($this->arg, $value);
 	}

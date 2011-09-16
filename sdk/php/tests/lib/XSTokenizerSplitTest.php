@@ -52,6 +52,15 @@ class XSTokenizerSplitTest extends PHPUnit_Framework_TestCase
 		$this->object = new XSTokenizerSplit('//');
 		$this->assertEquals($res, $this->object->getTokens($str, $this->doc));
 	}
+	
+	/**
+	 * @dataProvider provider3
+	 */
+	public function testGetTokens3($res, $str)
+	{
+		$this->object = new XSTokenizerSplit('/\s+/');
+		$this->assertEquals($res, $this->object->getTokens($str, $this->doc));
+	}	
 
 	public function provider()
 	{
@@ -88,4 +97,25 @@ class XSTokenizerSplitTest extends PHPUnit_Framework_TestCase
 			)
 		);
 	}
+	
+	public function provider3()
+	{
+		return array(
+			array(
+				array('he', 'l', 'lo'),
+				'he    l		lo'
+			),
+			array(
+				array('hello', 'world'),
+				'hello
+					world'
+			),
+			array(
+				array('测', '试一', '下'),
+				'测 
+					试一
+						下'
+			)
+		);
+	}	
 }

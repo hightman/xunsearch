@@ -26,7 +26,10 @@ class XSExceptionTest extends PHPUnit_Framework_TestCase
 		{
 			
 		}
+		$this->assertInstanceOf('XSException', $e1);
 		$this->assertEquals('[XSException] lib/XSExceptionTest.php(15): Test without code', strval($e1));
+		
+		$this->assertInstanceOf('XSException', $e2);
 		$this->assertEquals('[XSException] lib/XSExceptionTest.php(23): Test with code(S#400)', '' . $e2);
 	}
 
@@ -35,5 +38,6 @@ class XSExceptionTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('lib/XSExceptionTest.php', XSException::getRelPath(__FILE__));
 		$this->assertEquals('phpunit.xml', XSException::getRelPath(dirname(__FILE__) . '/../phpunit.xml'));
 		$this->assertEquals('../lib/XS.class.php', XSException::getRelPath('../../php/lib/XS.class.php'));
+		XSException::getRelPath('/dev');
 	}
 }

@@ -38,7 +38,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 	protected function setUp()
 	{
 		// doc1: input-UTF-8, index-doc
-		$this->doc1 = new XSDocument;
+		$this->doc1 = new XSDocument('UTF-8');
 		$this->doc1->setFields(self::$data);
 
 		// doc2: input-GBK, index-doc
@@ -71,6 +71,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(self::$data['subject'], $this->doc2->subject);
 		$this->assertEquals(self::$data['subject'], $this->doc3->subject);
 		$this->assertEquals(self::$data_gbk['subject'], $this->doc4->subject);
+		$this->assertEquals(self::$data_gbk['subject'], $this->doc4->f('subject'));
 	}
 
 	public function test__set()
@@ -82,6 +83,9 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		$this->doc1->subject = '换个标题';
 		$this->doc2->subject = XS::convert($this->doc1->subject, 'GBK', 'UTF-8');
 		$this->assertEquals($this->doc1->subject, $this->doc2->subject);
+
+		$this->doc1->setField('subject', 'Another');
+		$this->assertEquals('Another', $this->doc1->subject);
 	}
 
 	/**
@@ -162,6 +166,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		$this->doc2->addTerm($chrono, '2010');
 		$this->doc2->addTerm($chrono, '201009');
 		$this->doc2->addTerm($chrono, '20100915');
+		$this->doc2->addTerm($chrono, '2010');
 
 		$this->assertNull($this->doc2->getAddTerms('subject2'));
 		$this->assertEquals(self::$data['subject'], $this->doc2->subject);
@@ -169,7 +174,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		$expected = array('test1' => 1, 'test2' => 11, 'test3' => 3, 'GBK中文' => 1);
 		$this->assertEquals($expected, $this->doc2->getAddTerms('subject'));
 
-		$expected = array('2010' => 1, '201009' => 1, '20100915' => 1);
+		$expected = array('2010' => 2, '201009' => 1, '20100915' => 1);
 		$this->assertEquals($expected, $this->doc2->getAddTerms($chrono));
 	}
 
@@ -188,6 +193,13 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 
 	public function testGetIterator()
 	{
+		$temp = array();
+		foreach ($this->doc1 as $key => $value)
+		{
+			$temp[$key] = $value;
+		}
+		$this->assertEquals(self::$data, $temp);
+
 		$temp = array();
 		foreach ($this->doc2 as $key => $value)
 		{
@@ -224,37 +236,78 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 
 	public function testAddTerm()
 	{
-		// Remove the following lines when you implement this test.
-		// This test should combine with XSIndex
-		$this->markTestIncomplete(
-			'This test has not been implemented yet.'
-		);
+		$xs = new XS(end($GLOBALS['fixIniData']));
+		$doc = new XSDocument('UTF-8');
+		$doc->pid = '20061016';
+		$doc->subject = 'Hello, mazeyuan!';
+		$doc->message = 'I love you forever!';
+
+		// bool field 'date' (unused weight)
+		$doc->addTerm('date', 'Y2006', 1000);
+		$doc->addTerm('date', 'MD1016', 9999);
+
+		// non-bool field (with stem), 'subject'
+		$doc->addTerm('subject', '马明练');
+		$doc->addTerm('subject', '马明练', 200);
+		$doc->addTerm('subject', 'Twomice', 99);
+
+		$xs->index->clean();
+		$xs->index->add($doc);
+		$xs->index->flushIndex();
+
+		// wait for flushing
+		sleep(3);
+
+		$xs->search->setCharset('UTF-8');
+		// test search result about terms
+		$this->assertEquals(1, $xs->search->count('date:Y2006'));
+		$this->assertEquals(1, $xs->search->count('date:md1016'));
+		$this->assertEquals(1, $xs->search->count('subject:马明练'));
+		$this->assertEquals(1, $xs->search->count('subject:twomic'));
+		$xs->index->clean();
+		sleep(1);
 	}
 
 	public function testAddIndex()
 	{
-		// Remove the following lines when you implement this test.
-		// This test should combine with XSIndex
-		$this->markTestIncomplete(
-			'This test has not been implemented yet.'
-		);
+		$xs = new XS(end($GLOBALS['fixIniData']));
+		$doc = new XSDocument('UTF-8');
+		$doc->pid = '20061016';
+		$doc->subject = 'Hello, mazeyuan!';
+		$doc->message = 'I love you forever!';
+
+		// bool field 'date' split by '/'
+		$doc->addIndex('date', 'Y2006/M10/D16');
+
+		// non-bool field (with stem), 'subject'
+		$doc->addIndex('message', '你真是个小坏蛋');
+		$doc->addIndex('subject', '标是附加文字');
+
+		$xs->index->clean();
+		$xs->index->add($doc);
+		$xs->index->flushIndex();
+
+		// wait for flushing
+		sleep(3);
+
+		$xs->search->setCharset('UTF-8');
+
+		// test search result about indexed terms
+		$this->assertEquals(1, $xs->search->count('date:Y2006/M10'));
+		$this->assertEquals(1, $xs->search->count('date:D16'));
+		$this->assertEquals(1, $xs->search->count('subject:附加文字'));
+		$this->assertEquals(1, $xs->search->count('真是个小坏蛋'));
+		$xs->index->clean();
+		sleep(1);
 	}
 
 	public function testBeforeSubmit()
 	{
-		// Remove the following lines when you implement this test.
-		// This test should combine with XSIndex
-		$this->markTestIncomplete(
-			'This test has not been implemented yet.'
-		);
+		
 	}
 
 	public function testAfterSubmit()
 	{
-		// Remove the following lines when you implement this test.
-		// This test should combine with XSIndex
-		$this->markTestIncomplete(
-			'This test has not been implemented yet.'
-		);
+		
 	}
 }

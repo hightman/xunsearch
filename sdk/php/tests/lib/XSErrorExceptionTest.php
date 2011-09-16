@@ -17,4 +17,18 @@ class XSErrorExceptionTest extends PHPUnit_Framework_TestCase
 		trigger_error('test user notice', E_USER_NOTICE);
 		trigger_error('test user warning', E_USER_WARNING);
 	}
+	
+	public function test__toString()
+	{
+		try
+		{
+			trigger_error('test user warning', E_USER_WARNING);
+		}
+		catch (XSErrorException $e)
+		{			
+		}
+		
+		$this->assertInstanceOf('XSErrorException', $e);
+		$this->assertEquals('[XSErrorException] lib/XSErrorExceptionTest.php(25): test user warning(512)', strval($e));
+	}	
 }

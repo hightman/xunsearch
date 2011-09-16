@@ -80,7 +80,7 @@ class XSCommand extends XSComponent
 	 * @return string 用于服务端交互的字符串
 	 */
 	public function __toString()
-	{	
+	{
 		if (strlen($this->buf1) > 0xff)
 			$this->buf1 = substr($this->buf1, 0, 0xff);
 		return pack('CCCCI', $this->cmd, $this->arg1, $this->arg2, strlen($this->buf1), strlen($this->buf)) . $this->buf . $this->buf1;
@@ -190,6 +190,11 @@ class XSServer extends XSComponent
 	{
 		if ($this->_sock && !($this->_flag & self::BROKEN))
 		{
+			if (!$ioerr && $this->_sendBuffer !== '')
+			{
+				$this->write($this->_sendBuffer);
+				$this->_sendBuffer = '';
+			}
 			if (!$ioerr && !($this->_flag & self::FILE))
 			{
 				$cmd = new XSCommand(CMD_QUIT);
@@ -198,6 +203,15 @@ class XSServer extends XSComponent
 			fclose($this->_sock);
 			$this->_flag |= self::BROKEN;
 		}
+	}
+	
+	/**
+	 * 获取连接资源描述符
+	 * @return mixed 连接标识, 仅用于内部测试等目的
+	 */
+	public function getSocket()
+	{
+		return $this->_sock;
 	}
 
 	/**
