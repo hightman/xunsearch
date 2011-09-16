@@ -15,13 +15,13 @@
 文件为 `XSTokenizerXyz.class.php`，请将文件统一放入 `$prefix/sdk/php/lib` 目录。
 
 通常来讲，您只需要实现 [XSTokenizer::getTokens] 即可。该函数接受 2个参数，分别为要分词的值以及
-当前的文档对象；返回值为分好的词汇组成的数组。下面以按 `-` 分割字段为例：
+当前的文档对象(可选)；返回值为分好的词汇组成的数组。下面以按 `-` 分割字段为例：
 
 ~~~
 [php]
 class XSTokenizerXyz implements XSTokenizer
 {
-    public function getTokens($value, XSDocument $doc)
+    public function getTokens($value, XSDocument $doc = null)
     {
         $ret = array();
         if (!empty($value))
@@ -62,7 +62,10 @@ class XSTokenizerXyz implements XSTokenizer
 --------------
 
 编写完了自定义分词器的代码后，您就可以在项目配置文件中使用它了，在需要用这个分词器的字段中
-指定 `tokenizer` 选项的值，例子中省略了字段的其它选项，实际编写时可能还包括其它选项：
+指定 `tokenizer` 选项的值，例子中省略了字段的其它选项，实际编写时可能还包括其它选项。
+
+而在[搜索语句](search.query)中，如果指明了字段搜索前缀 `field:XXX` 那么搜索引擎内部也会
+对这个搜索语句执行自定义分词。
 
 ~~~
 [php]

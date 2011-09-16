@@ -707,6 +707,25 @@ class XSSearch extends XSServer
 					{
 						$newQuery .= substr($part, 0, $pos + 1) . '(' . substr($part, $pos + 1) . ')';
 					}
+					else if ($field->isBoolIndex())
+					{
+						// force to lowercase for boolean terms
+						$value = substr($part, $pos + 1);
+						// Add custom tokenizer supported
+						if (!$field->hasCustomTokenizer())
+							$newQuery .= substr($part, 0, $pos + 1) . strtolower($value);
+						else
+						{
+							$terms = array();
+							$tokens = $field->getCustomTokenizer()->getTokens($value);
+							foreach ($tokens as $term)
+							{
+								$terms[] = strtolower($term);
+							}
+							$terms = array_unique($terms);
+							$newQuery .= $name . ':' . implode(' ' . $name . ':', $terms);
+						}
+					}
 					else
 					{
 						$newQuery .= $part;

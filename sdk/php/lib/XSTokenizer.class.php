@@ -30,7 +30,7 @@ interface XSTokenizer
 	 * @param XSDocument $doc 当前相关的索引文档
 	 * @return array 切好的词组成的数组
 	 */
-	public function getTokens($value, XSDocument $doc);
+	public function getTokens($value, XSDocument $doc = null);
 }
 
 /**
@@ -43,7 +43,7 @@ interface XSTokenizer
 class XSTokenizerNone implements XSTokenizer
 {
 
-	public function getTokens($value, XSDocument $doc)
+	public function getTokens($value, XSDocument $doc = null)
 	{
 		return array();
 	}
@@ -59,7 +59,7 @@ class XSTokenizerNone implements XSTokenizer
 class XSTokenizerFull implements XSTokenizer
 {
 
-	public function getTokens($value, XSDocument $doc)
+	public function getTokens($value, XSDocument $doc = null)
 	{
 		return array($value);
 	}
@@ -82,7 +82,7 @@ class XSTokenizerSplit implements XSTokenizer
 			$this->arg = $arg;
 	}
 
-	public function getTokens($value, XSDocument $doc)
+	public function getTokens($value, XSDocument $doc = null)
 	{
 		if (strlen($arg) > 1 && substr($arg, 0, 1) == '/' && substr($arg, -1, 1) == '/')
 			return preg_split($this->arg, $value);
@@ -111,7 +111,7 @@ class XSTokenizerXlen implements XSTokenizer
 		}
 	}
 
-	public function getTokens($value, XSDocument $doc)
+	public function getTokens($value, XSDocument $doc = null)
 	{
 		$terms = array();
 		for ($i = 0; $i < strlen($value); $i += $this->arg)
@@ -143,7 +143,7 @@ class XSTokenizerXstep implements XSTokenizer
 		}
 	}
 
-	public function getTokens($value, XSDocument $doc)
+	public function getTokens($value, XSDocument $doc = null)
 	{
 		$terms = array();
 		$i = $this->arg;
