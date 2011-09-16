@@ -16,11 +16,12 @@ if test "x-$1" = "x---clean" ; then
 	find . -name Makefile.in -exec rm -f {} \;
 	rm -f aclocal.m4 config.* configure depcomp install-sh missing stamp-h1
 	rm -rf autom4te.cache
-	rm -f VERSION src/xs-ctl.sh src/xs-optimize.sh
+	rm -f README VERSION src/xs-ctl.sh src/xs-optimize.sh
 	echo "OK, done!"
 	exit
 fi
 
+ln -sf README.md README
 for cmd in aclocal autoheader \
 		"automake --add-missing --copy --force" autoconf ; do
 	echo "Running command: $cmd ..."

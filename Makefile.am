@@ -7,7 +7,7 @@ SUBDIRS = . src sdk
 
 DIST_SUBDIRS = src sdk
 
-EXTRA_DIST = README.arch VERSION etc
+EXTRA_DIST = README.md README.arch VERSION etc
 
 sysconf_DATA = etc/stopwords.txt etc/py.xdb
 

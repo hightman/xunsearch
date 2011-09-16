@@ -56,7 +56,7 @@ bin/xs-ctl.sh -b unix start     [tmp/indexd.sock, tmp/searchd.sock]
 解压后的目录结构如下：
 
 xunsearch-full/
- |- README
+ |- README.md
  |- setup.sh
  \- packages/
      |- xunsearch-1.x.y.tar.gz

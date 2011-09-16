@@ -15,7 +15,7 @@ if HAVE_SDK_PHP_DEV
 phplib_FILES += php/lib/xs_cmd.inc.php php/lib/*.class.php
 endif HAVE_SDK_PHP_DEV
 
-EXTRA_DIST = gen-phpinc.sh php/README php/doc php/app/demo.ini php/lib/XS.php php/util
+EXTRA_DIST = gen-phpinc.sh php/README.md php/doc php/app/demo.ini php/lib/XS.php php/util
 
 php/lib/xs_cmd.inc.php: ../config.h ../src/xs_cmd.h
 	sh gen-phpinc.sh > $@
@@ -51,10 +51,10 @@ uninstall: uninstall-am uninstall-sdk
 
 install-sdk:
 	$(MKDIR_P) "$(DESTDIR)$(phpdir)"
-	-cp -rf php/README php/util php/doc $(DESTDIR)$(phpdir)/
+	-cp -rf php/README.md php/util php/doc $(DESTDIR)$(phpdir)/
 	chmod 0755 $(DESTDIR)$(phpdir)/util/*.php
 
 uninstall-sdk:
 	-rmdir $(phpappdir) $(phplibdir)
-	-rm -rf $(phpdir)/README $(phpdir)/util $(phpdir)/doc
+	-rm -rf $(phpdir)/README.md $(phpdir)/util $(phpdir)/doc
 	-rmdir $(phpdir) $(sdkdir)
