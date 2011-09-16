@@ -140,6 +140,9 @@ class XSFieldScheme implements IteratorAggregate
 	{
 		if (!$field instanceof XSFieldMeta)
 			$field = new XSFieldMeta($field, $config);
+		
+		if (isset($this->_fields[$field->name]))
+			throw new XSException('Duplicated field name: `' . $field->name . '\'');
 
 		if ($field->isSpeical())
 		{

@@ -261,7 +261,11 @@ class XS extends XSComponent
 	public function __construct($file)
 	{
 		if (strlen($file) < 255 && !is_file($file))
-			$file = XS_LIB_ROOT . '/../app/' . $file . '.ini';
+		{
+			$file2 = XS_LIB_ROOT . '/../app/' . $file . '.ini';
+			if (is_file($file2))
+				$file = $file2;
+		}
 		$this->loadIniFile($file);
 	}
 
@@ -295,7 +299,7 @@ class XS extends XSComponent
 		$fs->checkValid(true);
 		$this->_scheme = $fs;
 		if ($this->_search !== null)
-			$this->_search->markResetScheme(true);
+			$this->_search->markResetScheme();
 	}
 
 	/**
@@ -339,7 +343,6 @@ class XS extends XSComponent
 		if ($this->_index === null)
 		{
 			$conn = isset($this->_config['server.index']) ? $this->_config['server.index'] : 8383;
-			$name = $this->_config['project.name'];
 			$this->_index = new XSIndex($conn, $this);
 		}
 		return $this->_index;
@@ -354,7 +357,6 @@ class XS extends XSComponent
 		if ($this->_search === null)
 		{
 			$conn = isset($this->_config['server.search']) ? $this->_config['server.search'] : 8384;
-			$name = $this->_config['project.name'];
 			$this->_search = new XSSearch($conn, $this);
 			$this->_search->setCharset($this->getDefaultCharset());
 		}
@@ -461,7 +463,7 @@ class XS extends XSComponent
 		}
 		return $data;
 	}
-	
+
 	/**
 	 * 解析INI配置文件
 	 * 由于 PHP 自带的 parse_ini_file 存在一些不兼容，故自行简易实现
@@ -472,7 +474,7 @@ class XS extends XSComponent
 	{
 		$ret = array();
 		$cur = &$ret;
-		$lines  = explode("\n", $data);
+		$lines = explode("\n", $data);
 		foreach ($lines as $line)
 		{
 			if ($line === '' || $line[0] == ';' || $line[0] == '#')
@@ -491,7 +493,7 @@ class XS extends XSComponent
 				continue;
 			$key = trim(substr($line, 0, $pos));
 			$value = trim(substr($line, $pos + 1), " '\t\"");
-			$cur[$key] = $value;			
+			$cur[$key] = $value;
 		}
 		return $ret;
 	}
@@ -509,7 +511,7 @@ class XS extends XSComponent
 		$cache_write = '';
 		if (strlen($file) < 255 && file_exists($file))
 		{
-			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));			
+			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));
 			if (function_exists('apc_fetch'))
 			{
 				$cache = apc_fetch($cache_key);

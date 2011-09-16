@@ -323,8 +323,7 @@ class XSSearch extends XSServer
 			if ($res->cmd == CMD_SEARCH_RESULT_DOC)
 			{
 				// got new doc
-				$doc = new XSDocument(unpack('Idocid/Irank/Iccount/ipercent/fweight', $res->buf));
-				$doc->setCharset($this->_charset);
+				$doc = new XSDocument($res->buf, $this->_charset);
 				$ret[] = $doc;
 			}
 			else if ($res->cmd == CMD_SEARCH_RESULT_FIELD)

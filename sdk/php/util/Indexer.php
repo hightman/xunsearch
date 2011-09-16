@@ -173,6 +173,7 @@ try
 			$doc = new XSDocument($dcs === false ? $charset : $dcs);
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
+			ob_flush();
 			$index->setTimeout(0);
 			$index->openBuffer();
 			while ($data = $src->getData())
@@ -238,7 +239,7 @@ function csv_transform($data)
 	if (is_null($fields))
 	{
 		// load default fields
-		$fields = array_keys($xs->scheme->getAllFields());
+		$fields = array_keys($xs->getScheme()->getAllFields());
 
 		// check data is fieldset or not
 		$is_header = true;

@@ -50,6 +50,8 @@ foreach($doc as $name => $value)
 [php]
 $doc = new XSDocument;  // 使用默认字符集
 $doc = new XSDocument('gbk'); // 指定文档为 GBK 编码
+$doc = new XSDocument($data); // 数组 $data 为初始字段数据, 编码则为默认编码
+$doc = new XSDocument($data, 'gbk'); // 数组 $data 为字段数据, 编码为 GBK
 
 // 然后进行一系列赋值操作
 

@@ -44,19 +44,30 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	private $_data;
 	private $_terms, $_texts;
 	private $_charset, $_meta;
+	private static $_resSize = 20;
+	private static $_resFormat = 'Idocid/Irank/Iccount/ipercent/fweight';
 
 	/**
 	 * 构造函数
-	 * @param mixed $p 索引文档的编码(字符串), 或搜索结果文档的 meta 元数据(数组)
-	 * @param array $d 可选参数, 用于初始化字段内容的键值数组
+	 * @param mixed $p 字符串表示索引文档的编码或搜索结果文档的 meta 数据, 数组则表示或索引文档的初始字段数据
+	 * @param string $d 可选参数, 当 $p 不为编码时, 本参数表示数据编码
 	 */
 	public function __construct($p = null, $d = null)
 	{
-		if (is_string($p))
-			$this->_charset = strtoupper($p);
-		else if (is_array($p))
-			$this->_meta = $p;
-		$this->_data = is_array($d) ? $d : array();
+		$this->_data = array();
+		if (is_array($p))
+			$this->_data = $p;
+		else if (is_string($p))
+		{
+			if (strlen($p) !== self::$_resSize)
+			{
+				$this->setCharset($p);
+				return;
+			}
+			$this->_meta = unpack(self::$_resFormat, $p);
+		}
+		if ($d !== null && is_string($d))
+			$this->setCharset($d);
 	}
 
 	/**
@@ -121,7 +132,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	{
 		$this->_charset = strtoupper($charset);
 		if ($this->_charset == 'UTF8')
-			$this->_charset = 'UTF-8';		
+			$this->_charset = 'UTF-8';
 	}
 
 	/**
@@ -156,7 +167,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	{
 		return $this->__get(strval($name));
 	}
-	
+
 	/**
 	 * 获取字段的附加索引词列表 (仅限索引文档)
 	 * @param string $field 字段名称
