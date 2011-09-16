@@ -44,6 +44,10 @@ echo "请指定安装目录 (默认为中括号内的值)"
 echo -n "[$def_prefix]:"
 while test -z ""; do
   read -e set_prefix
+  if test $? -ne 0 ; then
+    echo -n "[$def_prefix]:"
+    read set_prefix
+  fi
   if test -z "$set_prefix" ; then
     set_prefix=$def_prefix
   fi
