@@ -173,7 +173,8 @@ try
 			$doc = new XSDocument($dcs === false ? $charset : $dcs);
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
-			ob_flush();
+			if (ob_get_level() > 0)
+				ob_flush();
 			$index->setTimeout(0);
 			$index->openBuffer();
 			while ($data = $src->getData())
