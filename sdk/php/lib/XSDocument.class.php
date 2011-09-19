@@ -88,9 +88,12 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * 实现以对象属性方式设置文档字段值
 	 * @param string $name 字段名称
 	 * @param mixed $value 字段值
+	 * @param bool $internal 是否内部调用
 	 */
-	public function __set($name, $value)
+	public function __set($name, $value, $internal = false)
 	{
+		if ($this->_meta !== null && $internal !== true)
+			throw new XSException('Magick property of result document is read-only');
 		if ($value === null)
 			unset($this->_data[$name]);
 		else
@@ -155,7 +158,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function setField($name, $value)
 	{
-		$this->__set($name, $value);
+		$this->__set($name, $value, true);
 	}
 
 	/**

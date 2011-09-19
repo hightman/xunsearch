@@ -99,6 +99,8 @@ $docs = $search->setQuery('项目测试')->addWeight('subject', 'xunsearch')->se
 拼音搜索、纠错建议等功能。
 
 > tip: 如果您需要强制同步搜索日志库，请参见 [Indexer 索引管理工具](util.indexer) 的 `--flush-log` 选项。
+>
+> 此外，只有当您的搜索代码中调用了 [XSSearch::getRelatedQuery] 时才会记录本次搜索关键词。
 
 
 如何进行多库搜索？
