@@ -870,7 +870,7 @@ static int zcmd_task_add_query(XS_CONN *conn)
 	{
 		bool less = (XS_CMD_BLEN1(cmd) == 1 && *(XS_CMD_BUF1(cmd)) == CMD_VALCMP_GE) ? false : true;
 		log_debug_conn("add query valcmp (TYPE:%c, VNO:%d, VALUE:%s, ADD_OP:%d)",
-			less ? '<' : '>', cmd->arg2, qstr.data(), cmd->arg1);
+			less ? '<=' : '>=', cmd->arg2, qstr.data(), cmd->arg1);
 
 		// check to serialise
 		if (zarg->cuts[cmd->arg2] & CMD_VALUE_FLAG_NUMERIC)

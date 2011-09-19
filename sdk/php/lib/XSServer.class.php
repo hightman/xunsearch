@@ -174,11 +174,14 @@ class XSServer extends XSComponent
 	/**
 	 * 重新打开连接
 	 * 仅应用于曾经成功打开的连并且异常关闭了
+	 * @param bool $force 是否强制重新连接, 默认为否
+	 * @return XSServer 返回自己, 以便串接操作
 	 */
-	public function reopen()
+	public function reopen($force = false)
 	{
-		if ($this->_flag & self::BROKEN)
+		if ($this->_flag & self::BROKEN || $force === true)
 			$this->open($this->_conn);
+		return $this;
 	}
 
 	/**

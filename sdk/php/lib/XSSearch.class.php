@@ -132,6 +132,7 @@ class XSSearch extends XSServer
 			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, $type, $vno);
 		}
 		$this->execCommand($cmd);
+		return $this;
 	}
 
 	/**
@@ -153,8 +154,8 @@ class XSSearch extends XSServer
 	/**
 	 * 添加搜索过滤区间或范围
 	 * @param string $field
-	 * @param mixed $from 起始值(不包含), 若设为 null 则相当于匹配 < to (字典顺序)
-	 * @param mixed $to 结束值(包含), 若设为 null 则相当于匹配 > from (字典顺序)	 
+	 * @param mixed $from 起始值(不包含), 若设为 null 则相当于匹配 <= to (字典顺序)
+	 * @param mixed $to 结束值(包含), 若设为 null 则相当于匹配 >= from (字典顺序)	 
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function addRange($field, $from, $to)

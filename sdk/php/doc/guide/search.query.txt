@@ -152,7 +152,7 @@ $to = strtotime("2011-9-1"); // 结束时间 2011年9月1日
 // 1. <= $to: 要求结果的时间必须在 2011-9-1 之前，并且包含 2011-9-1
 $docs = $search->setQuery('杭州')->addRange('chrono', null, $to)->search();
 
-// 2. > $from: 要求结果的时间必须在 2011-1-1 之后，并且不包含 2011-1-1
+// 2. >= $from: 要求结果的时间必须在 2011-1-1 之后，并且包含 2011-1-1
 $docs = $search->setQuery('杭州')->addRange('chrono', $from, null)->search();
 
 // 3. > $from && <= $to: 要求结果的时间必须在 2011-1-1 之后 并且 2011-9-1 之前
