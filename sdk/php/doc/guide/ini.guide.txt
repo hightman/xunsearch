@@ -146,7 +146,7 @@
 
 ~~~
     project.name = sample
-    project.charset = GBK
+    project.default_charset = GBK
     ;server.index = 8383
     ;server.search = 8384
 
