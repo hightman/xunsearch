@@ -412,7 +412,9 @@ static int doc_fetch()
 	if (cmd.cmd == CMD_INDEX_REMOVE && term != NULL)
 	{
 		if (rc == FETCH_SKIP)
+		{
 			log_verbose("~skip to remove the document (ID:%s, SKIP_LEFT:%d)", term, num_skip - total - 1);
+		}
 		else
 		{
 			rc = FETCH_DELETE;
