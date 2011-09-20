@@ -85,6 +85,7 @@ try
 	// create xs object
 	$xs = new XS($ini);
 	$search = $xs->search;
+	$search->setCharset($charset === null ? 'UTF-8' : $charset);
 	if ($db !== null)
 	{
 		$dbs = explode(',', $db);

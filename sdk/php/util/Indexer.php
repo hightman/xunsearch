@@ -170,7 +170,9 @@ try
 			$total = $total_ok = $total_failed = 0;
 			$src = XSDataSource::instance($source, strpos($source, ':') ? $sql : $file);
 			$dcs = $src->getCharset();
-			$doc = new XSDocument($dcs === false ? $charset : $dcs);
+			if ($dcs === false)
+				$dcs = $charset === null ? 'UTF-8' : $charset;
+			$doc = new XSDocument($dcs);
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
 			if (ob_get_level() > 0)
