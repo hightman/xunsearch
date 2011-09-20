@@ -148,6 +148,41 @@ if test "$do_install" = "yes" ; then
   touch $old_dict
 fi
 
+# check & install libuuid
+uuid_place=
+dir_list="/usr /usr/local $prefix"
+echo -n "Checking libuuid ... "
+for tmp in $dir_list ; do
+  if test -f $tmp/include/uuid/uuid.h ; then
+    uuid_place=$tmp
+    break
+  fi
+done
+if test -z "$uuid_place" ; then
+  uuid_place=$prefix
+  echo "no, try to install it"
+  echo "Extracting libuuid package ..."
+  tar -xjf ./packages/libuuid-1.0.0.tar.bz2
+  cd libuuid-1.0.0
+  echo "Configuring libuuid ..."
+  ./configure --prefix=$prefix >> ../setup.log 2>&1
+  if test $? -ne 0 ; then
+    setup_abort "configure libuuid"
+  fi
+  echo "Compiling & installing libuuid ..."
+  make clean install >> ../setup.log 2>&1
+  if test $? -ne 0 ; then
+    setup_abort "compile libuuid"
+  fi
+  cd ..
+else
+  echo "yes: $uuid_place"
+fi
+xapian_env=
+if test "$uuid_place" = "$prefix" ; then
+  xapian_env="CXXFLAGS=-I$prefix/include LDFLAGS=-L$prefix/lib"
+fi
+
 # check & install xapian-scws
 old_version=
 echo -n "Checking xapian-core-scws ... "
@@ -177,7 +212,7 @@ if test "$do_install" = "yes" ; then
   tar -xjf $new_file
   cd xapian-core-scws-$new_version
   echo "Configuring xapian-core-scws ..."
-  ./configure --prefix=$prefix --with-scws=$prefix >> ../setup.log 2>&1
+  ./configure --prefix=$prefix --with-scws=$prefix $xapian_env >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "configure xapian-core-scws"
   fi

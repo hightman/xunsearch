@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "conn.h"
 #include "log.h"

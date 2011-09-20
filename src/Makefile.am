@@ -35,6 +35,9 @@ user_mm.c: user.c
 clean-generic:
 	-rm -f user_mm.c
 
+dist-hook:
+	-rm -f user_mm.c
+
 install: install-am install-shell
 
 install-exec: install-exec-am install-shell

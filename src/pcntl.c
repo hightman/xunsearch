@@ -231,6 +231,10 @@ static void _sig_term(int sig)
 		exit(rc);
 }
 
+#ifndef WIFCONTINUED
+#define	WIFCONTINUED(x)		0
+#endif
+
 static void _sig_child()
 {
 	pid_t pid;

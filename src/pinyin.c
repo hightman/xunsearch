@@ -247,7 +247,7 @@ py_list *py_convert(const char *str, int len)
 {
 	unsigned char *buf = (unsigned char *) str;
 	py_list *cur, *ret = NULL;
-	int i, j;
+	int i, j = 0;
 
 	for (i = 0; i < len; i++)
 	{

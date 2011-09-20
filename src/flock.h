@@ -51,6 +51,9 @@
 extern "C" {
 #endif
 
+#include <unistd.h>
+#define __USE_UNIX98	1
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <pthread.h>

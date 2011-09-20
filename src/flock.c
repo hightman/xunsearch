@@ -7,7 +7,7 @@
 #include "flock.h"
 #include <errno.h>
 #include <stdarg.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 /**
  * Lock or unlock operation

@@ -18,6 +18,6 @@
 #ifdef SIZEOF_OFF_T < 8
 #define	MAX_SPLIT_FILES			10			// max split files (xxx_xx.rcv.[NUM])
 #define	MAX_SPLIT_SIZE			1610612736L	// 1.5GB
-#endif	/* LARGFILE */
+#endif	/* LARG FILE */
 
 #endif	/* __XS_INDEXD_20090530_H__ */

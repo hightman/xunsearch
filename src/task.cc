@@ -51,7 +51,7 @@ static int query_ops[] = {
 	Xapian::Query::OP_XOR,
 	Xapian::Query::OP_AND_MAYBE,
 	Xapian::Query::OP_FILTER,
-	NULL
+	0
 };
 
 /**

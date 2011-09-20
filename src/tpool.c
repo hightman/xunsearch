@@ -456,7 +456,7 @@ char *tpool_draw(tpool_t *tp)
 			t->status & TPOOL_THREAD_ACTIVED ? 'A' : '-',
 			t->status & TPOOL_THREAD_BUSY ? 'B' : '-',
 			t->status & TPOOL_THREAD_TASK ? 'T' : '-', t->calls,
-			t->status & TPOOL_THREAD_ACTIVED ? t->tid : NULL);
+			t->status & TPOOL_THREAD_ACTIVED ? (void *)t->tid : NULL);
 		if (t->status & TPOOL_THREAD_TASK)
 		{
 			len += sprintf(buf + len, "func:%p, cancel:%p, arg:%p, time_cost:%d",
