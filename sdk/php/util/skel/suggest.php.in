@@ -18,7 +18,7 @@ if (!empty($q) && strpos($q, ':') === false)
 	try
 	{
 		$xs = new XS('@project@');
-		$terms = $xs->search->getExpandedQuery($q);
+		$terms = $xs->search->setCharset('UTF-8')->getExpandedQuery($q);
 	}
 	catch (XSException $e)
 	{

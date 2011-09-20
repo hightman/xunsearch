@@ -71,6 +71,7 @@ try
 {
 	$xs = new XS('@project@');
 	$search = $xs->search;
+	$search->setCharset('UTF-8');
 
 	if (empty($q))
 	{
