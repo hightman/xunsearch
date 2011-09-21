@@ -427,7 +427,10 @@ class XSSearch extends XSServer
 
 		// Simple to disable query with field filter		
 		if ($query === null)
+		{
 			$query = $this->_query;
+			$query = preg_replace_callback('/(^|\s)([0-9A-Za-z_\.-]+):([^\s]+)/', array($this, 'cleanFieldCallback'), $query);
+		}
 		if (empty($query) || strpos($query, ':') !== false)
 			return $ret;
 
@@ -525,6 +528,7 @@ class XSSearch extends XSServer
 				$query = $this->_query;
 				if ($this->_count > 0 && $this->_count > ceil($this->getDbTotal() * 0.001))
 					return $ret;
+				$query = preg_replace_callback('/(^|\s)([0-9A-Za-z_\.-]+):([^\s]+)/', array($this, 'cleanFieldCallback'), $query);
 			}
 			if (empty($query) || strpos($query, ':') !== false)
 				return $ret;
@@ -780,6 +784,22 @@ class XSSearch extends XSServer
 			$this->execCommand($cmd);
 			$this->_prefix[$name] = true;
 		}
+	}
+
+	/**
+	 * 清除布尔字段查询语句和非布尔的字段名
+	 * 用于正则替换回调函数, 净化 {@link getCorrectedQuery} 和 {@link getRelatedQuery} 中的搜索语句
+	 * @param array $match 正则匹配的部分, [1]:prefix [2]:field, [3]:data
+	 */
+	private function cleanFieldCallback($match)
+	{
+		if (($field = $this->xs->getField($match[2], false)) === false)
+			return $match[0];
+		if ($field->isBoolIndex())
+			return '';
+		if (substr($match[3], 0, 1) == '(' && substr($match[3], -1, 1) == ')')
+			$match[3] = substr($match[3], 1, -1);
+		return $match[1] . $match[3];
 	}
 
 	/**
