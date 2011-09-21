@@ -427,10 +427,8 @@ class XSSearch extends XSServer
 
 		// Simple to disable query with field filter		
 		if ($query === null)
-		{
-			$query = $this->_query;
-			$query = preg_replace_callback('/(^|\s)([0-9A-Za-z_\.-]+):([^\s]+)/', array($this, 'cleanFieldCallback'), $query);
-		}
+			$query = $this->cleanFieldQuery($this->_query);
+
 		if (empty($query) || strpos($query, ':') !== false)
 			return $ret;
 
@@ -525,10 +523,9 @@ class XSSearch extends XSServer
 		{
 			if ($query === null)
 			{
-				$query = $this->_query;
 				if ($this->_count > 0 && $this->_count > ceil($this->getDbTotal() * 0.001))
 					return $ret;
-				$query = preg_replace_callback('/(^|\s)([0-9A-Za-z_\.-]+):([^\s]+)/', array($this, 'cleanFieldCallback'), $query);
+				$query = $this->cleanFieldQuery($this->_query);
 			}
 			if (empty($query) || strpos($query, ':') !== false)
 				return $ret;
@@ -784,6 +781,22 @@ class XSSearch extends XSServer
 			$this->execCommand($cmd);
 			$this->_prefix[$name] = true;
 		}
+	}
+
+	/**
+	 * 清除查询语句中的字段名、布尔字段条件
+	 * @param string $query 查询语句
+	 * @return string 净化后的语句
+	 */
+	private function cleanFieldQuery($query)
+	{
+		$query = strtr($query, array(' AND ' => ' ', ' OR ' => ' '));
+		if (strpos($query, ':') !== false)
+		{
+			$regex = '/(^|\s)([0-9A-Za-z_\.-]+):([^\s]+)/';
+			return preg_replace_callback($regex, array($this, 'cleanFieldCallback'), $query);
+		}
+		return $query;
 	}
 
 	/**
