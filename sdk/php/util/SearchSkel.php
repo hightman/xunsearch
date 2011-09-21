@@ -65,6 +65,9 @@ try
 
 	// basic
 	$vars['@project@'] = $project;
+	$vars['@charset@'] = $xs->getDefaultCharset();
+	if ($vars['@charset@'] !== 'GB2312' && $vars['@charset@'] !== 'GBK')
+		$vars['@charset@'] = 'UTF-8';
 	$vars['@xs_lib_root@'] = XS_LIB_ROOT;
 	$vars['@date_time@'] = date('Y-m-d H:i:s');
 	$vars['@project_name@'] = ucfirst($xs->name);
@@ -136,6 +139,8 @@ try
 				copy($file, $file . '.bak');
 			$content = file_get_contents($input . '/' . $entry);
 			$content = strtr($content, $vars);
+			if ($vars['@charset@'] !== 'UTF-8')
+				$content = XS::convert($content, $vars['@charset@'], 'UTF-8');
 			file_put_contents($file, $content);
 		}
 		else

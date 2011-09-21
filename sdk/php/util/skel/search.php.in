@@ -5,6 +5,7 @@
  * 
  * 该文件由 xunsearch PHP-SDK 工具自动生成，请根据实际需求进行修改
  * 创建时间：@date_time@
+ * 默认编码：@charset@
  */
 // 加载 XS 入口文件
 require_once '@xs_lib_root@/XS.php';
@@ -17,8 +18,8 @@ error_reporting(E_ALL ^ E_NOTICE);
 // f: 只搜索某个字段，其值为字段名称，要求该字段的索引方式为 self/both
 // s: 排序字段名称及方式，其值形式为：xxx_ASC 或 xxx_DESC
 // p: 显示第几页，每页数量为 XSSearch::PAGE_SIZE 即 10 条
-// ie: 查询语句编码，默认为 UTF-8
-// oe: 输出编码，默认为 UTF-8
+// ie: 查询语句编码，默认为 @charset@
+// oe: 输出编码，默认为 @charset@
 // xml: 是否将搜索结果以 XML 格式输出，其值为 yes/no
 //
 // variables
@@ -28,26 +29,26 @@ foreach ($__ as $_)
 	$$_ = isset($_GET[$_]) ? $_GET[$_] : '';
 
 // input encoding
-if (!empty($ie) && !empty($q) && strcasecmp($ie, 'utf8') && strcasecmp($ie, 'utf-8'))
+if (!empty($ie) && !empty($q) && strcasecmp($ie, '@charset@'))
 {
-	$q = XS::convert($q, 'UTF-8', $ie);
+	$q = XS::convert($q, $cs, $ie);
 	$eu .= '&ie=' . $ie;
 }
 
 // output encoding
-if (!empty($oe) && strcasecmp($oe, 'utf8') && strcasecmp($oe, 'utf-8'))
+if (!empty($oe) && strcasecmp($oe, '@charset@'))
 {
 
 	function xs_output_encoding($buf)
 	{
-		return XS::convert($buf, $GLOBALS['oe'], 'UTF-8');
+		return XS::convert($buf, $GLOBALS['oe'], '@charset@');
 	}
 	ob_start('xs_output_encoding');
 	$eu .= '&oe=' . $oe;
 }
 else
 {
-	$oe = 'utf-8';
+	$oe = '@charset@';
 }
 
 // recheck request parameters
@@ -58,7 +59,7 @@ ${'f_' . $f} = ' checked';
 ${'s_' . $s} = ' selected';
 
 // base url
-$bu = $_SERVER['SCRIPT_NAME'] . '?q=' . urlencode($_GET['q']) . '&m=' . $m . '&f=' . $f . '&s=' . $s;
+$bu = $_SERVER['SCRIPT_NAME'] . '?q=' . urlencode($_GET['q']) . '&m=' . $m . '&f=' . $f . '&s=' . $s . $eu;
 
 // other variable maybe used in tpl
 $count = $total = $search_cost = 0;
@@ -71,7 +72,7 @@ try
 {
 	$xs = new XS('@project@');
 	$search = $xs->search;
-	$search->setCharset('UTF-8');
+	$search->setCharset('@charset@');
 
 	if (empty($q))
 	{

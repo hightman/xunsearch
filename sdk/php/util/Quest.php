@@ -41,7 +41,7 @@ Quest - 搜索查询和测试工具 ($version)
     -q <query>   指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来
     --fuzzy      将搜索默认设为模糊搜索	
     --charset=<gbk|utf-8>
-    -c <charset> 指定您当前在用的字符集，以便系统进行智能转换
+    -c <charset> 指定您当前在用的字符集，以便系统进行智能转换（默认：UTF-8）
     --db=<name[,name2 ...]>
     -d <db[,db2 ...]> 指定项目中的数据库名称，默认是名为 db 的库，多个库之间用逗号分隔
     --hot[=total|last|cur] 
