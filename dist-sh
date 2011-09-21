@@ -25,11 +25,11 @@ rm -f xunsearch-full-$fileinfo
 echo "Uploading file to web server ..."
 if test "$fileinfo" = "dev" ; then
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download
-  scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch-dev.tar.bz2
+  #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch-dev.tar.bz2
   scp VERSION xunsearch:./web/protected/data
 else
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
-  scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
+  #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
   ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
   scp VERSION xunsearch:./web/protected/data/RELEASE
 fi
