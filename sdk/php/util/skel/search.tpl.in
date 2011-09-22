@@ -202,7 +202,7 @@ form#q-form { margin: 0; }
 	<!-- footer -->
 	<div id="footer">
 		(C)opyright 2011 - @project_name@ search - 页面处理总时间：<?php printf('%.4f', $total_cost); ?>秒　<br />
-		Powered by <a href="http://www.xunsearch.com" target="_blank">@package_name@/@package_version@</a> 
+		Powered by <a href="http://www.xunsearch.com" target="_blank"><?php echo PACKAGE_NAME . '/' . PACKAGE_VERSION; ?></a> 
 	</div>
 </div><!-- outer -->
 
