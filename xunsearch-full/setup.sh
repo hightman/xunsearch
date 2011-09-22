@@ -78,10 +78,10 @@ echo -n > setup.log
 setup_abort()
 {
   echo "-----"
-  tail -4 ../setup.log
+  tail -10 ../setup.log
   echo "-----"
   echo "ERROR: failed to $1, see 'setup.log' for more detail"
-  exit -3
+  exit 3
 }
 
 # check & install scws
@@ -99,7 +99,7 @@ new_version=`echo $new_file | sed 's#^.*scws-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
   if test -z "$new_version" ; then
     echo "ERROR: Missing scws package (缺少 scws 安装包)"
-    exit -2
+    exit 2
   fi
   echo "Installing scws ($new_version) ... "
   do_install=yes  
@@ -198,7 +198,7 @@ new_version=`echo $new_file | sed 's#^.*xapian-core-scws-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
   if test -z "$new_version" ; then
     echo "ERROR: Missing xapian-core-scws package (缺少 xapian-core-scws 安装包)"
-    exit -2
+    exit 2
   fi
   echo "Installing xapian-core-scws ($new_version) ... "
   do_install=yes  
@@ -239,7 +239,7 @@ new_version=`echo $new_file | sed 's#^.*libevent-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
   if test -z "$new_version" ; then
     echo "ERROR: Missing libevent package (缺少 libevent 安装包)"
-    exit -2
+    exit 2
   fi
   echo "Installing libevent ($new_version) ... "
   do_install=yes  
@@ -270,7 +270,7 @@ new_file=`ls ./packages/xunsearch-*`
 new_version=`echo $new_file | sed 's#^.*xunsearch-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$new_version" ; then
   echo "ERROR: Missing xunsearch package (缺少 xunsearch 安装包)"
-  exit -2
+  exit 2
 fi
 echo "Extracting xunsearch package ($new_version) ..."
 tar -xjf $new_file

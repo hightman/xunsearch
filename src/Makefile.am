@@ -30,7 +30,7 @@ xs_searchd_LDADD = -levent -lxapian -lscws
 EXTRA_DIST = xs-ctl.sh.in xs-optimize.sh.in
 
 user_mm.c: user.c
-	$(COMPILE) -DHAVE_MM -E $^ > $@
+	$(COMPILE) -DHAVE_MM -E -o $@ $?
 	
 clean-generic:
 	-rm -f user_mm.c
