@@ -13,9 +13,6 @@
 // Application configuration
 $config = array(
 	'basePath' => dirname(__FILE__),
-	'commandMap' => array(
-		'api' => 'application.commands.DocCommand',
-	),
 );
 
 // Path of YiiFramework, try to read from env variable

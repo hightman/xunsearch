@@ -22,6 +22,12 @@ class SiteController extends CController
 	{
 		$this->render('index', array('name' => $name));
 	}
+	
+	public function actionApi($name = null)
+	{
+		readfile('../doc/html/api/' . $name . '.html');
+		exit(0);
+	}
 
 	public function actionGuide($name = null)
 	{

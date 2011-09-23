@@ -24,14 +24,14 @@
 <tr>
   <td class="paramNameCol">$<?php echo $param->name; ?></td>
   <td class="paramTypeCol"><?php echo $this->renderTypeUrl($param->type); ?></td>
-  <td class="paramDescCol"><?php echo $param->description; ?></td>
+  <td class="paramDescCol"><?php echo CHtml::encode($param->description); ?></td>
 </tr>
 <?php endforeach; ?>
 <?php if(!empty($method->output)): ?>
 <tr>
   <td class="paramNameCol"><?php echo '{return}'; ?></td>
   <td class="paramTypeCol"><?php echo $this->renderTypeUrl($method->output->type); ?></td>
-  <td class="paramDescCol"><?php echo $method->output->description; ?></td>
+  <td class="paramDescCol"><?php echo CHtml::encode($method->output->description); ?></td>
 </tr>
 <?php endif; ?>
 <?php endif; ?>

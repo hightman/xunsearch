@@ -7,20 +7,28 @@ SUBDIRS = . src sdk
 
 DIST_SUBDIRS = src sdk
 
-EXTRA_DIST = README.md README.arch VERSION etc
-
 sysconf_DATA = etc/stopwords.txt etc/py.xdb
 
-etc/py.xdb:
+EXTRA_DIST = README.md README.arch VERSION $(sysconf_DATA)
+
+py_xdb_DEPS =
+version_DEPS =
+
+if HAVE_SDK_PHP_DEV
+py_xdb_DEPS += sdk/php/dev/data/py.txt
+version_DEPS += .git/refs/heads/master
+endif HAVE_SDK_PHP_DEV
+
+etc/py.xdb: $(py_xdb_DEPS)
 	@echo "Generating pinyin dict by php ..."
 	php sdk/php/dev/build.php pinyin make > /dev/null 2>&1
 
-VERSION:
+VERSION: $(version_DEPS)
 	@echo "Generating version info ..."
 	sh version-sh > VERSION
 
 dist-hook:
-	sh version-sh > VERSION
+
 	
 dist-full: dist-bzip2
 	sh -c 'cd xunsearch-full ; ./setup.sh --clean'	

@@ -21,61 +21,74 @@ class DocCommand extends ApiCommand
 {
 	public $baseSourcePath;
 	public $baseSourceUrl = 'https://github.com/hightman/xunsearch/blob/master/';
-	private $root;
+	private $root, $output;
+	private static $_parser;
 
 	public function getHelp()
 	{
 		return <<<EOF
 用法
-  {$_SERVER['argv'][0]} api [mode]
+  {$_SERVER['argv'][0]} api [mode] [output_dir]
 
 描述
-  这条命令分析 ../lib/*.class.php 的文档注释并生成 HTML 格式文档，方便最终浏览。
-  生成的 HTML 文档位于 ../doc/api
+  这条命令用于自动根据代码注释和 Markdown 文档生成 HTML 格式文档、CHM 索引文件。
+  方便最终浏览和使用。
 
 参数
-  mode 可选的，其值为 offline 或 online 默认为 offline
+  mode 可选参数，其值为 offline 或 online ，默认为 offline  
+  output_dir 文档输出目录，可选参数，在此目录下生成相关的 HTML 文档
+  当 mode 为 online 时，输出目录默认为 ../doc 并且只生成 API 文档；
+  当 mode 为 offline 时，输出目录默认为 ../doc/html 并在此目录下生成 api/guide 全部文档。
 
 EOF;
 	}
 
 	public function run($args)
 	{
-		$options = array(
-			'fileTypes' => array('php'),
-			'exclude' => array(
-				'.svn',
-				'CVS',
-				'/XS.php',
-			),
-		);
-
+		// basic
 		$this->root = realpath(dirname(__FILE__) . '/../..');
-		$input = $this->root . '/lib';
-		$output = $this->root . '/doc';
-		$themePath = dirname(__FILE__) . '/api';
-		$vfile = $this->root . '/../../VERSION';
+		$online = (isset($args[0]) && !strcasecmp($args[0], 'online')) ? true : false;
 
-		include_once $input . '/xs_cmd.inc.php';
+		include_once $this->root . '/lib/xs_cmd.inc.php';
+		$vfile = $this->root . '/../../VERSION';
 		$this->version = file_exists($vfile) ? trim(file_get_contents($vfile)) : PACKAGE_VERSION;
-		$this->pageTitle = 'API 文档参考 (Xunsearch/PHP-SDK)';
+
+		if (isset($args[1]))
+			$output = $args[1];
+		else
+		{
+			$output = $this->root . '/doc';
+			if (!$online)
+				$output .= '/html';
+		}
+
+		// create output dir
+		if (!is_dir($output) && !@mkdir($output))
+			$this->usageError("输出目录 {$output} 不存在，并且无法创建！");
+		$this->output = $output;
+
+		echo "基础目录.. : " . $this->root . "\n";
+		echo "输出目录.. : " . $this->output . "\n";
+		echo "版本...... : " . $this->version . "(" . ($online ? "线上" : "线下") . ")\n";
+		echo "代码网址.. : " . $this->baseSourceUrl . "\n\n";
+
+
+		// 1. 生成 API 文档
+		$themePath = dirname(__FILE__) . '/api';
+		$this->pageTitle = 'Xunsearch PHP-SDK API 文档';
 		$this->baseSourcePath = dirname(dirname(($this->root)));
 
-		echo "\n创建项目.. : " . $this->pageTitle . "\n";
-		echo "版本...... : " . $this->version . "\n";
-		echo "源码目录.. : " . $input . "\n";
-		echo "源码网址.. : " . $this->baseSourceUrl . "\n\n";
-
-		echo "生成类对象文档 ... \n";
-		$model = $this->buildModel($input, $options);
+		echo "分析类对象文档 ... ";
+		$model = $this->buildModel($this->root . '/lib', array(
+				'fileTypes' => array('php'),
+				'exclude' => array('/XS.php'))
+		);
 		$this->classes = $model->classes;
 		$this->packages = $model->packages;
+		echo "共 " . count($this->packages) . " 个包，" . count($this->classes) . " 个类对象\n";
 
-		echo "清理旧有 API 文档 ...\n";
-		exec('rm -rf ' . $output . '/api');
-
-		echo "生成页面索引 ... ";
-		if (isset($args[0]) && $args[0] == 'online')
+		echo "生成 HTML 页面 ... ";
+		if ($online)
 		{
 			$this->buildOnlinePages($output . '/api', $themePath);
 			$this->buildKeywords($output);
@@ -86,6 +99,63 @@ EOF;
 			$this->buildOfflinePages($output . '/api', $themePath);
 		}
 		echo "完成\n\n";
+
+		// 2. 离线方式，增加 guide 文档
+		if ($online === false)
+		{
+			$data = array('guides' => array(), 'others' => array());
+			echo "生成权威指南 ...\n";
+			$this->themePath = $themePath;
+
+			@mkdir($this->output . '/guide');
+			$this->buildGuidePage('toc');
+			$guides = $this->loadGuideList();
+			for ($i = $j = 0; $i < count($guides); $i++)
+			{
+				if (!isset($guides[$i]['name']))
+				{
+					$data['guides'][] = array('label' => $guides[$i]['label'], 'items' => array());
+					continue;
+				}
+				$k = count($data['guides']) - 1;
+				$data['guides'][$k]['items'][$guides[$i]['name']] = $guides[$i]['label'];
+				$options = array();
+				if ($j !== 0)
+					$options['prev'] = $guides[$j];
+				if (isset($guides[$i + 1]))
+				{
+					if (isset($guides[$i + 1]['name']))
+						$options['next'] = $guides[$i + 1];
+					else if (isset($guides[$i + 2]))
+						$options['next'] = $guides[$i + 2];
+				}
+				$this->buildGuidePage($guides[$i]['name'], $options);
+				$j = $i;
+			}
+
+			// 3. 其它文档			
+			echo "生成其它相关文档 ...\n";
+			$this->buildGuidePage('README.md', array('name' => 'index'));
+			$others = array('ABOUT', 'FEATURE', 'ARCHITECTURE', 'DOWNLOAD', 'SUPPORT', 'LICENSE');
+			foreach ($others as $name)
+			{
+				$this->buildGuidePage($name);
+				$data['others'][$name] = $this->pageTitle;
+			}
+
+			// 4. 创建 CHM 总索引
+			$content = $this->renderPartial('chmProject2', null, true);
+			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
+			file_put_contents($this->output . '/xs_php_manual.hhp', $content);
+
+			$content = $this->renderPartial('chmIndex2', $data, true);
+			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
+			file_put_contents($this->output . '/xs_php_manual.hhk', $content);
+
+			$content = $this->renderPartial('chmContents2', $data, true);
+			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
+			file_put_contents($this->output . '/xs_php_manual.hhc', $content);
+		}
 	}
 
 	public function renderSourceLink($sourcePath, $line = null)
@@ -150,4 +220,61 @@ EOF;
 				return "<a href=\"/doc/php/api/{$matches[1]}\">{$matches[2]}</a>";
 		}
 	}
+
+	protected function loadGuideList()
+	{
+		// dot flag: *, -
+		$list = array();
+		$lines = file($this->root . '/doc/guide/toc.txt');
+		foreach ($lines as $line)
+		{
+			$line = trim($line);
+			if ($line[0] === '*')
+				$list[] = array('label' => substr($line, 2));
+			else if ($line[0] === '-')
+			{
+				list ($label, $name) = explode('](', substr($line, 3, -1), 2);
+				$list[] = array('label' => $label, 'name' => $name);
+			}
+		}
+		return $list;
+	}
+
+	protected function buildGuidePage($name, $options = array())
+	{
+		$ord = ord(substr($name, 0, 1));
+		$name2 = isset($options['name']) ? $options['name'] : $name;
+		$input = $this->root . '/doc/';
+		$output = $this->output . '/';
+		if ($ord >= 65 && $ord <= 90)
+		{
+			$input .= $name;
+			$output .= $name2 . '.html';
+		}
+		else
+		{
+			$input .= 'guide/' . $name . '.txt';
+			$output .= 'guide/' . $name2 . '.html';
+		}
+
+		$options['content'] = preg_replace('#\]\(([a-z]+\.[a-z]+)\)#', ']($1.html)', @file_get_contents($input));
+		$this->pageTitle = trim(substr($options['content'], 0, strpos($options['content'], '===')));
+		$content = $this->renderPartial('guide', $options, true);
+		if ($ord >= 65 && $ord <= 90)
+			$content = str_replace('../api/css/', 'api/css/', $content);
+		if ($name == 'README.md')
+			$content = preg_replace('#"http://www.xunsearch.com/doc/php/(.+?)"#', '"$1.html"', $content);
+		file_put_contents($output, $content);
+	}
+
+	protected function formatMarkdown($data)
+	{
+		if (self::$_parser === null)
+		{
+			Yii::import('application.vendors.Markdown', true);
+			self::$_parser = new Markdown;
+		}
+		return self::$_parser->transform($data);
+	}
 }
+

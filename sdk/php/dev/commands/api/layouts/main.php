@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="language" content="en" />
+<meta name="language" content="zh-cn" />
 <link rel="stylesheet" type="text/css" href="css/style.css" />
 <link rel="stylesheet" type="text/css" href="css/api.css" />
 <script type="text/javascript" src="js/jquery.js"></script>
@@ -13,7 +13,7 @@
 <div id="apiPage">
 
 <div id="apiHeader">
-<a href="http://www.xunsearch.com/php/">Xunsearch PHP-SDK</a> v<?php echo $this->version; ?> API 参考文档
+<a href="http://www.xunsearch.com" target="_blank">Xunsearch PHP-SDK</a> v<?php echo $this->version; ?> API 参考文档
 </div><!-- end of header -->
 
 <div id="content" class="api-index">
@@ -21,7 +21,7 @@
 </div><!-- end of content -->
 
 <div id="apiFooter">
-Copyright &copy; 2008-2011 by <a href="http://www.xunsearch.com/company/">杭州云圣网络科技有限公司</a><br/>
+Copyright &copy; 2008-2011 by <a href="http://www.xunsearch.com" target="_blank">杭州云圣网络科技有限公司</a><br/>
 All Rights Reserved.<br/>
 </div><!-- end of footer -->
 

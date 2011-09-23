@@ -79,7 +79,7 @@ class MarkdownParser extends CMarkdownParser
 		$segs = explode('::', rtrim($api, '()'));
 		$class = $segs[0];
 		$anchor = isset($segs[1]) ? '#' . $segs[1] : '';
-		$url = dirname(Yii::app()->request->baseUrl) . '/doc/api/' . $class . '.html' . $anchor;
+		$url = '../api/' . $class . '.html' . $anchor;
 		$link = "<a href=\"$url\">$text</a>";
 		return $this->hashPart($link);
 	}

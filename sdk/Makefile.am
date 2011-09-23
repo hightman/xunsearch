@@ -24,26 +24,18 @@ php/lib/XS.php: $(phplib_FILES)
 	@echo "Regenerating XS library class file ..."
 	@php php/dev/build.php lite > /dev/null 2>&1
 
-dist-hook: ../etc/py.xdb
-	@echo "Regenerating offline API reference ..."
-	@rm -rf php/doc/api	
-	@php php/dev/build.php api offline > /dev/null 2>&1
+dist-hook: 
+	@echo "Regenerating offline documents ..."
+	@rm -rf $(distdir)/php/doc
+	@php php/dev/build.php doc offline $(distdir)/php/doc > /dev/null 2>&1
 	@echo "Regenerating XS library class file ..."
-	@php php/dev/build.php lite > /dev/null 2>&1	
-
-../etc/py.xdb: php/dev/data/py.txt
-	@echo "Generating pinyin dict by php ..."
-	@php php/dev/build.php pinyin make > /dev/null 2>&1	
+	@php php/dev/build.php lite > /dev/null 2>&1
 	
 php-web-doc:
-	@echo "Regenerating online API reference ..."
-	@rm -rf php/doc/api
-	@php php/dev/build.php api online > /dev/null 2>&1
+	@echo "Regenerating online documents ..."
+	@php php/dev/build.php doc online > /dev/null 2>&1
 	@echo "Making tar ball ..."
-	@tar -cjf ../xunsearch-web-doc-latest.tar.bz2 -C php doc/
-	@echo "Regenerating offline API reference ..."
-	@rm -rf php/doc/api	
-	@php php/dev/build.php api offline > /dev/null 2>&1	
+	@tar -cjf ../xunsearch-web-doc-latest.tar.bz2 -C php --exclude doc/html doc/
 
 install: install-am install-sdk
 	

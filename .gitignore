@@ -25,6 +25,7 @@ src/user_mm.c
 src/xs_cmd.inc.php
 sdk/php/lib/XS.php
 sdk/php/dev/tmp
+sdk/php/doc/html
 *.o
 *.lo
 .libs

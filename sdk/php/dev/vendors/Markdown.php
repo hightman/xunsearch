@@ -3,12 +3,13 @@ require_once(dirname(__FILE__) . '/MarkdownParser.php');
 
 class Markdown extends CMarkdown
 {
+	public $cssFile = false;
 
 	protected function createMarkdownParser()
 	{
 		return new MarkdownParser;
 	}
-	
+
 	public function _doImages_callback_format($match)
 	{
 		return '<div class="image"><p>' . (isset($match[2]) ? $match[2] : $match[1]) . '</p>' . $match[0] . '</div>';
