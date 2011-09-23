@@ -687,7 +687,7 @@ class XSSearch extends XSServer
 			$this->clearQuery();
 
 		$newQuery = '';
-		$parts = preg_split('/\s+/', $query);
+		$parts = preg_split('/[ \t\r\n]+/', $query);
 		foreach ($parts as $part)
 		{
 			if ($newQuery != '')
