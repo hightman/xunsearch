@@ -228,7 +228,7 @@ class XSComponent
  * XS 搜索项目主类
  * 
  * @property XSFieldScheme $scheme 当前在用的字段方案
- * @property-read string $defaultCharset 默认字符集编码
+ * @property string $defaultCharset 默认字符集编码
  * @property-read string $name 项目名称
  * @property-read XSIndex $index 索引操作对象
  * @property-read XSSearch $search 搜索操作对象
@@ -333,6 +333,15 @@ class XS extends XSComponent
 	{
 		return isset($this->_config['project.default_charset']) ?
 			strtoupper($this->_config['project.default_charset']) : 'UTF-8';
+	}
+
+	/**
+	 * 改变项目的默认字符集
+	 * @param string 修改后的字符集
+	 */
+	public function setDefaultCharset($charset)
+	{
+		$this->_config['project.default_charset'] = strtoupper($charset);
 	}
 
 	/**

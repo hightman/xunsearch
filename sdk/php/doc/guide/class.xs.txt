@@ -20,8 +20,8 @@ $xs = new XS('/path/to/demo.ini');	// 使用 /path/to/demo.ini
 --------
 
 * [XS::defaultCharset] **项目默认字符集**
-  影响范围包括使用时的输入数据以及搜索结果的输出数据，该属性在代码中是只读的，由配置文件中的
-  `project.default_charset` 指定。
+  影响范围包括使用时的输入数据以及搜索结果的输出数据，该属性默认由配置文件中的
+  `project.default_charset` 指定，如有必要可以自行修改，但要确保在使用索引、搜索对象之前。
 
 * [XS::index] **索引管理对象**
   类型为 [XSIndex]，比如用下面代码可以清空项目索引内容：
