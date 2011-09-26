@@ -80,8 +80,16 @@ class XSException extends Exception
 	{
 		$from = getcwd();
 		$file = realpath($file);
-		$pos = strrpos($file, '/');
-		$to = substr($file, 0, $pos);
+		if (is_dir($file))
+		{
+			$pos = false;
+			$to = $file;
+		}
+		else
+		{
+			$pos = strrpos($file, '/');
+			$to = substr($file, 0, $pos);
+		}
 		for ($rel = '';; $rel .= '../')
 		{
 			if ($from === $to)
@@ -97,10 +105,12 @@ class XSException extends Exception
 				break;
 			}
 			$from = dirname($from);
-		}
-		if ($rel != '' && substr($rel, -1, 1) != '/')
-			$rel .= '/';
-		return $rel . substr($file, $pos + 1);
+		}		
+		if (substr($rel, -1, 1) === '/')
+			$rel = substr($rel, 0, -1);
+		if ($pos !== false)
+			$rel .= substr($file, $pos);		
+		return $rel;
 	}
 }
 

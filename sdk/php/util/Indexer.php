@@ -225,11 +225,12 @@ try
 catch (XSException $e)
 {
 	// Exception
-	$start = getcwd() . '/';
+	$start = dirname(dirname(__FILE__));
 	$relative = XSException::getRelPath($start);
 	$traceString = $e->getTraceAsString();
-	$traceString = str_replace($start, $relative, $traceString);
-	echo $e . "\n" . $traceString . "\n";
+	$traceString = str_replace(dirname(__FILE__) . '/', '', $traceString);
+	$traceString = str_replace($start . ($relative === '' ? '/' : ''), $relative, $traceString);
+	echo $e . "\n" . $traceString . "\n";	
 }
 
 // translate csv data
