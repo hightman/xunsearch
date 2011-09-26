@@ -7,11 +7,11 @@ require_once dirname(__FILE__) . '/../../lib/XSSearch.class.php';
  */
 class XSSearchTest extends PHPUnit_Framework_TestCase
 {
-	/**	 
+	/**
 	 * @var XS
 	 */
 	protected static $xs;
-	
+
 	public static function setUpBeforeClass()
 	{
 		$data = array(
@@ -37,11 +37,11 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'other' => 'master',
 			)
 		);
-		
+
 		// create object
 		self::$xs = new XS(end($GLOBALS['fixIniData']));
 		$index = self::$xs->index;
-		
+
 		// create testing data
 		$doc = new XSDocument('utf-8');
 		foreach ($data as $tmp)
@@ -51,7 +51,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			$index->add($doc);
 		}
 		$index->flushIndex();
-		
+
 		// create another db
 		$index->setDb('db2');
 		foreach ($data as $tmp)
@@ -60,8 +60,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			$doc->setFields(null);
 			$doc->setFields($tmp);
 			$index->add($doc);
-		}		
-		
+		}
+
 		// flush index & logging
 		$index->flushIndex();
 		sleep(2);
@@ -96,37 +96,38 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 */
 	protected function tearDown()
 	{
+		
 	}
-	
+
 	public function testCharset()
 	{
 		$xs = self::$xs;
 		$search = $xs->search;
 		$query = 'subject:测试';
-		
+
 		$docs = $search->search($query);
 		$this->assertEquals(3, count($docs));
-		$this->assertEquals('测试第二篇', $docs[0]->subject);			
-		
+		$this->assertEquals('测试第二篇', $docs[0]->subject);
+
 		$this->assertEquals('GBK', $xs->getDefaultCharset());
-		$search->setCharset($xs->getDefaultCharset());		
+		$search->setCharset($xs->getDefaultCharset());
 		$this->assertEquals(0, $search->count($query));
-		
+
 		$docs = $search->search(XS::convert($query, 'GBK', 'UTF-8'));
 		$this->assertEquals(3, count($docs));
 		$this->assertEquals(XS::convert('测试第二篇', 'GBK', 'UTF-8'), $docs[0]->subject);
 	}
-	
-	public function testFuzzy()	
+
+	public function testFuzzy()
 	{
 		$search = self::$xs->search;
 		$this->assertEquals(2, $search->count('subject:项目测试')); // default: non-fuzzy
-		$this->assertEquals(3, $search->setFuzzy()->count('subject:项目测试'));		
+		$this->assertEquals(3, $search->setFuzzy()->count('subject:项目测试'));
 		// restore
 		$search->setFuzzy(false);
 	}
-	
-	/**	 
+
+	/** 	 
 	 * @dataProvider queryProvider
 	 */
 	public function testQuery($raw, $parsed)
@@ -134,7 +135,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$search = self::$xs->search;
 		$this->assertEquals($parsed, $search->setQuery($raw)->getQuery());
 	}
-	
+
 	public function queryProvider()
 	{
 		return array(
@@ -144,28 +145,28 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('subject2:测试', 'Xapian::Query((subject2:(pos=1) PHRASE 2 测试:(pos=2)))'),
 		);
 	}
-	
+
 	public function testSetSort()
 	{
 		$search = self::$xs->search;
-		
+
 		// pid string
 		$docs = $search->setSort('pid')->setLimit(1)->search('subject:测试');
 		$this->assertEquals(3, $docs[0]->pid);
-		
+
 		$docs = $search->setSort('pid', true)->setLimit(1)->search('subject:测试');
 		$this->assertEquals(11, $docs[0]->pid);
-		
+
 		// chrono numeric
 		$docs = $search->setSort('chrono')->setLimit(1)->search('subject:测试');
 		$this->assertEquals(11, $docs[0]->pid);
-		
+
 		$docs = $search->setSort('chrono', true)->setLimit(1)->search('subject:测试');
-		$this->assertEquals(3, $docs[0]->pid);		
-				
+		$this->assertEquals(3, $docs[0]->pid);
+
 		$search->setSort(null);
 	}
-	
+
 	public function testCollapse()
 	{
 		$search = self::$xs->search;
@@ -173,18 +174,18 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(2, count($docs));
 		$this->assertEquals(0, $docs[0]->ccount());
 		$this->assertEquals(1, $docs[1]->ccount());
-		
+
 		$docs = $search->setCollapse('other', 2)->search('subject:测试');
 		$this->assertEquals(3, count($docs));
 		$this->assertEquals(0, $docs[0]->ccount());
 		$this->assertEquals(0, $docs[1]->ccount());
 	}
-	
+
 	public function testRange()
 	{
 		$search = self::$xs->search;
 		$query = 'subject:测试';
-		
+
 		// string
 		$docs = $search->setQuery($query)->addRange('pid', 20, 30)->search();
 		$this->assertEquals(2, count($docs));
@@ -192,145 +193,176 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(3, count($docs));
 		$docs = $search->setQuery($query)->addRange('pid', 12, null)->search();
 		$this->assertEquals(2, count($docs));
-		
+
 		// fast search (non-effects)
 		$docs = $search->setQuery($query)->addRange('pid', 12, null)->search('subject:测试');
-		$this->assertEquals(3, count($docs));		
-		
+		$this->assertEquals(3, count($docs));
+
 		// numeric
 		$docs = $search->setQuery($query)->addRange('chrono', 214336157, 1314336168)->search();
 		$this->assertEquals(3, count($docs));
 		$docs = $search->setQuery($query)->addRange('chrono', null, 314336178)->search();
 		$this->assertEquals(2, count($docs));
 		$docs = $search->setQuery($query)->addRange('chrono', 214336159, null)->search();
-		$this->assertEquals(2, count($docs));		
+		$this->assertEquals(2, count($docs));
 	}
-	
+
 	public function testWeight()
 	{
 		$search = self::$xs->search;
-		$query = 'subject:测试';	
-		
+		$query = 'subject:测试';
+
 		$docs = $search->setQuery($query)->search();
 		$this->assertEquals(11, $docs[0]->pid);
 
 		$docs = $search->setQuery($query)->addWeight('subject', 'demo')->search();
 		$this->assertEquals(3, $docs[0]->pid);
-		
+
 		$docs = $search->setQuery($query)->addWeight('subject', 'demo')->addWeight(null, '俗话', 2)->search();
 		$this->assertEquals(21, $docs[0]->pid);
 	}
-	
+
 	public function testLimit()
 	{
 		$search = self::$xs->search;
-		$search->query = 'subject:测试';	
-				
+		$search->query = 'subject:测试';
+
 		$docs = $search->search();
 		$this->assertEquals(3, count($docs));
-		
+
 		$docs = $search->setLimit(2)->search();
 		$this->assertEquals(2, count($docs));
-		
+
 		$docs = $search->setLimit(1)->search();
 		$this->assertEquals(11, $docs[0]->pid);
-		$docs = $search->setLimit(1,1)->search();
+		$docs = $search->setLimit(1, 1)->search();
 		$this->assertEquals(21, $docs[0]->pid);
-		$docs = $search->setLimit(1,2)->search();
-		$this->assertEquals(3, $docs[0]->pid);		
+		$docs = $search->setLimit(1, 2)->search();
+		$this->assertEquals(3, $docs[0]->pid);
 	}
-	
+
 	public function testMultiDb()
 	{
 		$search = self::$xs->search;
 		$search->setDb('db2');
-		
+
 		$docs = $search->search('subject:测试');
 		$this->assertEquals(3, $search->dbTotal);
 		$this->assertEquals(11 + 1000, $docs[0]->pid);
-		
+
 		$search->setDb(null);
 		$docs = $search->search('subject:测试');
 		$this->assertEquals(11, $docs[0]->pid);
 		$this->assertEquals(3, $search->dbTotal);
-		
+
 		$search->addDb('db2');
 		$this->assertEquals(6, $search->dbTotal);
-		$docs = $search->search('subject:测试');		
+		$docs = $search->search('subject:测试');
 		$this->assertEquals(6, count($docs));
 		$search->setDb(null);
 	}
-	
+
 	public function testTerms()
 	{
 		$search = self::$xs->search;
-		
-		$search->query = 'subject:项目测试 working';		
+
+		$search->query = 'subject:项目测试 working';
 		$this->assertEquals(array('项目', '测试', 'working'), $search->terms());
-		
+
 		$this->assertEquals(array('项目', 'working'), $search->terms('项目working'));
 	}
-	
+
 	public function testCount()
 	{
 		$search = self::$xs->search;
-		
+
 		$this->assertEquals(3, $search->count('subject:测试'));
 		$this->assertEquals(1, $search->count('测试'));
 		$search->query = '内容';
 		$this->assertEquals(1, $search->count());
 	}
-	
+
 	public function testSearch()
 	{
-		$search = self::$xs->search;		
+		$search = self::$xs->search;
 	}
-	
+
 	public function testHotQuery()
 	{
 		$search = self::$xs->search;
 	}
-	
+
 	public function testRelatedQuery()
 	{
 		$search = self::$xs->search;
-		$search->setQuery('项目测试')->search();		
+		$search->setQuery('项目测试')->search();
 		$search->getRelatedQuery();
 		$search->xs->index->reopen(true)->flushLogging();
 		sleep(3);
 		$search->reopen(true);
-		
+
 		$search->setQuery('测试')->search();
 		$words = $search->getRelatedQuery();
 		$this->assertEquals('项目测试', $words[0]);
-		
+
 		$words = $search->getRelatedQuery('项目');
 		$this->assertEquals('项目测试', $words[0]);
 	}
-	
+
 	public function testExpandedQuery()
 	{
 		$search = self::$xs->search;
 		$this->assertEquals(array('测试'), $search->getExpandedQuery('c'));
 		$this->assertEquals(array('测试'), $search->getExpandedQuery('cs'));
 		$this->assertEquals(array('测试'), $search->getExpandedQuery('ces'));
-		$this->assertEquals(array('测试'), $search->getExpandedQuery('测'));		
+		$this->assertEquals(array('测试'), $search->getExpandedQuery('测'));
 	}
-	
+
 	public function testCorrectedQuery()
 	{
 		$search = self::$xs->search;
 		$this->assertEquals(array('测试'), $search->getCorrectedQuery('cs'));
-		$this->assertEquals(array('测试'), $search->getCorrectedQuery('策试'));		
-		$this->assertEquals(array('测试'), $search->getCorrectedQuery('ceshi'));	
+		$this->assertEquals(array('测试'), $search->getCorrectedQuery('策试'));
+		$this->assertEquals(array('测试'), $search->getCorrectedQuery('ceshi'));
 	}
-	
+
 	public function testHightlight()
 	{
 		$search = self::$xs->search;
 		$search->setQuery('subject:测试 OR DEMO')->search();
-		
+
 		$this->assertEquals('<em>测试</em>一下 <em>DEMO</em>', $search->highlight('测试一下 DEMO'));
 		$this->assertEquals('评<em>测试</em>试一下', $search->highlight('评测试试一下'));
+	}
+
+	public function testSetDb()
+	{
+		$index = self::$xs->index;
+		$index->clean();
+		sleep(1);
+
+		$search = self::$xs->search;
+		try
+		{
+			$e1 = null;
+			$search->setDb(null);
+		}
+		catch (XSException $e1)
+		{
+			
+		}
+		$search->reopen(true);
+		try
+		{
+			$e2 = null;
+			$search->setDb('db');
+		}
+		catch (XSException $e2)
+		{
+			
+		}
+		$this->assertNull($e1);
+		$this->assertInstanceOf('XSException', $e2);
+		$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
 	}
 }

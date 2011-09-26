@@ -39,7 +39,7 @@ class XSSearch extends XSServer
 	private $_defaultOp = CMD_QUERY_OP_AND;
 	private $_prefix, $_fieldSet, $_resetScheme = false;
 	private $_query, $_terms, $_count;
-	private $_lastCount, $_highlight;
+	private $_lastCount, $_highlight, $_lastDb;
 	private $_limit = 0, $_offset = 0;
 	private $_charset = 'UTF-8';
 
@@ -217,6 +217,8 @@ class XSSearch extends XSServer
 	 */
 	public function setDb($name)
 	{
+		if ($name !== self::LOB_DB)
+			$this->_lastDb = $name;		
 		$this->execCommand(array('cmd' => CMD_SEARCH_SET_DB, 'buf' => strval($name)));
 		return $this;
 	}
@@ -400,7 +402,7 @@ class XSSearch extends XSServer
 				$body = $doc->body;
 				$ret[$body] = $doc->f($type);
 			}
-			$this->setDb(null);
+			$this->setDb($this->_lastDb);
 		}
 		catch (XSException $e)
 		{
@@ -454,7 +456,7 @@ class XSSearch extends XSServer
 			if ($e->getCode() != CMD_ERR_XAPIAN)
 				throw $e;
 		}
-		$this->setDb(null);
+		$this->setDb($this->_lastDb);
 		$this->xs->restoreScheme();
 		$this->_defaultOp = $op;
 
