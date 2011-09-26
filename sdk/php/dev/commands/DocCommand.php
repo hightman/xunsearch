@@ -144,13 +144,13 @@ EOF;
 			}
 
 			// 4. 创建 CHM 总索引
-			$content = $this->renderPartial('chmProject2', null, true);
+			$content = $this->render('chmProject2', null, true, null);
 			file_put_contents($this->output . '/xs_php_manual.hhp', $content);
 
-			$content = $this->renderPartial('chmIndex2', $data, true);
+			$content = $this->render('chmIndex2', $data, true, null);
 			file_put_contents($this->output . '/xs_php_manual.hhk', $content);
 
-			$content = $this->renderPartial('chmContents2', $data, true);
+			$content = $this->render('chmContents2', $data, true, null);
 			file_put_contents($this->output . '/xs_php_manual.hhc', $content);
 		}
 	}
@@ -165,33 +165,12 @@ EOF;
 			return CHtml::link($sourcePath . '#L' . $line, $this->baseSourceUrl . $sourcePath . '#L' . $line, array('class' => 'sourceLink'));
 	}
 
-	public function renderPartial($view, $data = null, $return = false)
-	{
-		if ($view !== 'sourceCode')
-			$html = parent::renderPartial($view, $data, $return);
-		else
-		{
-			$object = $data['object'];
-			$html = CHtml::openTag('div', array('class' => 'sourceCode'));
-			$html .= CHtml::tag('b', array(), '源码：') . ' ';
-			$html .= $this->renderSourceLink($object->sourcePath, $object->startLine);
-			$html .= ' (<b><a href="#" class="show">显示</a></b>)';
-			$html .= CHtml::tag('div', array('class' => 'code'), $this->highlight($this->getSourceCode($object)));
-			$html .= CHtml::closeTag('div');
-		}
-		if ($this->online === false)
-		{
-			$html = mb_convert_encoding($html, 'GBK', 'UTF-8');
-			$html = str_replace('; charset=utf-8"', '; charset=gbk"', $html);
-		}
-		if ($return)
-			return $html;
-		echo $html;
-	}
-
 	public function render($view, $data = null, $return = false, $layout = 'main')
 	{
-		$html = parent::render($view, $data, true, $layout);
+		if ($layout === null)
+			$html = $this->renderPartial($view, $data, true);
+		else
+			$html = parent::render($view, $data, true, $layout);
 		if ($this->online === false)
 		{
 			$html = mb_convert_encoding($html, 'GBK', 'UTF-8');
@@ -277,7 +256,7 @@ EOF;
 
 		$options['content'] = preg_replace('#\]\(([a-z]+\.[a-z]+)\)#', ']($1.html)', @file_get_contents($input));
 		$this->pageTitle = trim(substr($options['content'], 0, strpos($options['content'], '===')));
-		$content = $this->renderPartial('guide', $options, true);
+		$content = $this->render('guide', $options, true, null);
 		if ($ord >= 65 && $ord <= 90)
 			$content = str_replace('../api/css/', 'api/css/', $content);
 		if ($name == 'README.md')

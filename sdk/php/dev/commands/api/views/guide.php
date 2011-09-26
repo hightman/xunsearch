@@ -36,5 +36,12 @@ All Rights Reserved.<br/>
 </div><!-- end of footer -->
 
 </div><!-- end of page -->
+
+<div style="display:none;">
+	<img src="../api/css/info.gif" />
+	<img src="../api/css/tip.gif" />
+	<img src="../api/css/note.gif" />
+</div>
+
 </body>
 </html>

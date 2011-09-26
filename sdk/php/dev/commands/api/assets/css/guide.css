@@ -44,7 +44,7 @@ div.clear { clear: both; float: none; height: 0; line-height: 0; }
 }
 .markdown .tip, .markdown .info, .markdown .note {
     background-color: #FFFAE6;
-    background-image: url(tip.gif);
+    background-image: url("tip.gif");
     background-position: 10px 45%;
     background-repeat: no-repeat;
     border-bottom: 1px solid #E4DFB8;
@@ -55,12 +55,12 @@ div.clear { clear: both; float: none; height: 0; line-height: 0; }
 }
 .markdown .note {
     background-color: #FFE6E6;
-    background-image: url(note.gif);
+    background-image: url("note.gif");
     border-color: #D9C3C3;
 }
 .markdown .info {
     background-color: #EBFFCE;
-    background-image: url(info.gif);
+    background-image: url("info.gif");
     border-color: #B4DAA5;
 }
 .markdown .toc {
