@@ -4,12 +4,17 @@
 
 # get fileinfo & version
 fileinfo=
+filetype=BETA
 devel=`cat config.h | grep PACKAGE_VERSION | cut -d \" -f 2 | grep "dev$"`
 if test -z "$devel" ; then
   fileinfo=`cat VERSION`
   git tag $fileinfo -a -m "Release: $fileinfo" 
   if test $? -ne 0 ; then
     exit -1
+  fi
+  fileinfo2=`echo $fileinfo | sed 's/[a-zA-Z]//g'`
+  if test "$fileinfo" = "$fileinfo2" ; then
+    filetype=RELEASE
   fi
 else
   fileinfo=dev
@@ -22,7 +27,7 @@ tar -cHjf xunsearch-full-$fileinfo.tar.bz2 xunsearch-full-$fileinfo
 rm -f xunsearch-full-$fileinfo
 
 # upload to web server
-echo "Uploading file to web server ..."
+echo "Uploading file to web server ($filetype) ..."
 if test "$fileinfo" = "dev" ; then
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download
   #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch-dev.tar.bz2
@@ -31,7 +36,7 @@ else
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
   #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
   ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
-  scp VERSION xunsearch:./web/protected/data/RELEASE
+  scp VERSION xunsearch:./web/protected/data/$filetype
 fi
 
 # clean local file

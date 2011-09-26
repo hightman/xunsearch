@@ -5,6 +5,7 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
 自由的使用它，并在许可条件下修改和再分发，具体参见[授权声明][1]。
 
  - **稳定版(stable)** 意味着您可以安心的将它应用于您的生产环境中。
+ - **测试版(beta)** 表示这个版本用于测试收集问题进行改进，不推荐应用于生产环境。
  - **开发版(devel)** 表示这个版本正处于不断开发修改中，不推荐应用于生产环境。
 
 <table class="download">
@@ -16,18 +17,17 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
   </thead>
   <tbody>
     <tr>
-      <th>最新发布</th>
-      <td>$RELEASE0</td>
-    </tr>
-    <tr>
-      <th>状态</th>
-      <td>活跃开发中</td>
-    </tr>
-    <tr>
-      <th>安装包</th>
+      <th>最新稳定版</th>
       <td>
         <a href="/download/xunsearch-full-latest.tar.bz2" target="_blank">xunsearch-full-latest.tar.bz2</a>
         ($RELEASE，<a href="https://github.com/hightman/xunsearch/commits/$RELEASE0" target="_blank">修改日志</a>)
+      </td>
+    </tr>
+    <tr>
+      <th>最新测试版</th>
+      <td>
+        <a href="/download/xunsearch-full/xunsearch-full-$BETA.tar.bz2" target="_blank">xunsearch-full-$BETA.tar.bz2</a>
+        (测试版：$BETA，<a href="https://github.com/hightman/xunsearch/commits/$BETA0" target="_blank">修改日志</a>)
       </td>
     </tr>
     <tr>
@@ -40,10 +40,10 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
     </tr>
     <tr>
       <th>终止维护</th>
-      <td>2013-12-31 (视情况进行延长)</td>
+      <td>2013-12-31 (活跃开发中，视情况进行延长)</td>
     </tr>
     <tr>
-      <th>最新快照</th>
+      <th>最新开发版</th>
       <td>
         <a href="/download/xunsearch-full-dev.tar.bz2" target="_blank">xunsearch-full-dev.tar.bz2</a>
         (开发版：$VERSION，<a href="https://github.com/hightman/xunsearch/commits/master" target="_blank">修改日志</a>)
