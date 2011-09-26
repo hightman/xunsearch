@@ -35,7 +35,9 @@ if test "$fileinfo" = "dev" ; then
 else
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
   #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
-  ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
+  if test "$filetype" = "RELEASE" ; then
+    ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
+  fi
   scp VERSION xunsearch:./web/protected/data/$filetype
 fi
 
