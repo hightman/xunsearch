@@ -33,6 +33,7 @@ dist-hook:
 	
 php-web-doc:
 	@echo "Regenerating online documents ..."
+	@rm -rf php/doc/api
 	@php php/dev/build.php doc online > /dev/null 2>&1
 	@echo "Making tar ball ..."
 	@tar -cjf ../xunsearch-web-doc-latest.tar.bz2 -C php --exclude doc/html doc/
