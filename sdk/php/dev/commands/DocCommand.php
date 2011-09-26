@@ -21,7 +21,7 @@ class DocCommand extends ApiCommand
 {
 	public $baseSourcePath;
 	public $baseSourceUrl = 'https://github.com/hightman/xunsearch/blob/master/';
-	private $root, $output;
+	private $root, $output, $online;
 	private static $_parser;
 
 	public function getHelp()
@@ -47,7 +47,7 @@ EOF;
 	{
 		// basic
 		$this->root = realpath(dirname(__FILE__) . '/../..');
-		$online = (isset($args[0]) && !strcasecmp($args[0], 'online')) ? true : false;
+		$this->online = (isset($args[0]) && !strcasecmp($args[0], 'online')) ? true : false;
 
 		include_once $this->root . '/lib/xs_cmd.inc.php';
 		$vfile = $this->root . '/../../VERSION';
@@ -58,7 +58,7 @@ EOF;
 		else
 		{
 			$output = $this->root . '/doc';
-			if (!$online)
+			if (!$this->online)
 				$output .= '/html';
 		}
 
@@ -69,7 +69,7 @@ EOF;
 
 		echo "基础目录.. : " . $this->root . "\n";
 		echo "输出目录.. : " . $this->output . "\n";
-		echo "版本...... : " . $this->version . "(" . ($online ? "线上" : "线下") . ")\n";
+		echo "版本...... : " . $this->version . "(" . ($this->online ? "线上" : "线下") . ")\n";
 		echo "代码网址.. : " . $this->baseSourceUrl . "\n\n";
 
 
@@ -88,7 +88,7 @@ EOF;
 		echo "共 " . count($this->packages) . " 个包，" . count($this->classes) . " 个类对象\n";
 
 		echo "生成 HTML 页面 ... ";
-		if ($online)
+		if ($this->online)
 		{
 			$this->buildOnlinePages($output . '/api', $themePath);
 			$this->buildKeywords($output);
@@ -101,7 +101,7 @@ EOF;
 		echo "完成\n\n";
 
 		// 2. 离线方式，增加 guide 文档
-		if ($online === false)
+		if ($this->online === false)
 		{
 			$data = array('guides' => array(), 'others' => array());
 			echo "生成权威指南 ...\n";
@@ -145,15 +145,12 @@ EOF;
 
 			// 4. 创建 CHM 总索引
 			$content = $this->renderPartial('chmProject2', null, true);
-			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
 			file_put_contents($this->output . '/xs_php_manual.hhp', $content);
 
 			$content = $this->renderPartial('chmIndex2', $data, true);
-			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
 			file_put_contents($this->output . '/xs_php_manual.hhk', $content);
 
 			$content = $this->renderPartial('chmContents2', $data, true);
-			$content = mb_convert_encoding($content, 'gbk', 'utf-8');
 			file_put_contents($this->output . '/xs_php_manual.hhc', $content);
 		}
 	}
@@ -171,14 +168,35 @@ EOF;
 	public function renderPartial($view, $data = null, $return = false)
 	{
 		if ($view !== 'sourceCode')
-			return parent::renderPartial($view, $data, $return);
-		$object = $data['object'];
-		$html = CHtml::openTag('div', array('class' => 'sourceCode'));
-		$html .= CHtml::tag('b', array(), '源码：') . ' ';
-		$html .= $this->renderSourceLink($object->sourcePath, $object->startLine);
-		$html .= ' (<b><a href="#" class="show">显示</a></b>)';
-		$html .= CHtml::tag('div', array('class' => 'code'), $this->highlight($this->getSourceCode($object)));
-		$html .= CHtml::closeTag('div');
+			$html = parent::renderPartial($view, $data, $return);
+		else
+		{
+			$object = $data['object'];
+			$html = CHtml::openTag('div', array('class' => 'sourceCode'));
+			$html .= CHtml::tag('b', array(), '源码：') . ' ';
+			$html .= $this->renderSourceLink($object->sourcePath, $object->startLine);
+			$html .= ' (<b><a href="#" class="show">显示</a></b>)';
+			$html .= CHtml::tag('div', array('class' => 'code'), $this->highlight($this->getSourceCode($object)));
+			$html .= CHtml::closeTag('div');
+		}
+		if ($this->online === false)
+		{
+			$html = mb_convert_encoding($html, 'GBK', 'UTF-8');
+			$html = str_replace('; charset=utf-8"', '; charset=gbk"', $html);
+		}
+		if ($return)
+			return $html;
+		echo $html;
+	}
+
+	public function render($view, $data = null, $return = false, $layout = 'main')
+	{
+		$html = parent::render($view, $data, true, $layout);
+		if ($this->online === false)
+		{
+			$html = mb_convert_encoding($html, 'GBK', 'UTF-8');
+			$html = str_replace('; charset=utf-8"', '; charset=gbk"', $html);
+		}
 		if ($return)
 			return $html;
 		echo $html;
