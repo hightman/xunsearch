@@ -226,6 +226,7 @@ $(function(){
 	}).blur().autocomplete({
 		'source':'suggest.php',
 		'select':function(ev,ui) {
+			$('#q-input .text').val(ui.item.label);
 			$('#q-form').submit();
 		}
 	});
