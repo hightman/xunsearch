@@ -95,9 +95,10 @@ try
 		}
 
 		// set sort
-		if (strpos($s, '_') !== false)
+		if (($pos = strrpos($s, '_')) !== false)
 		{
-			list($sf, $st) = explode('_', $s, 2);
+			$sf = substr($s, 0, $pos);
+			$st = substr($s, $pos + 1);
 			$search->setSort($sf, $st === 'ASC');
 		}
 
