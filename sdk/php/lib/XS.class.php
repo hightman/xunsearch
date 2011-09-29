@@ -105,11 +105,11 @@ class XSException extends Exception
 				break;
 			}
 			$from = dirname($from);
-		}		
+		}
 		if (substr($rel, -1, 1) === '/')
 			$rel = substr($rel, 0, -1);
 		if ($pos !== false)
-			$rel .= substr($file, $pos);		
+			$rel .= substr($file, $pos);
 		return $rel;
 	}
 }
@@ -336,6 +336,16 @@ class XS extends XSComponent
 	}
 
 	/**
+	 * 修改当前项目名称
+	 * 注意，必须在 {@link getSearch} 和 {@link getIndex} 前调用才能起作用
+	 * @param string $name 项目名称
+	 */
+	public function setName($name)
+	{
+		$this->_config['project.name'] = $name;
+	}
+
+	/**
 	 * 获取项目的默认字符集
 	 * @return string 默认字符集(已大写)
 	 */
@@ -347,7 +357,7 @@ class XS extends XSComponent
 
 	/**
 	 * 改变项目的默认字符集
-	 * @param string 修改后的字符集
+	 * @param string $charset 修改后的字符集
 	 */
 	public function setDefaultCharset($charset)
 	{
