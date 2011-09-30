@@ -841,7 +841,7 @@ class XSSearch extends XSServer
 	{
 		if (($field = $this->xs->getField($match[2], false)) === false)
 			return $match[0];
-		if ($field->isBoolIndex())
+		if (!$field->hasIndex() || $field->isBoolIndex())
 			return '';
 		if (substr($match[3], 0, 1) == '(' && substr($match[3], -1, 1) == ')')
 			$match[3] = substr($match[3], 1, -1);
