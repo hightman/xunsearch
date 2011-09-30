@@ -218,7 +218,7 @@ class XSSearch extends XSServer
 	public function setDb($name)
 	{
 		if ($name !== self::LOB_DB)
-			$this->_lastDb = $name;		
+			$this->_lastDb = $name;
 		$this->execCommand(array('cmd' => CMD_SEARCH_SET_DB, 'buf' => strval($name)));
 		return $this;
 	}
@@ -265,7 +265,8 @@ class XSSearch extends XSServer
 			$tmps = explode(' ', $res->buf);
 			for ($i = 0; $i < count($tmps); $i++)
 			{
-				if ($tmps[$i] === '' || strpos($tmps[$i], ':') !== false)
+				$chr = ord(substr($tmps[$i], 0, 1));
+				if ($tmps[$i] === '' || strpos($tmps[$i], ':') !== false || ($chr >= 65 && $chr <= 90))
 					continue;
 				$ret[] = $tmps[$i];
 			}
@@ -351,7 +352,11 @@ class XSSearch extends XSServer
 		}
 
 		if ($query === '')
+		{
 			$this->_count = $tmp['count'];
+			// trigger to logQuery
+			$this->logQuery();
+		}
 		$this->_limit = $this->_offset = 0;
 		return $ret;
 	}
@@ -424,8 +429,6 @@ class XSSearch extends XSServer
 	{
 		$ret = array();
 		$limit = max(1, min(20, intval($limit)));
-		// trigger to logQuery
-		$this->logQuery();
 
 		// Simple to disable query with field filter		
 		if ($query === null)
@@ -578,13 +581,17 @@ class XSSearch extends XSServer
 	 */
 	private function logQuery($query = null)
 	{
-		if (!$this->_lastCount)
-			return;
 		if ($query !== '' && $query !== null)
 			$terms = $this->terms($query, false);
 		else
 		{
+			// 无结果、包含 OR、XOR、NOT/-、默认 fuzzy		
 			$query = $this->_query;
+			if (!$this->_lastCount || $this->_defaultOp == CMD_QUERY_OP_OR
+				|| strpos($query, ' OR ') || strpos($query, ' NOT ') || strpos($query, ' XOR '))
+			{
+				return;
+			}
 			$terms = $this->terms(null, false);
 		}
 		// purify the query statement to log
@@ -607,7 +614,9 @@ class XSSearch extends XSServer
 			}
 			$pos = $pos2 + strlen($term);
 		}
-		// run the command
+		// run the command, filter for single word character
+		if (strlen($log) < 2 || (strlen($log) == 3 && ord($log[0]) > 0x80))
+			return;
 		$cmd = array('cmd' => CMD_SEARCH_ADD_LOG, 'buf' => $log);
 		$this->execCommand($cmd, CMD_OK_LOGGED);
 	}
