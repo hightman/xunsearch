@@ -39,7 +39,9 @@ class XSSearch extends XSServer
 	private $_defaultOp = CMD_QUERY_OP_AND;
 	private $_prefix, $_fieldSet, $_resetScheme = false;
 	private $_query, $_terms, $_count;
-	private $_lastCount, $_highlight, $_lastDb;
+	private $_lastCount, $_highlight;
+	private $_curDb, $_curDbs = array();
+	private $_lastDb, $_lastDbs = array();
 	private $_limit = 0, $_offset = 0;
 	private $_charset = 'UTF-8';
 
@@ -217,9 +219,12 @@ class XSSearch extends XSServer
 	 */
 	public function setDb($name)
 	{
-		if ($name !== self::LOB_DB)
-			$this->_lastDb = $name;
+		$name = strval($name);
 		$this->execCommand(array('cmd' => CMD_SEARCH_SET_DB, 'buf' => strval($name)));
+		$this->_lastDb = $this->_curDb;
+		$this->_lastDbs = $this->_curDbs;
+		$this->_curDb = $name;
+		$this->_curDbs = array();
 		return $this;
 	}
 
@@ -231,7 +236,9 @@ class XSSearch extends XSServer
 	 */
 	public function addDb($name)
 	{
-		$this->execCommand(array('cmd' => CMD_SEARCH_ADD_DB, 'buf' => strval($name)));
+		$name = strval($name);
+		$this->execCommand(array('cmd' => CMD_SEARCH_ADD_DB, 'buf' => $name));
+		$this->_curDbs[] = $name;
 		return $this;
 	}
 
@@ -407,7 +414,7 @@ class XSSearch extends XSServer
 				$body = $doc->body;
 				$ret[$body] = $doc->f($type);
 			}
-			$this->setDb($this->_lastDb);
+			$this->restoreDb();
 		}
 		catch (XSException $e)
 		{
@@ -459,7 +466,7 @@ class XSSearch extends XSServer
 			if ($e->getCode() != CMD_ERR_XAPIAN)
 				throw $e;
 		}
-		$this->setDb($this->_lastDb);
+		$this->restoreDb();
 		$this->xs->restoreScheme();
 		$this->_defaultOp = $op;
 
@@ -678,6 +685,21 @@ class XSSearch extends XSServer
 
 		$cmd = new XSCommand(CMD_QUERY_TERM, $addOp, $vno, $term, $bscale);
 		$this->execCommand($cmd);
+	}
+
+	/**
+	 * 还原搜索 DB
+	 * 常用于因需改变当前 db 为 LOG_DB 后还原
+	 */
+	private function restoreDb()
+	{
+		$db = $this->_lastDb;
+		$dbs = $this->_lastDbs;
+		$this->setDb($db);
+		foreach ($dbs as $name)
+		{
+			$this->addDb($name);
+		}
 	}
 
 	/**
