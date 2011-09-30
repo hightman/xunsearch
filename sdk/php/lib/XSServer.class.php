@@ -61,7 +61,7 @@ class XSCommand extends XSComponent
 		{
 			foreach ($cmd as $key => $value)
 			{
-				if (property_exists($this, $key))
+				if ($key === 'arg' || property_exists($this, $key))
 					$this->$key = $value;
 			}
 		}
