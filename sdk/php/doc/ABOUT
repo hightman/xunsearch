@@ -65,6 +65,7 @@ Xunsearch 底层采用 C/C++ 编写，其中用到了许多其它优秀项目，
   * [scws][2] 默认内置的中文分词解决方案
   * [libevent][8] 后端服务器的事件处理模型
   * [nginx][9] 搜索服务器的设计借鉴了 nginx 的方式，采用多进程、多线程混合用于处理高并发请求
+  * [Yii][10] 非常优秀的 PHP 开发框架，xunsearch 官网采用该框架，文档组织形式也参考自 Yii
 
 
 [1]: http://xapian.org/
@@ -76,6 +77,8 @@ Xunsearch 底层采用 C/C++ 编写，其中用到了许多其它优秀项目，
 [7]: http://github.com/hightman/xunsearch/
 [8]: http://monkey.org/~provos/libevent/
 [9]: http://nginx.org/
+[10]: http://www.yiiframework.com/
+
 
 
 <div class="revision">$Id$</div>
