@@ -330,12 +330,12 @@ class XSFieldMeta
 
 	/**
 	 * 判断当前字段的索引是否为布尔型
-	 * 目前只有内置分词器支持语法型索引
+	 * 目前只有内置分词器支持语法型索引, 自 1.0.1 版本起把非索引字段也视为布尔便于判断
 	 * @return bool 是返回 true, 不是返回 false
 	 */
 	public function isBoolIndex()
 	{
-		return ($this->tokenizer !== XSTokenizer::DFL);
+		return (!$this->hasIndex() || $this->tokenizer !== XSTokenizer::DFL);
 	}
 
 	/**
