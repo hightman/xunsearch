@@ -622,6 +622,7 @@ class XSSearch extends XSServer
 			$pos = $pos2 + strlen($term);
 		}
 		// run the command, filter for single word character
+		$log = trim($log);
 		if (strlen($log) < 2 || (strlen($log) == 3 && ord($log[0]) > 0x80))
 			return;
 		$cmd = array('cmd' => CMD_SEARCH_ADD_LOG, 'buf' => $log);
