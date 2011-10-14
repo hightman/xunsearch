@@ -5,6 +5,8 @@
 用 `vi`，而 `Windows` 下可以用记事本或 `EditPlus` 进行编写。我们也正在计划不久的将来制作一个 `Web`
 界面的编辑工具，以便进行可视化的设计以及约束检测。
 
+> tip: 目前我们针对新手用户开发了一个 WEB 版本的在线配置文件编辑辅助工具，[点击试用][1]。
+
 如果您是从头阅读到这儿，应该对配置文件也有了基本的了解，下面我们以传统的 `discuz` 论坛贴子为例子，
 来学习编写配置文件。
 
@@ -131,5 +133,7 @@ type = body
 [dateline]
 type = numeric
 ~~~
+
+[1]: http://www.xunsearch.com/tools/iniconfig
 
 <div class="revision">$Id$</div>
