@@ -81,6 +81,7 @@ struct search_zarg
 	unsigned int parse_flag;
 	unsigned int db_total;
 	unsigned char cuts[XS_DATA_VNO + 1]; // 0x80(numeric)|(cut_len/10)
+	unsigned char facets[MAX_SEARCH_FACETS]; // facets earch record
 
 	struct object_chain *objs;
 };
@@ -93,6 +94,7 @@ struct result_doc
 	int percent;
 	float weight;
 };
+
 
 #define	DELETE_PTR(p)		do { if (p != NULL) { delete p; p = NULL; } } while(0)
 #define	DELETE_PTT(p, t)	do { if (p != NULL) { delete (t)p; p = NULL; } } while(0)
@@ -116,6 +118,7 @@ struct cache_result
 {
 	unsigned int total; // document total on caching
 	unsigned int count; // matched count
+	unsigned int facets_len; // data length of facets result
 	struct result_doc doc[MAX_SEARCH_RESULT];
 };
 
@@ -427,6 +430,24 @@ static int zcmd_task_default(XS_CONN *conn)
 					conn->flag |= CONN_FLAG_CH_COLLAPSE;
 			}
 			break;
+		case CMD_SEARCH_SET_FACETS:
+			// exact check
+			if (cmd->arg1 == 1)
+				conn->flag |= CONN_FLAG_EXACT_FACETS;
+			else
+				conn->flag &= ~CONN_FLAG_EXACT_FACETS;
+			// facets list
+			if (XS_CMD_BLEN(cmd) > 0)
+			{
+				int i, j;
+				unsigned char *buf = (unsigned char *) XS_CMD_BUF(cmd);
+				for (i = j = 0; i <= sizeof(zarg->facets) && j < XS_CMD_BLEN(cmd); j++)
+				{
+					if (buf[j] < XS_DATA_VNO)
+						zarg->facets[i++] = buf[j] + 1;
+				}
+			}
+			break;
 		case CMD_QUERY_INIT:
 			if (!zarg->qq->empty())
 			{
@@ -656,13 +677,22 @@ static int zcmd_task_get_result(XS_CONN *conn)
 {
 	XS_CMD *cmd = conn->zcmd;
 	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
-	unsigned int off, limit, count;
+	unsigned int off, limit, count, total;
 	int rc = CMD_RES_CONT, cache_flag = CACHE_NONE;
 #ifdef HAVE_MEMORY_CACHE
-	struct cache_result cs, *cr = NULL;
+	struct cache_result *cr = NULL;
 	char md5[33];
 #endif
 	Xapian::Query qq;
+	unsigned char facets[64];
+
+	// load & clear specified facets
+	memset(facets, 0, sizeof(facets));
+	facets[0] = (conn->flag & CONN_FLAG_EXACT_FACETS) ? '+' : '~';
+	memcpy(facets + 1, zarg->facets, sizeof(zarg->facets));
+	conn->flag &= ~CONN_FLAG_EXACT_FACETS;
+	memset(zarg->facets, 0, sizeof(zarg->facets));
+	log_debug_conn("facets: %s(%d)", facets, strlen((const char *) facets));
 
 	// check db & data length
 	if (zarg->db == NULL)
@@ -687,8 +717,8 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof(int)));
 		if (limit > MAX_SEARCH_RESULT) limit = MAX_SEARCH_RESULT;
 	}
-	log_debug_conn("search result (USER:%s, OFF:%d, LIMIT:%d, QUERY:%s)",
-		conn->user->name, off, limit, qq.get_description().data() + 13);
+	log_debug_conn("search result (USER:%s, OFF:%d, LIMIT:%d, QUERY:%s, FACETS:%c)",
+		conn->user->name, off, limit, qq.get_description().data() + 13, facets[0]);
 
 	// check to skip empty query
 	if (qq.empty() || limit == 0)
@@ -697,11 +727,13 @@ static int zcmd_task_get_result(XS_CONN *conn)
 #ifdef HAVE_MEMORY_CACHE
 	// Only cache for default db with default sorter, and only top MAX_SEARCH_RESUT items
 	// KEY: MD5("Result for " +  user + ": " + query");
-	cs.total = zarg->db->get_doccount();
+	total = zarg->db->get_doccount();
 	if ((off + limit) <= MAX_SEARCH_RESULT
 		&& !(conn->flag & (CONN_FLAG_CH_SORT | CONN_FLAG_CH_DB | CONN_FLAG_CH_COLLAPSE)))
 	{
 		string key = "Result for " + string(conn->user->name) + ": " + qq.get_description();
+		if (facets[1] != '\0')
+			key += " Facets: " + string((const char *) facets);
 
 		cache_flag |= CACHE_USE;
 		md5_r(key.data(), md5);
@@ -713,10 +745,10 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		if (cr != NULL)
 		{
 			cache_flag |= CACHE_FOUND;
-			if (cr->total != cs.total)
+			if (cr->total != total)
 			{
 				log_debug_conn("search result cache expired (COUNT:%d, TOTAL:%u<>%u)",
-					cr->count, cr->total, cs.total);
+					cr->count, cr->total, total);
 			}
 			else
 			{
@@ -737,26 +769,86 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	// check cache flag
 	if (!(cache_flag & CACHE_VALID))
 	{
+		Xapian::ValueCountMatchSpy * spy[MAX_SEARCH_FACETS];
 		unsigned int off2, limit2;
+		int i, facets_len = 0;
+		unsigned char *ptr;
 
 		// search directly
 		off2 = (cache_flag & CACHE_USE) ? 0 : off;
 		limit2 = (cache_flag & CACHE_USE) ? MAX_SEARCH_RESULT : limit;
 
-		Xapian::MSet mset = zarg->eq->get_mset(off2, limit2);
+		// register search facets
+		memset(spy, 0, sizeof(spy));
+		for (i = 1; facets[i] != '\0'; i++)
+		{
+			log_debug_conn("adding match spy (VNO:%d)", facets[i] - 1);
+			spy[i - 1] = new Xapian::ValueCountMatchSpy(facets[i] - 1);
+			zarg->eq->add_matchspy(spy[i - 1]);
+		}
+
+		Xapian::MSet mset = zarg->eq->get_mset(off2, limit2, facets[0] == '+' ? total : 0);
 		count = mset.get_matches_estimated();
 		log_debug_conn("search result estimated (COUNT:%d, OFF2:%d, LIMIT2:%d)", count, off2, limit2);
+
+		// count facets		
+		for (i = 0; spy[i] != NULL; i++)
+		{
+			Xapian::TermIterator tv = spy[i]->values_begin();
+			while (tv != spy[i]->values_end())
+			{
+				const string &tt = *tv++;
+				if (tt.size() <= 255)
+					facets_len += 2 + sizeof(unsigned int) +tt.size();
+			}
+		}
+		log_debug_conn("get facets length (LEN:%d)", facets_len);
+
+		// create cache result buffer 
+		// FIXME: this may cause memory leak on Xapian::Exception
+		cr = (struct cache_result *) malloc(sizeof(struct cache_result) +facets_len);
+		cr->facets_len = facets_len;
+		ptr = (unsigned char *) cr + sizeof(struct cache_result);
+
+		// filled with facets data
+		for (i = 0; spy[i] != NULL; i++)
+		{
+			Xapian::TermIterator tv = spy[i]->values_begin();
+			while (tv != spy[i]->values_end())
+			{
+				const string &tt = *tv;
+				if (tt.size() <= 255)
+				{
+					*ptr++ = facets[i + 1] - 1;
+					*ptr++ = (unsigned char) tt.size();
+					// TODO: fixed scale ratio
+					*((unsigned int *) ptr) = (unsigned int) tv.get_termfreq();
+					ptr += sizeof(unsigned int);
+					memcpy(ptr, tt.data(), tt.size());
+					ptr += tt.size();
+				}
+				tv++;
+			}
+			delete spy[i];
+		}
+
+		// clean matchspies
+		zarg->eq->clear_matchspies();
 
 #ifdef HAVE_MEMORY_CACHE
 		if (count > MAX_SEARCH_RESULT && (cache_flag & CACHE_USE))
 		{
 			cache_flag |= CACHE_NEED;
-			memset(&cs.doc, 0, sizeof(cs.doc));
+			memset(&cr->doc, 0, sizeof(cr->doc));
 		}
 #endif
 		// first to send the total header
 		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count))) != CMD_RES_CONT)
 			return rc;
+
+		// send facets data
+		if (cr->facets_len > 0)
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct cache_result), cr->facets_len);
 
 		// send every document
 		limit2 = 0;
@@ -771,7 +863,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 			rd.percent = m.get_percent();
 			rd.weight = (float) m.get_weight();
 #ifdef HAVE_MEMORY_CACHE
-			if (cache_flag & CACHE_NEED) cs.doc[limit2++] = rd;
+			if (cache_flag & CACHE_NEED) cr->doc[limit2++] = rd;
 #endif
 			if (++off2 <= off) continue;
 			if (off2 > limit) continue;
@@ -786,9 +878,10 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		// check to save or delete cache
 		if (cache_flag & CACHE_NEED)
 		{
-			cs.count = count;
+			cr->total = total;
+			cr->count = count;
 			C_LOCK_CACHE();
-			mc_put(mc, md5, &cs, sizeof(cs));
+			mc_put(mc, md5, cr, sizeof(struct cache_result) +cr->facets_len);
 			C_UNLOCK_CACHE();
 			log_debug_conn("search result cache created (KEY:%s, COUNT:%d)", md5, count);
 		}
@@ -800,6 +893,8 @@ static int zcmd_task_get_result(XS_CONN *conn)
 			log_debug_conn("search result cache dropped (KEY:%s)", md5);
 		}
 #endif
+		// free cache result
+		free(cr);
 	}
 #ifdef HAVE_MEMORY_CACHE
 	else
@@ -807,6 +902,10 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		// send the total header (break to switch)
 		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &cr->count, sizeof(cr->count))) != CMD_RES_CONT)
 			return rc;
+
+		// send facets data
+		if (cr->facets_len > 0)
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct cache_result), cr->facets_len);
 
 		// send documents
 		limit += off;

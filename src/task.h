@@ -14,6 +14,12 @@
 #define	MAX_SEARCH_RESULT		100
 
 /**
+ * max number of facets search field
+ * defined as multiples of 4
+ */
+#define	MAX_SEARCH_FACETS		8
+
+/**
  * max length of query string for CMD_QUERY_
  */
 #define	MAX_QUERY_LENGTH		80

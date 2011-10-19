@@ -42,6 +42,7 @@ class XSSearch extends XSServer
 	private $_lastCount, $_highlight;
 	private $_curDb, $_curDbs = array();
 	private $_lastDb, $_lastDbs = array();
+	private $_facets = array();
 	private $_limit = 0, $_offset = 0;
 	private $_charset = 'UTF-8';
 
@@ -197,6 +198,47 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置分面搜索记数
+	 * 用于记录匹配搜索结果中按字段值分组的数量统计, 每次调用 {@link search} 后会还原设置 
+	 * 对于多次调用 $exact 参数以最后一次为准, 只支持字段值不超过 255 字节的情况
+	 * @param mixed $field 要进行分组统计的字段或字段组成的数组, 最多同时支持 8 个
+	 * @param bool $exact 是否要求绝对精确搜索, 这会造成较大的系统开销
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.1.0
+	 */
+	public function setFacets($field, $exact = false)
+	{
+		$buf = '';
+		if (!is_array($field))
+			$buf = chr($this->xs->getField($field)->vno);
+		else
+		{
+			foreach ($field as $ff)
+			{
+				$buf .= chr($this->xs->getField($ff)->vno);
+			}
+		}
+		$cmd = array('cmd' => CMD_SEARCH_SET_FACETS, 'buf' => $buf);
+		$cmd['arg1'] = $exact === true ? 1 : 0;
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
+	 * 读取最近一次分面搜索记数
+	 * 必须在某一次 {@link search} 之后调用本函数才有意义
+	 * @param string $field 读取分面记数的字段, 若为 null 则返回全部分面搜索记录
+	 * @return array 返回由值和计数组成的关联数组, 若不存在或未曾登记过则返回空数组
+	 * @since 1.1.0
+	 */
+	public function getFacets($field = null)
+	{
+		if ($field === null)
+			return $this->_facets;
+		return isset($this->_facets[$field]) ? $this->_facets[$field] : array();
+	}
+
+	/**
 	 * 设置搜索结果的数量和偏移
 	 * 用于搜索结果分页, 每次调用 {@link search} 后会还原这2个变量到初始值
 	 * @param int $limit 数量上限, 若设为 0 则启用默认值 self::PAGE_SIZE
@@ -273,7 +315,7 @@ class XSSearch extends XSServer
 			for ($i = 0; $i < count($tmps); $i++)
 			{
 				$chr = ord(substr($tmps[$i], 0, 1));
-				if ($tmps[$i] === '' || strpos($tmps[$i], ':') !== false || ($chr >= 65 && $chr <= 90))
+				if ($tmps[$i] === '' || strpos($tmps[$i], ':') !== false)
 					continue;
 				$ret[] = $tmps[$i];
 			}
@@ -324,14 +366,31 @@ class XSSearch extends XSServer
 		$this->_lastCount = $tmp['count'];
 
 		// load vno map to name of fields
-		$ret = array();
+		$ret = $this->_facets = array();
 		$vnoes = $this->xs->getScheme()->getVnoMap();
 
 		// get result documents		
 		while (true)
 		{
 			$res = $this->getRespond();
-			if ($res->cmd == CMD_SEARCH_RESULT_DOC)
+			if ($res->cmd == CMD_SEARCH_RESULT_FACETS)
+			{
+				$off = 0;
+				while (($off + 6) < strlen($res->buf))
+				{
+					$tmp = unpack('Cvno/Cvlen/Inum', substr($res->buf, $off, 6));
+					if (isset($vnoes[$tmp['vno']]))
+					{
+						$name = $vnoes[$tmp['vno']];
+						$value = substr($res->buf, $off + 6, $tmp['vlen']);
+						if (!isset($this->_facets[$name]))
+							$this->_facets[$name] = array();
+						$this->_facets[$name][$value] = $tmp['num'];
+					}
+					$off += $tmp['vlen'] + 6;
+				}
+			}
+			else if ($res->cmd == CMD_SEARCH_RESULT_DOC)
 			{
 				// got new doc
 				$doc = new XSDocument($res->buf, $this->_charset);

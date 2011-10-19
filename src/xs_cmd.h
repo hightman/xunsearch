@@ -282,6 +282,12 @@ struct xs_import_hdr
 #define	CMD_SEARCH_RESULT_FIELD	141
 
 /**
+ * Result facets content [vno:1][vlen:1][num:4][value] ...
+ * blen:facets_len, buf:content
+ */
+#define	CMD_SEARCH_RESULT_FACETS	142
+
+/**
  * -----------------------------------------
  * Request commands without respond: 160~255
  * -----------------------------------------
@@ -362,6 +368,12 @@ struct xs_import_hdr
  * arg1: 0/1
  */
 #define	CMD_SEARCH_KEEPALIVE	196
+
+/**
+ * Register value slot for facets searching
+ * arg1: 0/1(exact or not), blen: field number, buf: vno list
+ */
+#define	CMD_SEARCH_SET_FACETS	197
 
 /**
  * ----------------------------------

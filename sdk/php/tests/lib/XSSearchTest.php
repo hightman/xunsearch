@@ -99,6 +99,19 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		
 	}
 
+	public function testFacets()
+	{
+		$search = self::$xs->search;
+		$docs = $search->setQuery('subject:测试')->setFacets(array('other'))->search();
+
+		$this->assertEquals(3, count($docs));
+		$this->assertEquals('测试第二篇', $docs[0]->subject);
+
+		$facets = $search->getFacets('other');
+		$this->assertEquals($facets['master'], 2);
+		$this->assertEquals($facets['slave'], 1);
+	}
+
 	public function testCharset()
 	{
 		$xs = self::$xs;

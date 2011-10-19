@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2011/09/30 13:59 */
+/* Automatically generated at 2011/10/19 15:59 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -35,6 +35,7 @@ define('CMD_OK',	128);
 define('CMD_ERR',	129);
 define('CMD_SEARCH_RESULT_DOC',	140);
 define('CMD_SEARCH_RESULT_FIELD',	141);
+define('CMD_SEARCH_RESULT_FACETS',	142);
 define('CMD_DOC_TERM',	160);
 define('CMD_DOC_VALUE',	161);
 define('CMD_DOC_INDEX',	162);
@@ -45,6 +46,7 @@ define('CMD_SEARCH_SET_CUT',	193);
 define('CMD_SEARCH_SET_NUMERIC',	194);
 define('CMD_SEARCH_SET_COLLAPSE',	195);
 define('CMD_SEARCH_KEEPALIVE',	196);
+define('CMD_SEARCH_SET_FACETS',	197);
 define('CMD_QUERY_INIT',	224);
 define('CMD_QUERY_PARSE',	225);
 define('CMD_QUERY_TERM',	226);
