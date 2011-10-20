@@ -36,7 +36,7 @@ class XSExceptionTest extends PHPUnit_Framework_TestCase
 	public function testGetRelPath()
 	{
 		$this->assertEquals('lib/XSExceptionTest.php', XSException::getRelPath(__FILE__));
-		$this->assertEquals('phpunit.xml', XSException::getRelPath(dirname(__FILE__) . '/../phpunit.xml'));
+		$this->assertEquals('/phpunit.xml', XSException::getRelPath(dirname(__FILE__) . '/../phpunit.xml'));
 		$this->assertEquals('../lib/XS.class.php', XSException::getRelPath('../../php/lib/XS.class.php'));
 		XSException::getRelPath('/dev');
 	}

@@ -40,6 +40,7 @@ Xunsearch PHP-SDK 权威指南
     - [获取热门搜索词](search.hot)
     - [获取相关搜索词](search.rel)
     - [搜索建议和纠错](search.fix)
+	- [按字段值分面搜索](search.facet)
 
 * 使用辅助工具
     - [RequiredCheck 运行检测](util.check)
