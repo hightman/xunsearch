@@ -814,6 +814,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		for (i = 0; spy[i] != NULL; i++)
 		{
 			Xapian::TermIterator tv = spy[i]->values_begin();
+			double ro = (double) count / spy[i]->get_total();
 			while (tv != spy[i]->values_end())
 			{
 				const string &tt = *tv;
@@ -821,8 +822,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 				{
 					*ptr++ = facets[i + 1] - 1;
 					*ptr++ = (unsigned char) tt.size();
-					// TODO: fixed scale ratio
-					*((unsigned int *) ptr) = (unsigned int) tv.get_termfreq();
+					*((unsigned int *) ptr) = (unsigned int) tv.get_termfreq() * ro;
 					ptr += sizeof(unsigned int);
 					memcpy(ptr, tt.data(), tt.size());
 					ptr += tt.size();
