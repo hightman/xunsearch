@@ -87,7 +87,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 */
 	protected function setUp()
 	{
-		self::$xs->search->setCharset('UTF8');
+		self::$xs->search->setCharset('UTF8')->setSort(null);
 	}
 
 	/**
@@ -178,6 +178,30 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(3, $docs[0]->pid);
 
 		$search->setSort(null);
+	}
+	
+	public function testSetMultiSort()
+	{
+		$search = self::$xs->search;
+		
+		// pid string
+		$docs = $search->setMultiSort(array('pid'))->setLimit(1)->search('subject:测试');
+		$this->assertEquals(3, $docs[0]->pid);
+		
+		$docs = $search->setMultiSort(array('pid' => true))->setLimit(1)->search('subject:测试');
+		$this->assertEquals(11, $docs[0]->pid);
+		
+		// other (desc) + chrono (desc)
+		$docs = $search->setMultiSort(array('other', 'chrono'))->setLimit(1)->search('subject:测试');
+		$this->assertEquals(11, $docs[0]->pid);
+		
+		// other (asc) + chrono(desc)
+		$docs = $search->setMultiSort(array('other' => true, 'chrono'))->setLimit(1)->search('subject:测试');
+		$this->assertEquals(21, $docs[0]->pid);
+		
+		// other (asc) + chrono(asc)
+		$docs = $search->setMultiSort(array('other' => true, 'chrono' => true))->setLimit(1)->search('subject:测试');
+		$this->assertEquals(3, $docs[0]->pid);
 	}
 
 	public function testCollapse()

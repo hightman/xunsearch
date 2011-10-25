@@ -33,11 +33,27 @@ $search->setSort('chrono'); // 按 chrono 字段的值倒序
 $search->setSort('chrono', true); // 按 chrono 字段的值正序排列
 ~~~
 
+自从 1.1.0 版本起，通过 [XSSearch::setMultiSort] 可以实现按照多字段的值排序，
+它接受一个数组参数用于表述排序的方式。以字段名称为键，用 true/false 值来表示是否需要正序排列，
+默认为 false 表示逆序排列。参见以下代码：
+
+~~~
+[php]
+// 表示先以 chrono 正序、再以 pid 逆序(pid 是字符串并不是数值所以 12 会排在 3 之后)
+$sorts = array('chrono' => true, 'pid' => false);
+
+// 如果直接把字段名作为数组的值，默认对该字段采用逆序，因此以上用法和下面用法是完全一样的
+$sorts = array('chrono', 'pid' => false);
+
+// 设置搜索排序
+$search->setMultiSort($sorts);
+~~~
+
 > note: 按字段值排序是一个低效能的行为，如非必要，强烈建议使用默认排序方式。
 > 排序默认也是按照字节序比较，对于数字型的字段请将字段类型设为 `numeric`。
 >
-> 如果 2 个字段的值相同，那么内部继续按照相关度排序，如果确实需要多字段排序，
-> 请考虑在项目设计时组合这些字段形成一个独立的字段用于排序。
+> 为了兼容，您也可以把多字段排序的参数直接传递给 [XSSearch::setSort] 即可。
+>
 
 
 读取搜索结果文档

@@ -118,14 +118,54 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置多字段组合排序方式
+	 * 当您需要根据多个字段的值按不同的方式综合排序时, 请使用这项
+	 * @param array $fields 排序依据的字段数组, 以字段名称为键, true/false 为值表示正序或逆序
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.1.0
+	 */
+	public function setMultiSort($fields)
+	{
+		if (!is_array($fields))
+			return $this->setSort($fields);
+
+		// [vno][0/1] (0:reverse,1:asc)
+		$buf = '';
+		foreach ($fields as $key => $value)
+		{
+			if (is_bool($value))
+			{
+				$vno = $this->xs->getField($key, true)->vno;
+				$asc = $value;
+			}
+			else
+			{
+				$vno = $this->xs->getField($value, true)->vno;
+				$asc = false;
+			}
+			if ($vno != XSFieldScheme::MIXED_VNO)
+				$buf .= chr($vno) . chr($asc ? 1 : 0);
+		}
+		if ($buf !== '')
+		{
+			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, CMD_SORT_TYPE_MULTI, 0, $buf);
+			$this->execCommand($cmd);
+		}
+		return $this;
+	}
+
+	/**
 	 * 设置搜索结果的排序方式
 	 * 注意, 每当调用 {@link setDb} 或 {@link addDb} 修改当前数据库时会重置排序设定
+	 * 此函数第一参数的用法与 {@link setMultiSort} 兼容, 即也可以用该方法实现多字段排序
 	 * @param string $field 依据指定字段的值排序, 设为 null 则用默认顺序
 	 * @param bool $asc 是否为正序排列, 即从小到大, 从少到多, 默认为反序
-	 * @return XSSearch 返回对象本身以支持串接操作	 
+	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function setSort($field, $asc = false)
 	{
+		if (is_array($field))
+			return $this->setMultiSort($field);
 		if ($field === null)
 			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, CMD_SORT_TYPE_RELEVANCE);
 		else

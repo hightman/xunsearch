@@ -60,7 +60,8 @@ static int query_ops[] = {
 enum object_type
 {
 	OTYPE_DB,
-	OTYPE_RANGER
+	OTYPE_RANGER,
+	OTYPE_KEYMAKER
 };
 
 struct object_chain
@@ -322,6 +323,11 @@ static inline void zarg_cleanup(struct search_zarg *zarg)
 			log_debug("delete (Xapian::ValueRangeProcessor *): %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::ValueRangeProcessor *);
 		}
+		else if (oc->type == OTYPE_KEYMAKER)
+		{
+			log_debug("delete (Xapian::Xapian::MultiValueKeyMaker *): %p", oc->val);
+			DELETE_PTT(oc->val, Xapian::MultiValueKeyMaker *);
+		}
 		if (oc->key != NULL) free(oc->key);
 		free(oc);
 	}
@@ -394,20 +400,28 @@ static int zcmd_task_default(XS_CONN *conn)
 				int type = cmd->arg1 & CMD_SORT_TYPE_MASK;
 				bool reverse = (cmd->arg1 & CMD_SORT_FLAG_ASCENDING) ? false : true;
 
+				conn->flag |= CONN_FLAG_CH_SORT;
 				if (type == CMD_SORT_TYPE_DOCID)
-				{
 					zarg->eq->set_docid_order(reverse ? Xapian::Enquire::DESCENDING : Xapian::Enquire::ASCENDING);
-					conn->flag |= CONN_FLAG_CH_SORT;
-				}
 				else if (type == CMD_SORT_TYPE_VALUE)
-				{
 					zarg->eq->set_sort_by_value_then_relevance(cmd->arg2, reverse);
-					conn->flag |= CONN_FLAG_CH_SORT;
-				}
 				else if (type == CMD_SORT_TYPE_RELEVANCE)
 				{
 					zarg->eq->set_sort_by_relevance();
 					conn->flag &= ~CONN_FLAG_CH_SORT;
+				}
+				else if (type == CMD_SORT_TYPE_MULTI)
+				{
+					int i;
+					unsigned char *buf = (unsigned char *) XS_CMD_BUF(cmd);
+					Xapian::MultiValueKeyMaker *sorter = new Xapian::MultiValueKeyMaker();
+
+					for (i = 0; i < (XS_CMD_BLEN(cmd) - 1); i += 2)
+					{
+						sorter->add_value(buf[i], buf[i + 1] == 0 ? true : false);
+					}
+					zarg_add_object(zarg, OTYPE_KEYMAKER, NULL, sorter);
+					zarg->eq->set_sort_by_key_then_relevance(sorter, false);
 				}
 			}
 			break;

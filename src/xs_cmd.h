@@ -342,6 +342,7 @@ struct xs_import_hdr
  * Set the sort order of search results
  * arg1:sort_type|sort_flag(integer:docid|relevance|value+relevance) (type:0~63,flag_64,flag_128)
  * arg2:vno (when sort type=value+...)
+ * buf:[vno][asc]...
  */
 #define	CMD_SEARCH_SET_SORT		192
 
@@ -437,6 +438,7 @@ struct xs_import_hdr
 #define	CMD_SORT_TYPE_RELEVANCE		0
 #define	CMD_SORT_TYPE_DOCID			1
 #define	CMD_SORT_TYPE_VALUE			2
+#define	CMD_SORT_TYPE_MULTI			3	// mutli fields sort
 #define	CMD_SORT_TYPE_MASK			0x3f
 #define	CMD_SORT_FLAG_ASCENDING		0x80
 
