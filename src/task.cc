@@ -530,7 +530,18 @@ static int zcmd_task_set_db(XS_CONN *conn)
 				conn->flag ^= CONN_FLAG_CH_DB;
 		}
 
+		/**
+		 * NOTE: when name == DEFAULT_DB_NAME (equal to calling XSSearch::setDb(null))
+		 * archive database db_a was added automatically
+		 */
 		zarg->db->add_database(*db);
+		if (XS_CMD_BLEN(cmd) == 0)
+		{
+			db = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
+			if (db != NULL)
+				zarg->db->add_database(*db);
+		}
+
 		zarg->qp->set_database(*zarg->db);
 		DELETE_PTR(zarg->eq);
 		zarg->eq = new Xapian::Enquire(*zarg->db);
@@ -1578,15 +1589,24 @@ void task_exec(void *arg)
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
 
 		// load default database, try to init queryparser, enquire
+		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT);
 		try
 		{
 			db = fetch_conn_database(conn, DEFAULT_DB_NAME);
 			zarg.db = new Xapian::Database();
 			zarg.db->add_database(*db);
+			try
+			{
+				db = fetch_conn_database(conn, DEFAULT_DB_NAME "_a");
+				zarg.db->add_database(*db);
+			}
+			catch (...)
+			{
+
+			}
 			zarg.qp->set_database(*zarg.db);
 			zarg.eq = new Xapian::Enquire(*zarg.db);
-			zarg.db_total = db->get_doccount();
-			conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT);
+			zarg.db_total = zarg.db->get_doccount();
 		}
 		catch (const Xapian::Error &e)
 		{

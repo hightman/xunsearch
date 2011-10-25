@@ -25,6 +25,7 @@
 #include "log.h"
 #include "xs_cmd.h"
 #include "import.h"
+#include "global.h"
 
 /* global flag settings */
 #define	FLAG_CORRECTION		0x01
@@ -37,6 +38,8 @@
 #define	FLAG_STDIN			0x400	// read data from stdin <need not lock>
 #define	FLAG_HEADER			0x800	// file has import header
 #define	FLAG_HEADER_ONLY	0x1000	// only show the header
+#define	FLAG_ARCHIVE		0x2000	// there is archive database
+#define	FLAG_DEFAULT_DB		0x4000	// is the dbname equal to db
 
 /* fetch result type */
 #define	FETCH_ABORT			-1		// error break
@@ -49,9 +52,9 @@
 /* local global variables */
 static char *prog_name;
 static int flag, fd, num_skip, bytes_read;
-static int total, total_update, total_delete, total_add;
+static int total, total_update, total_delete, total_add, archive_delete;
 
-static Xapian::WritableDatabase database;
+static Xapian::WritableDatabase database, archive;
 static Xapian::TermGenerator indexer;
 static Xapian::Stem stemmer;
 static Xapian::SimpleStopper stopper;
@@ -121,6 +124,8 @@ static inline void batch_committed(int reopen)
 	flag |= FLAG_COMMITTING;
 	try
 	{
+		if (reopen == 0 && archive_delete > 0)
+			archive.commit();
 		if (flag & FLAG_TRANSACTION)
 		{
 			database.commit_transaction();
@@ -172,8 +177,8 @@ int signal_term(int sig)
 	else
 	{
 		batch_committed(0);
-		log_force("interrupted (ADD:%d, UPDATE:%d, DELETE:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, total, database.get_doccount());
+		log_force("interrupted (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)",
+			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
 
 		if (!(flag & FLAG_STDIN))
 		{
@@ -211,13 +216,13 @@ void signal_reload(int sig)
 	{
 		// The signal came from keyboard(^Z)
 		// Although printf is not signal safe, but we do not use in other place
-		printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d, PROC_TOTAL:%d, DB_TOTAL:%d)\n",
-			total_add, total_update, total_delete, total, database.get_doccount());
+		printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)\n",
+			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
 	}
 	else
 	{
-		log_force("importing progress (ADD:%d, UPDATE:%d, DELETE:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, total, database.get_doccount());
+		log_force("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)",
+			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
 	}
 }
 
@@ -418,9 +423,18 @@ static int doc_fetch()
 		else
 		{
 			rc = FETCH_DELETE;
-			total_delete++;
-			database.delete_document(term);
-			log_verbose("-remove the document (ID:%s, TOTAL_DELETE:%d)", term, total_delete);
+			if ((flag & FLAG_ARCHIVE) && archive.term_exists(term))
+			{
+				archive_delete++;
+				archive.delete_document(term);
+				log_verbose("--remove the documnt from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
+			}
+			else
+			{
+				total_delete++;
+				database.delete_document(term);
+				log_verbose("-remove the document (ID:%s, TOTAL_DELETE:%d)", term, total_delete);
+			}
 		}
 		goto doc_end;
 	}
@@ -560,6 +574,12 @@ static int doc_fetch()
 	}
 	else if (rc == FETCH_UPDATE)
 	{
+		if ((flag & FLAG_ARCHIVE) && archive.term_exists(term))
+		{
+			archive_delete++;
+			archive.delete_document(term);
+			log_verbose("--remove the documnt from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
+		}
 		total_update++;
 		database.replace_document(term, doc);
 		log_verbose("!update the document (ID:%s, TOTAL_UPDATE:%d)", term == NULL ? "NULL" : term, total_update);
@@ -810,6 +830,31 @@ int main(int argc, char *argv[])
 		goto main_end;
 	}
 
+	// try to open the archive database
+	archive_delete = 0;
+	try
+	{
+		char *ptr = strrchr(db_path, '/');
+		if (ptr == NULL && !strcasecmp(db_path, DEFAULT_DB_NAME))
+		{
+			flag |= FLAG_DEFAULT_DB;
+			archive = Xapian::WritableDatabase(DEFAULT_DB_NAME "_a", Xapian::DB_OPEN);
+			flag |= FLAG_ARCHIVE;
+		}
+		else if (ptr != NULL && !strcasecmp(ptr + 1, DEFAULT_DB_NAME))
+		{
+			char dba_path[256];
+
+			flag |= FLAG_DEFAULT_DB;
+			snprintf(dba_path, sizeof(dba_path), "%.*s/" DEFAULT_DB_NAME "_a", (int) (ptr - db_path), db_path);
+			archive = Xapian::WritableDatabase(dba_path, Xapian::DB_OPEN);
+			flag |= FLAG_ARCHIVE;
+		}
+	}
+	catch (...)
+	{
+	}
+
 	// read the file & count them
 	t_begin = time(NULL);
 	log_normal("begin importing (NUM_BATCH:%d, SIZE_LIMIT:%dMB, DB_TOTAL:%d, NUM_SKIP:%d)",
@@ -843,10 +888,48 @@ int main(int argc, char *argv[])
 
 	// finished report
 	argc = time(NULL) - t_begin;
-	log_force("%s (ADD:%d, UPDATE:%d, DELETE:%d, PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
+	log_force("%s (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
 		(flag & FLAG_TERMINATED ? "terminated" : "finished"),
-		total_add, total_update, total_delete, total,
+		total_add, total_update, total_delete, archive_delete, total,
 		database.get_doccount(), argc / 60, argc % 60);
+
+	// check to archive
+	if ((flag & FLAG_DEFAULT_DB) && (database.get_doccount() >= DEFAULT_ARCHIVE_THRESHOLD))
+	{
+		char cmd_buf[256];
+		char *ptr = strrchr(db_path, '/');
+
+		log_force("compacting current database into archive (DB:%s, TOTAL:%d)", db_path, database.get_doccount());
+		if (ptr != NULL)
+		{
+			ptr[1] = '\0';
+			chdir(db_path);
+		}
+
+		database.close();
+		if (flag & FLAG_ARCHIVE)
+		{
+			archive.close();
+
+			// 1. merge: db + db_a -> db_b			
+			system(XAPIAN_DIR "/bin/xapian-compact " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME "_c");
+			// 2. remove: db_o db
+			system("/bin/rm -rf " DEFAULT_DB_NAME "_o " DEFAULT_DB_NAME);
+			// 3. rename: db_a -> db_o, db_c -> db_a
+			system("/bin/mv -f " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME "_o");
+			system("/bin/mv -f " DEFAULT_DB_NAME "_c " DEFAULT_DB_NAME "_a");
+		}
+		else
+		{
+			// 1. remove: db_a (clean)
+			system("/bin/rm -rf " DEFAULT_DB_NAME "_a");
+			// 2. rename: db -> db_a
+			system("/bin/mv -f " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a");
+		}
+		
+		// re-create empty db
+		database = Xapian::WritableDatabase(DEFAULT_DB_NAME, Xapian::DB_CREATE_OR_OPEN);		
+	}
 
 main_end:
 	if (fd >= 0)
