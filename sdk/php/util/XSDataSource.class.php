@@ -834,7 +834,8 @@ class XSDatabasePDO_MySQL extends XSDatabasePDO
 	 */
 	public function setUtf8()
 	{
-		return $this->obj->prepare("SET NAMES 'utf8'")->execute();
+		// BUGFIXED: 感谢 tina 网友协助测试, 此处将 utf8 改为 utf-8 提高兼容性
+		return $this->obj->prepare("SET NAMES 'utf-8'")->execute();
 	}
 }
 

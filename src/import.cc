@@ -896,7 +896,6 @@ int main(int argc, char *argv[])
 	// check to archive
 	if ((flag & FLAG_DEFAULT_DB) && (database.get_doccount() >= DEFAULT_ARCHIVE_THRESHOLD))
 	{
-		char cmd_buf[256];
 		char *ptr = strrchr(db_path, '/');
 
 		log_force("compacting current database into archive (DB:%s, TOTAL:%d)", db_path, database.get_doccount());

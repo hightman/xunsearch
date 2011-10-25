@@ -119,6 +119,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 设置搜索结果的排序方式
+	 * 注意, 每当调用 {@link setDb} 或 {@link addDb} 修改当前数据库时会重置排序设定
 	 * @param string $field 依据指定字段的值排序, 设为 null 则用默认顺序
 	 * @param bool $asc 是否为正序排列, 即从小到大, 从少到多, 默认为反序
 	 * @return XSSearch 返回对象本身以支持串接操作	 
@@ -140,6 +141,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 设置折叠搜索结果
+	 * 注意, 每当调用 {@link setDb} 或 {@link addDb} 修改当前数据库时会重置此项设置
 	 * @param string $field 依据该字段的值折叠搜索结果, 设为 null 则取消折叠
 	 * @param int $num 折叠后只是返最匹配的数据数量, 默认为 1, 最大值 255
 	 * @return XSSearch 返回对象本身以支持串接操作	 	 
