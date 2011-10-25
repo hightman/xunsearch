@@ -272,6 +272,7 @@ indexer.set_document(doc);
 			  CXXFLAGS="$CXXFLAGS -I$XAPIAN_DIR/include"
 			  LDFLAGS="$LDFLAGS -L$XAPIAN_DIR/lib -Wl,-rpath,$XAPIAN_DIR/lib"
             fi
+			AC_DEFINE_UNQUOTED(XAPIAN_DIR, "$XAPIAN_DIR", [Install directory of xapian])
 			AC_MSG_RESULT(ok)
 		], [ 
 			AC_MSG_RESULT(no)
@@ -279,7 +280,7 @@ indexer.set_document(doc);
 		]
 	)
 else
-	AC_MSG_ERROR([Xapian-core(scws patched) is required, get it from: http://www.xunsearch.com/xapian-scws/])
+	AC_MSG_ERROR([Xapian-core(scws patched) is required, get it from: http://www.xunsearch.com/download/packages/])
 fi
 
 # Pthread check
