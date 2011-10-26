@@ -107,7 +107,7 @@ try
 				continue;
 			}
 		}
-		$vars['@field_info@'] .= "\t\t\t\t<li><span>" . ucfirst($field->name) . ":</span> <?php echo \$doc->" . $field->name . "; ?></li>\n";
+		$vars['@field_info@'] .= "\t\t\t\t<li><span>" . ucfirst($field->name) . ":</span> <?php echo htmlspecialchars(\$doc->" . $field->name . "); ?></li>\n";
 	}
 
 	$vars['@set_filter@'] = trim($vars['@set_filter@']);

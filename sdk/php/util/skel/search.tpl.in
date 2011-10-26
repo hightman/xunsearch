@@ -165,10 +165,10 @@ form#q-form { margin: 0; }
 		<?php foreach ($docs as $doc): ?>
 		<div class="res-doc">
 			<h2>
-				<a href="javascript:void(alert('@field_id@: <?php echo $doc->@field_id@; ?>'));"><?php echo $doc->rank(); ?>. <?php echo $search->highlight($doc->@field_title@); ?></a>
+				<a href="javascript:void(alert('@field_id@: <?php echo $doc->@field_id@; ?>'));"><?php echo $doc->rank(); ?>. <?php echo htmlspecialchars($search->highlight($doc->@field_title@)); ?></a>
 				<small>[<?php echo $doc->percent(); ?>%]</small>
 			</h2>
-			<p><?php echo $search->highlight($doc->@field_body@); ?></p>
+			<p><?php echo htmlspecialchars($search->highlight($doc->@field_body@)); ?></p>
 			<ul>
 				@field_info@
 			</ul>
