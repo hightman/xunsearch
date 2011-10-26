@@ -462,6 +462,13 @@ static void rebuild_wdb_end(XS_DB *db, XS_USER *user)
 		log_printf("failed to rename rebuilt database (DB:%s.%s, ERROR:%s)",
 			user->name, db->name, strerror(errno));
 	}
+	// clean db_a
+	if (!strcmp(db->name, DEFAULT_DB_NAME))
+	{
+		strcat(dbpath, "_a");
+		log_debug("clean old archive database (PATH:%s)", dbpath);
+		rmdir_r(dbpath);
+	}
 
 	// clean flag
 	db->flag &= ~(XS_DBF_REBUILD_BEGIN | XS_DBF_REBUILD_END | XS_DBF_REBUILD_WAIT);
