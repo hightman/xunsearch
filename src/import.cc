@@ -910,7 +910,8 @@ int main(int argc, char *argv[])
 		{
 			archive.close();
 
-			// 1. merge: db + db_a -> db_b			
+			// 1. merge: db + db_a -> db_c
+			system("/bin/rm -rf " DEFAULT_DB_NAME "_c");
 			system(XAPIAN_DIR "/bin/xapian-compact " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME "_c");
 			// 2. remove: db_o db
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_o " DEFAULT_DB_NAME);

@@ -109,7 +109,7 @@ static void xs_logging_call(XS_USER *user)
 			if (user == NULL)
 				exit(execl(xs_logging, "xs-logging", "-SQT", DEFAULT_DATA_DIR, NULL));
 			else
-				exit(execl(xs_logging, "xs-logging", "-QT", user->home, NULL));			
+				exit(execl(xs_logging, "xs-logging", "-QT", user->home, NULL));
 		}
 		else if (pid > 0)
 		{
@@ -515,6 +515,12 @@ void signal_child(pid_t pid, int status)
 			log_printf("failed to clean marked database (DB:%s.%s, ERROR:%s)",
 				user->name, db->name, strerror(errno));
 		}
+		if (!strcmp(db->name, DEFAULT_DB_NAME))
+		{
+			strcat(sndfile, "_a");
+			log_debug("clean marked archive database (PATH:%s)", sndfile);
+			rmdir_r(sndfile);
+		}
 	}
 	else if (db->flag & XS_DBF_REBUILD_WAIT)
 	{
@@ -717,7 +723,15 @@ static int remove_conn_wdb(XS_CONN *conn)
 			// remove the database from disk
 			log_debug_conn("removing database directory (PATH:%s)", dbpath);
 			if (rmdir_r(dbpath) == 0)
+			{
+				if (!strcmp(db->name, DEFAULT_DB_NAME))
+				{
+					strcat(dbpath, "_a");
+					log_debug_conn("removing database archive (PATH:%s)", dbpath);
+					rmdir_r(dbpath);
+				}
 				return CONN_RES_OK(DB_CLEAN);
+			}
 
 			log_conn("failed to remove database (PATH:%s, ERROR:%s)", dbpath, strerror(errno));
 			return CONN_RES_ERR(REMOVE_DB);
