@@ -218,11 +218,12 @@ class XSIndex extends XSServer
 	 * 批量提交索引命令封包数据
 	 * 把多个命令封包内容连续保存为文件或变量, 然后一次性提交以减少网络开销提升性能
 	 * @param string $data 要提交的命令封包数据, 或存储命令封包的文件路径, 编码必须已经是 UTF-8
+	 * @param bool $check_file 是否检测参数为文件的情况
 	 * @throw XSException 出错时抛出异常
 	 */
-	public function addExdata($data)
+	public function addExdata($data, $check_file = true)
 	{
-		if (strlen($data) < 255 && file_exists($data) && ($data = file_get_contents($data) === false))
+		if (strlen($data) < 255 && $check_file && file_exists($data) && ($data = file_get_contents($data)) === false)
 			throw new XSException('Failed to read exdata from file');
 
 		// try to check allowed (BUG: check the first cmd only): 
@@ -249,7 +250,7 @@ class XSIndex extends XSServer
 	public function openBuffer($size = 4)
 	{
 		if ($this->_buf !== '')
-			$this->addExdata($this->_buf);
+			$this->addExdata($this->_buf, false);
 		$this->_bufSize = intval($size) << 20;
 		$this->_buf = '';
 	}
@@ -353,7 +354,7 @@ class XSIndex extends XSServer
 		$this->_buf .= $buf;
 		if (strlen($this->_buf) >= $this->_bufSize)
 		{
-			$this->addExdata($this->_buf);
+			$this->addExdata($this->_buf, false);
 			$this->_buf = '';
 		}
 	}
