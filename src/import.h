@@ -12,6 +12,6 @@
 #define	DEFAULT_COMMIT_SIZE			256			// MB
 #define DEFAULT_SCWS_MULTI			3			// default scws multi level
 
-#define	DEFAULT_ARCHIVE_THRESHOLD	1000		// default threshold value to archive
+#define	DEFAULT_ARCHIVE_THRESHOLD	100000		// default threshold value to archive
 
 #endif
