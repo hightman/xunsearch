@@ -287,7 +287,7 @@ fi
 AC_CHECK_LIB(pthread, 
 	pthread_mutex_init,
 	[ 
-		LDFLAGS="$LDFLAGS -lpthread"
+		LIBS="$LIBS -lpthread"
 	], [
 		AC_MSG_ERROR([You need to have lib-pthread around])
 	]
