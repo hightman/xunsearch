@@ -75,6 +75,7 @@ EOF;
 		$content = "<?php\n" . preg_replace('/^(\?>|<\?php)/m', '', $content) . "\n";
 		$content = $this->stripComments($content);
 		$content = preg_replace('/^include(_once)?.*\s*;\s*$/m', '', $content);
+		$content = preg_replace('/^spl_autoload_register\s*\(.*$/m', '', $content);		
 		$content = $this->stripEmptyLines($content);
 		$content = substr_replace($content, $comment . "\n", 6, 0);
 		echo "完成，最终大小为 " . number_format(strlen($content)) . " 字节\n";
