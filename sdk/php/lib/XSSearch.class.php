@@ -103,7 +103,7 @@ class XSSearch extends XSServer
 	 * 设置默认搜索语句
 	 * 用于不带参数的 {@link count} 或 {@link search} 以及 {@link terms} 调用
 	 * 可与 {@link addWeight} 组合运用
-	 * @param string $query 搜索语句, 设为 null 则清空搜索语句
+	 * @param string $query 搜索语句, 设为 null 则清空搜索语句, 最大长度为 80 字节
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function setQuery($query)
@@ -337,7 +337,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 获取搜索语句中的高亮词条列表
-	 * @param string $query 搜索语句, 若传入 null 使用默认语句
+	 * @param string $query 搜索语句, 若传入 null 使用默认语句, 最大长度为 80 字节
 	 * @param bool $raw 是否进行编码转换, 默认为 true
 	 * @return array 可用于高亮显示的词条列表
 	 */
@@ -371,6 +371,7 @@ class XSSearch extends XSServer
 	 * 估算搜索语句的匹配数据量
 	 * @param string $query 搜索语句, 若传入 null 使用默认语句, 调用后会还原默认排序方式
 	 *        如果搜索语句和最近一次 {@link search} 的语句一样, 请改用 {@link getLastCount} 以提升效率
+	 *        最大长度为 80 字节
 	 * @return int 匹配的搜索结果数量, 估算数值
 	 */
 	public function count($query = null)
@@ -392,7 +393,7 @@ class XSSearch extends XSServer
 	 * 获取匹配的搜索结果文档
 	 * 默认提取最匹配的前 self::PAGE_SIZE 个结果
 	 * 如需分页请参见 {@link setLimit} 设置, 每次调用本函数后都会还原 setLimit 的设置
-	 * @param string $query 搜索语句, 若传入 null 使用默认语句
+	 * @param string $query 搜索语句, 若传入 null 使用默认语句, 最大长度为 80 字节
 	 * @return XSDocument[] 匹配的搜索结果文档列表
 	 */
 	public function search($query = null)
