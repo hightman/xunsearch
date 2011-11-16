@@ -144,7 +144,7 @@ class XSIndex extends XSServer
 				if (!$field->hasCustomTokenizer())
 				{
 					$wdf = $field->weight | ($field->withPos() ? CMD_INDEX_FLAG_WITHPOS : 0);
-					$cmds[] = new XSCommand(CMD_DOC_INDEX, $arg1, $field->vno, $text);
+					$cmds[] = new XSCommand(CMD_DOC_INDEX, $wdf, $field->vno, $text);
 				}
 				else
 				{
