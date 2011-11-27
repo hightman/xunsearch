@@ -531,7 +531,7 @@ class XSDatabaseMySQL extends XSDatabase
 	public function setUtf8()
 	{
 		if (version_compare(mysql_get_server_info($this->link), '4.1.0', '>='))
-			return @mysql_query("SET NAMES 'utf8'", $this->link);
+			return @mysql_query("SET NAMES utf8", $this->link);
 		return false;
 	}
 }
@@ -834,8 +834,8 @@ class XSDatabasePDO_MySQL extends XSDatabasePDO
 	 */
 	public function setUtf8()
 	{
-		// BUGFIXED: 感谢 tina 网友协助测试, 此处将 utf8 改为 utf-8 提高兼容性
-		return $this->obj->prepare("SET NAMES 'utf-8'")->execute();
+		// BUGFIXED: 此处应为不带引号的 utf8
+		return $this->obj->prepare("SET NAMES utf8")->execute();
 	}
 }
 
