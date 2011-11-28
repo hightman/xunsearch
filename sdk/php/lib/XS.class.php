@@ -560,7 +560,7 @@ class XS extends XSComponent
 			if ($cache && filemtime($file) <= $cache['mtime'])
 			{
 				// cache HIT
-				$this->_scheme = $this->_bindScheme = $cache['scheme'];
+				$this->_scheme = $this->_bindScheme = unserialize($cache['scheme']);
 				$this->_config = $cache['config'];
 				return;
 			}
@@ -596,7 +596,7 @@ class XS extends XSComponent
 		if ($cache_write != '')
 		{
 			$cache['mtime'] = filemtime($file);
-			$cache['scheme'] = $this->_scheme;
+			$cache['scheme'] = serialize($this->_scheme);
 			$cache['config'] = $this->_config;
 			call_user_func($cache_write, $cache_key, $cache);
 		}
