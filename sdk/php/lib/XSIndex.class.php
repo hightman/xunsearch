@@ -21,6 +21,7 @@ class XSIndex extends XSServer
 {
 	private $_buf = '';
 	private $_bufSize = 0;
+	private $_rebuild = false;
 
 	/**
 	 * 完全清空索引数据
@@ -275,6 +276,7 @@ class XSIndex extends XSServer
 	public function beginRebuild()
 	{
 		$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 0), CMD_OK_DB_REBUILD);
+		$this->_rebuild = true;
 	}
 
 	/**
@@ -284,7 +286,11 @@ class XSIndex extends XSServer
 	 */
 	public function endRebuild()
 	{
-		$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 1), CMD_OK_DB_REBUILD);
+		if ($this->_rebuild === true)
+		{
+			$this->_rebuild = false;
+			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 1), CMD_OK_DB_REBUILD);
+		}
 	}
 
 	/**
@@ -357,5 +363,25 @@ class XSIndex extends XSServer
 			$this->addExdata($this->_buf, false);
 			$this->_buf = '';
 		}
+	}
+
+	/**
+	 * 析构函数
+	 * 在此自动关闭开启的 rebuild
+	 */
+	public function __destruct()
+	{
+		if ($this->_rebuild === true)
+		{
+			try
+			{
+				$this->endRebuild();
+			}
+			catch (Exception $e)
+			{
+				
+			}
+		}
+		parent::__destruct();
 	}
 }

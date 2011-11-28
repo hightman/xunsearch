@@ -64,7 +64,8 @@ Indexer - 索引批量管理、导入工具 ($version)
 	             使用 \\ 开头及其它与 shell 有岐议的分割符时请使用引号包围。
     --file <file>当数据源为 json 或 csv 格式时指定数据源文件，默认读取标准输入
     --sql <sql>  当数据源为 sql 类型时指定 sql 搜索语句，默认情况下，
-                 如果在 --source 包含 table 则载入该表数据
+                 如果在 --source 包含 table 则载入该表数据。
+                 警告：请勿在 SQL 语句中包含 `` 反引号，这在 SHELL 中有特殊函义可能会出错
 
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
     --clean      清空库内当前的索引数据
