@@ -202,10 +202,10 @@ class XSFieldScheme implements IteratorAggregate
 			$scheme->addField('id', array('type' => 'id'));
 			$scheme->addField('pinyin');
 			$scheme->addField('partial');
-			$scheme->addField('total', array('type' => 'numeric'));
-			$scheme->addField('lastnum', array('type' => 'numeric'));
-			$scheme->addField('currnum', array('type' => 'numeric'));
-			$scheme->addField('currtag', array('type' => 'numeric'));
+			$scheme->addField('total', array('type' => 'numeric', 'index' => 'self'));
+			$scheme->addField('lastnum', array('type' => 'numeric', 'index' => 'self'));
+			$scheme->addField('currnum', array('type' => 'numeric', 'index' => 'self'));
+			$scheme->addField('currtag', array('type' => 'string'));
 			$scheme->addField('body', array('type' => 'body'));
 			self::$_logger = $scheme;
 		}
