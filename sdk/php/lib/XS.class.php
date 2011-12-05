@@ -374,6 +374,7 @@ class XS extends XSComponent
 		{
 			$conn = isset($this->_config['server.index']) ? $this->_config['server.index'] : 8383;
 			$this->_index = new XSIndex($conn, $this);
+			$this->_index->setTimeout(0);
 		}
 		return $this->_index;
 	}
