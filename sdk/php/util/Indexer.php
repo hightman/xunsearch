@@ -23,7 +23,7 @@ $charset = XSUtil::getOpt('c', 'charset');
 XSUtil::setCharset($charset);
 
 // long options
-$params = array('source', 'file', 'sql', 'rebuild', 'clean', 'flush', 'flush-log', 'info', 'csv-delimiter');
+$params = array('source', 'file', 'sql', 'rebuild', 'clean', 'flush', 'flush-log', 'info', 'csv-delimiter', 'filter');
 foreach ($params as $_)
 {
 	$k = strtr($_, '-', '_');
@@ -66,7 +66,9 @@ Indexer - 索引批量管理、导入工具 ($version)
     --sql <sql>  当数据源为 sql 类型时指定 sql 搜索语句，默认情况下，
                  如果在 --source 包含 table 则载入该表数据。
                  警告：请勿在 SQL 语句中包含 `` 反引号，这在 SHELL 中有特殊函义可能会出错
-
+    --filter <name|path>
+                 指定数据过滤器，可为内置的 debug 或自定义的过滤器文件路径(不包含 .php)
+                 过滤器必须实现接口 XSDataFilter
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
     --clean      清空库内当前的索引数据
     --flush      强制提交刷新索引服务端的缓冲索引，与 --source 分开用
@@ -112,6 +114,30 @@ if (is_string($csv_delimiter) && $source == 'csv')
 	}
 	$_SERVER['XS_CSV_DELIMITER'] = $csv_delimiter;
 	printf("注意：CSV 字段分割符被修改为 `%c` (ASCII: 0x%02x)\n", ord($csv_delimiter), ord($csv_delimiter));
+}
+
+// filter
+if ($filter !== null && is_string($filter))
+{
+	$original = $filter;
+	$class = 'XS' . ucfirst(strtolower($filter)) . 'Filter';
+	if (class_exists($class))
+		$filter = new $class;
+	else
+	{
+		if (file_exists($filter . '.php'))
+		{
+			$class = basename($filter);
+			require_once $filter . '.php';
+			if (class_exists($class))
+				$filter = new $class;
+		}
+	}
+	if (!is_object($filter) || !($filter instanceof XSDataFilter))
+	{
+		$filter = null;
+		echo "注意：自动忽略无效的过滤器 [" . $original . "]\n";
+	}
 }
 
 // execute the indexer
@@ -164,7 +190,8 @@ try
 			$index->beginRebuild();
 		}
 
-		// import data from source
+		// import data from source	
+		$fid = $xs->getFieldId();
 		if (!empty($source))
 		{
 			echo "初始化数据源 ... $source \n";
@@ -187,6 +214,13 @@ try
 					$data = csv_transform($data);
 					if (is_null($data))
 						continue;
+				}
+
+				if ($filter !== null && $filter->process($data, $dcs) === false)
+				{
+					$total++;
+					echo "警告：过滤器忽略了第 $total 条数据， 主键为：" . $data[$fid->name] . "\n";
+					continue;
 				}
 
 				$doc->setFields($data);
@@ -231,7 +265,7 @@ catch (XSException $e)
 	$traceString = $e->getTraceAsString();
 	$traceString = str_replace(dirname(__FILE__) . '/', '', $traceString);
 	$traceString = str_replace($start . ($relative === '' ? '/' : ''), $relative, $traceString);
-	echo $e . "\n" . $traceString . "\n";	
+	echo $e . "\n" . $traceString . "\n";
 }
 
 // translate csv data

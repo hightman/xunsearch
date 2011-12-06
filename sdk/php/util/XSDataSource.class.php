@@ -860,3 +860,40 @@ class XSDatabasePDO_SQLite extends XSDatabasePDO
 		return $dsn;
 	}
 }
+
+/**
+ * 数据过滤器的接口
+ * 以便在提交到索引前有一个修改和调整数据的机会
+ * 
+ * @author hightman <hightman@twomice.net>
+ * @since 1.1.0
+ * @package XS.util
+ */
+interface XSDataFilter
+{
+
+	/**
+	 * 数据处理函数, 返回 false 则跳过不处理
+	 * @param array $data 字段名和值组成的数据数组
+	 * @param mixed $cs 数据字符集, 如无法确定则为 false
+	 */
+	public function process($data, $cs);
+}
+
+/**
+ * 内置调试过滤器, 直接打印数据内容
+ * 
+ * @author hightman <hightman@twomice.net>
+ * @version 1.0.0
+ * @package XS.util
+ */
+class XSDebugFilter implements XSDataFilter
+{
+
+	public function process($data, $cs = false)
+	{
+		echo "\n----- DEBUG DATA INFO -----\n";
+		print_r($data);
+		return $data;
+	}
+}

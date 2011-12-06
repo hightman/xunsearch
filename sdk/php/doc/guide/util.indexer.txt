@@ -29,6 +29,8 @@ $prefix/sdk/php/util/Indexer.php --help
 
   * _-d|--db <..name..>_ 指定要更新的索引数据库名称，默认是名为 db 的库。
 
+  * _--filter_ 指定数据过滤器，针对资深用户使用，在提交索引前可以处理一次数据。
+
 
 经典用法示例
 -----------
@@ -128,6 +130,40 @@ util/Indexer.php --source=sqlite:///tmp/test.db --sql="select * from tbl_post"
 
 由于清空立即生效会导致搜索中断或不可用一段时间，对于线上服务，建议使用 `--rebuild`
 选项实现平滑重建，在导入完成后再将新数据库替换为原数据库。
+
+
+自定义数据过滤器
+---------------
+
+自从 1.1.1 版本起，在索引工具中引入了过滤器的概念，通过 `--filter` 选项来指定。
+这项功能以便于批量导入数据时，在数据提交到索引前有一次机会可以处理数据，常见的操作有
+格式化数据，清除无效的标记标签等。
+
+内置的过滤器只有一个，就是 `debug`，它相当于在数据提交前执行一次 print_r 函数，
+打印出数据的实际内容，可用于调试。
+
+我们要求所有自定义过滤器必须实现 [XSDataFilter] 这个接口，里面只有一个函数方法，
+那就是 [XSDataFilter::process] 它接收 2 个参数，第一个参数是字段键值组成的数组，
+第二个字段是当前的字符集，如果不能确定则为 false 值。
+
+您可以在这个方法函数中对数据进行处理再返回。此外，编写好的过滤器必须单独以类名为文件名
+保存，比如您的过滤器对象名称为 XSXyzFilter，那么您必须将代码命名为 XSXyzFilter.php
+保存。使用的时候用 --filter=/paht/to/XSXyzFilter 作为参数。
+
+> note: 当过滤器处理完数据返回 false 时，索引工具将跳过此条数据不添加到索引中。
+
+典型过滤器写法如下，文件保存为 XSXyzFilter.php
+~~~
+[php]
+class XSXyzFilter implements XSDataFilter
+{
+	public function process($data, $cs)
+	{
+		print_r($data);
+		return $data;
+	}
+}
+~~~
 
 
 自定义数据源

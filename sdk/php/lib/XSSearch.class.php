@@ -663,6 +663,7 @@ class XSSearch extends XSServer
 	 * 需要调用 [XSIndex::flushLogging] 才能确保立即刷新, 否则要隔一段时间
 	 * @param string $query 需要记录的数据
 	 * @param int $wdf 需要记录的次数, 默认为 1
+	 * @since 1.1.1
 	 */
 	public function addSearchLog($query, $wdf = 1)
 	{
