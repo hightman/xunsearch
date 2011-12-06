@@ -213,7 +213,7 @@ struct xs_import_hdr
 
 /**
  * Add search log (cleaned)
- * blen:query_len, buf:query
+ * blen:query_len, buf:query, blen1:4/0, buf1:len
  */
 #define	CMD_SEARCH_ADD_LOG		71
 

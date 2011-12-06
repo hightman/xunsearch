@@ -377,7 +377,10 @@ static int zcmd_task_default(XS_CONN *conn)
 					log_conn("failed to open search log (PATH:%s, ERROR:%s)", fpath, strerror(errno));
 				else
 				{
-					fprintf(fp, "%.*s\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
+					if (XS_CMD_BLEN1(cmd) != 4)
+						fprintf(fp, "%.*s\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
+					else
+						fprintf(fp, "%.*s\t%d\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd), (*(int *) XS_CMD_BUF1(cmd)));
 					fclose(fp);
 				}
 				rc = CONN_RES_OK(LOGGED);

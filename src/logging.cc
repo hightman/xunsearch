@@ -785,7 +785,8 @@ child_begin:
 
 		if (bytes > 0)
 		{
-			char *ptr, *str;
+			char *ptr, *str, *qtr;
+			int wdf;
 			std::map<string, int> lines;
 			std::map<string, int>::iterator it;
 
@@ -794,12 +795,19 @@ child_begin:
 			{
 				if (ptr == str)
 					continue;
+				wdf = 1;
 				*ptr = '\0';
+				if ((qtr = strchr(str, '\t')) != NULL)
+				{
+					*qtr++ = '\0';
+					wdf = atoi(qtr);
+				}
+
 				fix_log_words(str);
 				if (*str != '\0')
 				{
 					string line(str);
-					lines[line]++;
+					lines[line] = lines[line] + wdf;
 				}
 			}
 

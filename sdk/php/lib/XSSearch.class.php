@@ -659,6 +659,20 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 添加搜索日志关键词到缓冲区里
+	 * 需要调用 [XSIndex::flushLogging] 才能确保立即刷新, 否则要隔一段时间
+	 * @param string $query 需要记录的数据
+	 * @param int $wdf 需要记录的次数, 默认为 1
+	 */
+	public function addSearchLog($query, $wdf = 1)
+	{
+		$cmd = array('cmd' => CMD_SEARCH_ADD_LOG, 'buf' => $query);
+		if ($wdf > 1)
+			$cmd['buf1'] = pack('i', $wdf);
+		$this->execCommand($cmd, CMD_OK_LOGGED);
+	}
+
+	/**
 	 * 搜索结果字符串高亮处理
 	 * 对搜索结果文档的字段进行高亮、飘红处理, 高亮部分加上 em 标记
 	 * @param string $value 需要处理的数据
@@ -727,8 +741,7 @@ class XSSearch extends XSServer
 		$log = trim($log);
 		if (strlen($log) < 2 || (strlen($log) == 3 && ord($log[0]) > 0x80))
 			return;
-		$cmd = array('cmd' => CMD_SEARCH_ADD_LOG, 'buf' => $log);
-		$this->execCommand($cmd, CMD_OK_LOGGED);
+		$this->addSearchLog($log);
 	}
 
 	/**

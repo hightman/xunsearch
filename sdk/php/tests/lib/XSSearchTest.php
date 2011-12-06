@@ -179,26 +179,26 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		$search->setSort(null);
 	}
-	
+
 	public function testSetMultiSort()
 	{
 		$search = self::$xs->search;
-		
+
 		// pid string
 		$docs = $search->setMultiSort(array('pid'))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(3, $docs[0]->pid);
-		
+
 		$docs = $search->setMultiSort(array('pid' => true))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(11, $docs[0]->pid);
-		
+
 		// other (desc) + chrono (desc)
 		$docs = $search->setMultiSort(array('other', 'chrono'))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(11, $docs[0]->pid);
-		
+
 		// other (asc) + chrono(desc)
 		$docs = $search->setMultiSort(array('other' => true, 'chrono'))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(21, $docs[0]->pid);
-		
+
 		// other (asc) + chrono(asc)
 		$docs = $search->setMultiSort(array('other' => true, 'chrono' => true))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(3, $docs[0]->pid);
@@ -370,6 +370,26 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		$this->assertEquals('<em>测试</em>一下 <em>DEMO</em>', $search->highlight('测试一下 DEMO'));
 		$this->assertEquals('评<em>测试</em>试一下', $search->highlight('评测试试一下'));
+	}
+
+	public function testAddSearchLog()
+	{
+		$search = self::$xs->search;
+
+		$search->addSearchLog('php 教程');
+		$search->addSearchLog('php 教学');
+		$search->addSearchLog('php 教导', 999);
+		$search->addSearchLog('php 教程');
+		self::$xs->index->reopen(true)->flushLogging();
+		sleep(2);
+		self::$xs->setScheme(XSFieldScheme::logger());
+		$search->reopen(true);
+		$docs = $search->setDb(XSSearch::LOB_DB)->search('php');
+		$search->setDb(null);
+		self::$xs->restoreScheme();
+		$this->assertEquals($docs[0]->total, 999);
+		$this->assertEquals($docs[1]->total, 2);
+		$this->assertEquals($docs[2]->total, 1);
 	}
 
 	public function testSetDb()
