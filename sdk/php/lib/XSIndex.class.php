@@ -26,22 +26,25 @@ class XSIndex extends XSServer
 	/**
 	 * 完全清空索引数据
 	 * 如果当前数据库处于重建过程中将禁止清空
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @see beginRebuild
 	 */
 	public function clean()
 	{
 		$this->execCommand(CMD_INDEX_CLEAN_DB, CMD_OK_DB_CLEAN);
+		return $this;
 	}
 
 	/**
 	 * 添加文档到索引中
 	 * 特别要注意的是: 系统不会自动检测主键是否冲突, 即便已存在相同主键也会添加进去
 	 * @param XSDocument $doc
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @see update
 	 */
 	public function add(XSDocument $doc)
 	{
-		$this->update($doc, true);
+		return $this->update($doc, true);
 	}
 
 	/**
@@ -50,12 +53,13 @@ class XSIndex extends XSServer
 	 * 如果你能明确认定是新文档, 则建议使用 {@link add}
 	 * @param XSDocument $doc
 	 * @param bool $add 是否为新增文档, 已有数据中不存在同一主键的其它数据
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 */
 	public function update(XSDocument $doc, $add = false)
 	{
 		// before submit
 		if ($doc->beforeSubmit($this) === false)
-			return;
+			return $this;
 
 		// check primary key of document
 		$fid = $this->xs->getFieldId();
@@ -176,6 +180,7 @@ class XSIndex extends XSServer
 
 		// after submit
 		$doc->afterSubmit($this);
+		return $this;
 	}
 
 	/**
@@ -188,6 +193,7 @@ class XSIndex extends XSServer
 	 * </pre>	 
 	 * @param mixed $term 单个主键或指定字段的索引词, 或多个组成的数组, 编码与 {@link xs} 默认字符集一致
 	 * @param string $field 索引词所属的字段名称, 默认不指定则为主键字段 (类型为ID)
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 */
 	public function del($term, $field = null)
 	{
@@ -213,6 +219,7 @@ class XSIndex extends XSServer
 			$cmd = array('cmd' => CMD_INDEX_EXDATA, 'buf' => implode('', $cmds));
 			$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
 		}
+		return $this;
 	}
 
 	/**
@@ -220,6 +227,7 @@ class XSIndex extends XSServer
 	 * 把多个命令封包内容连续保存为文件或变量, 然后一次性提交以减少网络开销提升性能
 	 * @param string $data 要提交的命令封包数据, 或存储命令封包的文件路径, 编码必须已经是 UTF-8
 	 * @param bool $check_file 是否检测参数为文件的情况
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @throw XSException 出错时抛出异常
 	 */
 	public function addExdata($data, $check_file = true)
@@ -239,6 +247,7 @@ class XSIndex extends XSServer
 		// create cmd & execute it
 		$cmd = array('cmd' => CMD_INDEX_EXDATA, 'buf' => $data);
 		$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+		return $this;
 	}
 
 	/**
@@ -247,6 +256,7 @@ class XSIndex extends XSServer
 	 * 当总大小达到参数指定的 size 时或调用 {@link closeBuffer} 时再真正提交到服务器
 	 * 注意: 此举常用于需要大批量更新索引时, 此外重复调用本函数是无必要的
 	 * @param int $size 缓冲区大小, 单位: MB 默认为 4MB
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 */
 	public function openBuffer($size = 4)
 	{
@@ -254,16 +264,18 @@ class XSIndex extends XSServer
 			$this->addExdata($this->_buf, false);
 		$this->_bufSize = intval($size) << 20;
 		$this->_buf = '';
+		return $this;
 	}
 
 	/**
 	 * 提交所有指令并关闭缓冲区
 	 * 若未曾打开缓冲区, 调用本方法是无意义的
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @see openBuffer
 	 */
 	public function closeBuffer()
 	{
-		$this->openBuffer(0);
+		return $this->openBuffer(0);
 	}
 
 	/**
@@ -271,17 +283,20 @@ class XSIndex extends XSServer
 	 * 此后所有的索引更新指令将写到临时库, 而不是当前搜索库, 重建完成后调用
 	 * {@link endRebuild} 实现平滑重建索引, 重建过程仍可搜索旧的索引库,
 	 * 如直接用 {@link clean} 清空数据, 则会导致重建过程搜索到不全的数据
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @see endRebuild	
 	 */
 	public function beginRebuild()
 	{
 		$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 0), CMD_OK_DB_REBUILD);
 		$this->_rebuild = true;
+		return $this;
 	}
 
 	/**
 	 * 完成并关闭重建索引
 	 * 重建完成后调用, 用重建好的索引数据代替旧的索引数据
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 * @see beginRebuild
 	 */
 	public function endRebuild()
@@ -291,16 +306,19 @@ class XSIndex extends XSServer
 			$this->_rebuild = false;
 			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 1), CMD_OK_DB_REBUILD);
 		}
+		return $this;
 	}
 
 	/**
 	 * 更改存放索引数据的目录
 	 * 默认索引数据保存到服务器上的 db 目录, 通过此方法修改数据目录名
 	 * @param string $name 数据库名称
+	 * @return XSIndex 返回自身对象以支持串接操作
 	 */
 	public function setDb($name)
 	{
 		$this->execCommand(array('cmd' => CMD_INDEX_SET_DB, 'buf' => $name), CMD_OK_DB_CHANGED);
+		return $this;
 	}
 
 	/**

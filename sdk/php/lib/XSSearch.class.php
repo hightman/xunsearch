@@ -660,7 +660,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 添加搜索日志关键词到缓冲区里
-	 * 需要调用 [XSIndex::flushLogging] 才能确保立即刷新, 否则要隔一段时间
+	 * 需要调用 {@link XSIndex::flushLogging} 才能确保立即刷新, 否则要隔一段时间
 	 * @param string $query 需要记录的数据
 	 * @param int $wdf 需要记录的次数, 默认为 1
 	 * @since 1.1.1
