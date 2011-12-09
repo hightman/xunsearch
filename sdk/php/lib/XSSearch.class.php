@@ -793,7 +793,7 @@ class XSSearch extends XSServer
 	 * @param float $scale 权重计算缩放比例, 默认为 1表示不缩放, 其它值范围 0.xx ~ 655.35
 	 * @see addQueryString
 	 */
-	private function addQueryTerm($field, $term, $addOp = CMD_QUERY_OP_AND, $scale = 1)
+	public function addQueryTerm($field, $term, $addOp = CMD_QUERY_OP_AND, $scale = 1)
 	{
 		$term = strtolower($term);
 		$term = XS::convert($term, 'UTF-8', $this->_charset);
