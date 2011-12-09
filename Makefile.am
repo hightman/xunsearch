@@ -7,9 +7,12 @@ SUBDIRS = . src sdk
 
 DIST_SUBDIRS = src sdk
 
-sysconf_DATA = etc/stopwords.txt etc/py.xdb
+sysconf_DATA = etc/py.xdb
 
-EXTRA_DIST = README.md README.arch VERSION $(sysconf_DATA)
+customdir = ${sysconfdir}
+custom_DATA = etc/dict_user.txt etc/stopwords.txt
+
+EXTRA_DIST = README.md README.arch VERSION $(sysconf_DATA) $(custom_DATA)
 
 py_xdb_DEPS =
 version_DEPS =
@@ -26,6 +29,22 @@ etc/py.xdb: $(py_xdb_DEPS)
 VERSION: $(version_DEPS)
 	@echo "Generating version info ..."
 	sh version-sh > VERSION
+
+install-customDATA:
+	@$(NORMAL_INSTALL)
+	test -z "$(customdir)" || $(MKDIR_P) "$(DESTDIR)$(customdir)"
+	@list='$(custom_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  if test -f "$(DESTDIR)$(customdir)/$$f"; then \
+	    echo " Ignore exists custom data file '$$p'"; else \
+	    echo " $(sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(customdir)/$$f'"; \
+	    $(sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(customdir)/$$f"; \
+	  fi; \
+	done
+
+uninstall-customDATA:
+	@$(NORMAL_UNINSTALL)
 
 dist-hook:
 

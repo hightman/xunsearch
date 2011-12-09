@@ -31,6 +31,7 @@ Xunsearch PHP-SDK 权威指南
     - [清空索引](index.clean)
     - [平滑重建索引](index.rebuild)
     - [使用索引缓冲区](index.buffer)
+    - [自定义SCWS词库](index.dict)
 
 * 使用搜索
     - [搜索概述](search.overview)

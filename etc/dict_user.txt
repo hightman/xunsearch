@@ -1,0 +1,10 @@
+# Custom dictionary for scws (UTF-8 encoding)
+# 每行一条记录，以 # 开头的号表示注释忽略
+# 每行最多包含 4 个字段，依次代表 “词条” “TF” “IDF” “词性”
+# 字段之间用空格或制表符分开，特殊词性 “!” 用于表示删除该词
+# 参见 scws 自定义词典帮助：
+# http://www.hightman.cn/bbs/showthread.php?tid=712
+# $Id$
+#
+# WORD		TF		IDF		ATTR
+# ------------------------------------------------------

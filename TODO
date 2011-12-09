@@ -5,6 +5,7 @@ Big Plans of Xunsearch
 
 * 增加同义词搜索、管理功能
 
+* Xapian 底层支持自定义文本词库，要求 txt 格式即可
 
 * 将代码使用 git 管理，并推送一份到 github 上托管
 
