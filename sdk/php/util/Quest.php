@@ -52,6 +52,7 @@ Quest - 搜索查询和测试工具 ($version)
     --related    根据当前搜索词查找相关搜索词
     --limit=<num>用于设置 suggest|hot|related 的返回数量，两者默认值均为 10 个
                  对于普通搜索模式，还支持用 --limit=offset,num 的格式
+    --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
     -h|--help    显示帮助信息
 
     若未指定 -p 或 -q 则会依次把附加的参数当作 <project> 和 <query> 处理，例：
@@ -162,7 +163,7 @@ try
 		// fuzzy search
 		if (XSUtil::getOpt(null, 'fuzzy') !== null)
 			$search->setFuzzy();
-		
+
 		if (($pos = strpos($limit, ',')) === false)
 			$offset = 0;
 		else
@@ -184,6 +185,16 @@ try
 		$cost = microtime(true) - $begin;
 		$matched = $search->getLastCount();
 		$total = $search->getDbTotal();
+
+		// show query?
+		if (XSUtil::getOpt(null, 'show-query') !== null)
+		{
+			echo str_repeat("-", 20) . "\n";
+			echo "解析后的 QUERY 语句：" . $search->getQuery() . "\n";
+			echo str_repeat("-", 20) . "\n";
+		}
+
+		// related & corrected
 		$correct = $search->getCorrectedQuery();
 		$related = $search->getRelatedQuery();
 
