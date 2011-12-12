@@ -203,8 +203,7 @@ try
 			$doc = new XSDocument($dcs);
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
-			if (ob_get_level() > 0)
-				ob_flush();
+			XSUtil::flush();
 			$index->setTimeout(0);
 			$index->openBuffer();
 			while ($data = $src->getData())

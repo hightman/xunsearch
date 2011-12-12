@@ -235,8 +235,7 @@ class XSSearch extends XSServer
 	 */
 	public function addWeight($field, $term, $weight = 1)
 	{
-		$this->addQueryTerm($field, $term, CMD_QUERY_OP_AND_MAYBE, $weight);
-		return $this;
+		return $this->addQueryTerm($field, $term, CMD_QUERY_OP_AND_MAYBE, $weight);
 	}
 
 	/**
@@ -791,6 +790,7 @@ class XSSearch extends XSServer
 	 * @param string $term 索引词 (强制转为小写)
 	 * @param int $addOp 与旧语句的结合操作符, 如果无旧语句或为空则这此无意义, 支持的操作符有:
 	 * @param float $scale 权重计算缩放比例, 默认为 1表示不缩放, 其它值范围 0.xx ~ 655.35
+	 * @return XSSearch 返回对象本身以支持串接操作
 	 * @see addQueryString
 	 */
 	public function addQueryTerm($field, $term, $addOp = CMD_QUERY_OP_AND, $scale = 1)
@@ -802,6 +802,7 @@ class XSSearch extends XSServer
 
 		$cmd = new XSCommand(CMD_QUERY_TERM, $addOp, $vno, $term, $bscale);
 		$this->execCommand($cmd);
+		return $this;
 	}
 
 	/**

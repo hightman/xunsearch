@@ -50,4 +50,4 @@ Xunsearch PHP-SDK 权威指南
     - [Quest 搜索测试工具](util.quest)
     - [SearchSkel 生成搜索代码](util.skel)
     - [IniWizzard 配置文件向导](util.ini)
-
+    - [Logger 搜索日志管理](util.logger)

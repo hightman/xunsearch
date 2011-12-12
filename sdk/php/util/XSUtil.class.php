@@ -172,4 +172,14 @@ class XSUtil
 		}
 		return $value;
 	}
+
+	/**
+	 * 刷新标准输出缓冲区
+	 */
+	public static function flush()
+	{
+		flush();
+		if (ob_get_level() > 0)
+			ob_flush();
+	}
 }

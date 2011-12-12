@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2011/12/06 11:25 */
+/* Automatically generated at 2011/12/12 15:02 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
