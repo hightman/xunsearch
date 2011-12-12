@@ -2,9 +2,10 @@ Xunsearch PHP-SDK 权威指南
 =========================
 
 * 新手上路
+    - [最新主要变动](start.changelog)
     - [概述](start.overview)
     - [关于 Xunsearch PHP-SDK](start.about)
-    - [安装](start.installation)
+    - [安装、升级](start.installation)
     - [体验 demo 项目](start.demo)
     - [开发规范](start.convention)
     - [开发流程](start.workflow)

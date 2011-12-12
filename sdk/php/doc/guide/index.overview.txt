@@ -66,6 +66,7 @@ $search->addDb('db2')->setQuery(...)->search();
 
 但请放心，这个时间差我们已经控制在非常合理的范围内，通常是若干秒。
 
-> note: 特别说明，索引清空是同步操作，立即生效。
+> note: 特别说明，索引清空是同步操作，立即生效。如果确实有必要，您可以以使用 
+> [Indexer](util.indexer)的  `--flush` 选项来强制刷新索引。
 
 <div class="revision">$Id$</div>

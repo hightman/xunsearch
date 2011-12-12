@@ -1,0 +1,35 @@
+最新的主要变动
+=============
+
+在这里，按版本号罗列了历次版本的主要变动记录，以及相关的文档链接，
+方便新老用户快速查看。完整的更新日志请查看 [git 提交日志][1]。
+
+
+版本 1.2.0 (待发布)
+------------------
+
+- 新增搜索日志（用于热门统计、相关搜索等）管理工具 [util.Logger](util.logger)
+
+- [XSIndex] 对象的各个方法也直接返回对象本身，以支持串接操作。
+
+- [util.Quest](util.quest) 增加了 `--show-query` 功能用于查看解析后的内部搜索语句。
+
+- [util.Indexer](util.indexer) 增加了 `--filter` 指定数据过滤器，[阅读文档](util.indexer#ch6)
+
+
+版本 1.1.0 (2011-10-25)
+-----------------------
+
+- 数据库智能分库、切割，提升大数据量下的索引速度；使用者不必关心它的用法和实现，由系统后台完成。
+
+- 按字段值的分面搜索功能，常用于各种 WEB2.0、电子商务等相关的站内搜索，[阅读文档](search.facet)
+
+- 多字段联合排序功能，习惯了 SQL 的用户往往都会碰到多字段不同方式的联合排序需求，[阅读文档](search.search#ch1)
+
+- 该版本的完整修改日志，请查看 [git commits](https://github.com/hightman/xunsearch/commits/1.1.0)
+
+
+
+[1]: https://github.com/hightman/xunsearch/commits
+
+<div class="revision">$Id$</div>
