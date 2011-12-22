@@ -692,7 +692,7 @@ class XSSearch extends XSServer
 		if (isset($this->_highlight['pattern']))
 			$value = preg_replace($this->_highlight['pattern'], $this->_highlight['replace'], $value);
 		if (isset($this->_highlight['pairs']))
-			$value = strtr($value, $this->_highlight['pairs']);
+			$value = str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
 		return $value;
 	}
 
