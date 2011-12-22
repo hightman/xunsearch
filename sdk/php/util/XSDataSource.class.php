@@ -15,7 +15,7 @@
  * 
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
- * @package XS.util
+ * @package XS.utilf
  */
 abstract class XSDataSource
 {
@@ -877,7 +877,7 @@ interface XSDataFilter
 	 * @param array $data 字段名和值组成的数据数组
 	 * @param mixed $cs 数据字符集, 如无法确定则为 false
 	 */
-	public function process($data, $cs);
+	public function process($data, $cs = false);
 }
 
 /**

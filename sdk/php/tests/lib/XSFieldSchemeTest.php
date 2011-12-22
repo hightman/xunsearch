@@ -95,7 +95,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($log->getField('total')->isNumeric());
 		$this->assertTrue($log->getField('lastnum')->isNumeric());
 		$this->assertTrue($log->getField('currnum')->isNumeric());
-		$this->assertTrue($log->getField('currtag')->isNumeric());
+		$this->assertFalse($log->getField('currtag')->isNumeric());
 		$this->assertTrue($log->getField('body')->isSpeical());
 		$this->assertEquals(XSFieldScheme::MIXED_VNO, $log->getFieldBody()->vno);
 	}
