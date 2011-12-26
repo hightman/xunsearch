@@ -710,7 +710,7 @@ class XSSearch extends XSServer
 		{
 			// 无结果、包含 OR、XOR、NOT/-、默认 fuzzy		
 			$query = $this->_query;
-			if (!$this->_lastCount || $this->_defaultOp == CMD_QUERY_OP_OR
+			if (!$this->_lastCount || ($this->_defaultOp == CMD_QUERY_OP_OR && strpos($query, ' '))
 				|| strpos($query, ' OR ') || strpos($query, ' NOT ') || strpos($query, ' XOR '))
 			{
 				return;
