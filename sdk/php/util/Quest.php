@@ -212,11 +212,13 @@ try
 			{
 				$title = $search->highlight($doc->f($ftitle));
 				$title = preg_replace('#<em>(.+?)</em>#', "\033[7m\\1\033[m", $title) . ' ';
+				$title = strtr($title, array('<em>' => '', '</em>' => ''));
 			}
 			if ($fbody !== false)
 			{
 				$body = $search->highlight($doc->f($fbody));
 				$body = preg_replace('#<em>(.+?)</em>#', "\033[7m\\1\033[m", $body) . "\n";
+				$body = strtr($body, array('<em>' => '', '</em>' => ''));
 			}
 
 			// main fields

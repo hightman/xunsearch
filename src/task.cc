@@ -20,6 +20,7 @@
 #include "global.h"
 #include "task.h"
 #include "pinyin.h"
+#include "import.h"
 
 /**
  * Reset debug log macro to contiain tid
@@ -475,6 +476,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			{
 				delete zarg->qp;
 				zarg->qp = new Xapian::QueryParser();
+				zarg->qp->load_libscws(NULL, false, DEFAULT_SCWS_MULTI);
 				zarg->qp->set_stemmer(stemmer);
 				zarg->qp->set_stopper(&stopper);
 				zarg->qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
@@ -1700,6 +1702,7 @@ void task_exec(void *arg)
 
 		zarg.qq = new Xapian::Query();
 		zarg.qp = new Xapian::QueryParser();
+		zarg.qp->load_libscws(NULL, false, DEFAULT_SCWS_MULTI);
 		zarg.qp->set_stemmer(stemmer);
 		zarg.qp->set_stopper(&stopper);
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
