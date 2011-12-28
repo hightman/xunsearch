@@ -215,10 +215,11 @@ try
 						continue;
 				}
 
-				if ($filter !== null && $filter->process($data, $dcs) === false)
+				$pk = $data[$fid->name];
+				if ($filter !== null && ($data = $filter->process($data, $dcs)) === false)
 				{
 					$total++;
-					echo "警告：过滤器忽略了第 $total 条数据， 主键为：" . $data[$fid->name] . "\n";
+					echo "警告：过滤器忽略了第 $total 条数据， 主键为：" . $pk . "\n";
 					continue;
 				}
 
