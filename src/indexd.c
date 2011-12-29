@@ -37,6 +37,7 @@
 #define	FLAG_ON_EXIT		0x08
 
 #define	IS_RQST_CMD(c)		(c==CMD_INDEX_SUBMIT||c==CMD_DOC_TERM||c==CMD_DOC_INDEX||c==CMD_DOC_VALUE)
+#define	IS_INDEX_CMD(c)		(c==CMD_INDEX_REQUEST||c==CMD_INDEX_REMOVE||c==CMD_INDEX_EXDATA)
 
 /**
  * Global variables
@@ -799,7 +800,7 @@ static int save_conn_request(XS_CONN *conn)
 			// skip exdata cmd
 			if (cmd->cmd == CMD_INDEX_EXDATA) continue;
 			// check to skip other cmd? (CMD_DOC_xxx, CMD_INDEX_REQUEST, REMOVE, SUBMIT)
-			if (cmd->cmd != CMD_INDEX_REQUEST && !IS_RQST_CMD(cmd->cmd))
+			if (!IS_INDEX_CMD(cmd->cmd) && !IS_RQST_CMD(cmd->cmd))
 				continue;
 
 			// write the data
@@ -810,7 +811,7 @@ static int save_conn_request(XS_CONN *conn)
 			}
 
 			// add count (submit|remove)
-			if (cmd->cmd == CMD_INDEX_SUBMIT || cmd->cmd == CMD_INDEX_REMOVE)
+			if (IS_INDEX_CMD(cmd->cmd))
 				db->count++;
 		}
 	}
