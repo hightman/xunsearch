@@ -1,5 +1,5 @@
 *** xapian-core-1.2.8/configure.ac	2011-12-14 13:28:25.000000000 +0800
---- xapian-core-scws-1.2.8/configure.ac	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/configure.ac	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 1008,1013 ****
 --- 1008,1069 ----
@@ -66,7 +66,7 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.2.8/include/xapian/queryparser.h	2011-12-14 13:28:13.000000000 +0800
---- xapian-core-scws-1.2.8/include/xapian/queryparser.h	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/include/xapian/queryparser.h	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 495,500 ****
 --- 495,509 ----
@@ -86,7 +86,7 @@
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.2.8/include/xapian/termgenerator.h	2011-12-14 13:28:13.000000000 +0800
---- xapian-core-scws-1.2.8/include/xapian/termgenerator.h	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/include/xapian/termgenerator.h	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 82,87 ****
 --- 82,92 ----
@@ -102,7 +102,7 @@
       enum flags {
   	/// Index data required for spelling correction.
 *** xapian-core-1.2.8/api/omqueryinternal.cc	2011-12-14 13:28:19.000000000 +0800
---- xapian-core-scws-1.2.8/api/omqueryinternal.cc	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/api/omqueryinternal.cc	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 370,375 ****
 --- 370,380 ----
@@ -118,7 +118,7 @@
       }
   }
 *** xapian-core-1.2.8/queryparser/queryparser_internal.h	2011-12-14 13:28:01.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/queryparser_internal.h	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/queryparser_internal.h	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -168,7 +168,7 @@
   
   }
 *** xapian-core-1.2.8/queryparser/termgenerator_internal.h	2011-12-14 13:28:01.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/termgenerator_internal.h	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/termgenerator_internal.h	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 26,31 ****
 --- 26,35 ----
@@ -208,7 +208,7 @@
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.2.8/queryparser/queryparser.cc	2011-12-14 13:28:01.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/queryparser.cc	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/queryparser.cc	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 110,115 ****
 --- 110,126 ----
@@ -230,7 +230,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.2.8/queryparser/queryparser_internal.cc	2011-12-14 13:35:52.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/queryparser_internal.cc	2012-01-05 12:31:35.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/queryparser_internal.cc	2012-01-05 14:24:48.000000000 +0800
 ***************
 *** 164,169 ****
 --- 164,172 ----
@@ -342,7 +342,7 @@
       return q;
 ***************
 *** 572,583 ****
---- 622,696 ----
+--- 622,699 ----
      }
   }
   
@@ -375,6 +375,9 @@
 + 	scws_set_rule(scws, temp.data());
 + 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict.utf8.xdb");
 + 	scws_set_dict(scws, temp.data(), xmem == true ? SCWS_XDICT_MEM : SCWS_XDICT_XDB);
++ 	/* hightman.20111209: custom dict support */
++ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict_user.txt");
++ 	scws_add_dict(scws, temp.data(), SCWS_XDICT_TXT);
 +     }
 +     if (multi >= 0 && multi < 0x10)
 + 	scws_set_multi(scws, (multi<<12));
@@ -420,7 +423,7 @@
       if (U_isupper(*it)) {
 ***************
 *** 662,667 ****
---- 775,781 ----
+--- 778,784 ----
   	    }
   	}
       }
@@ -430,7 +433,7 @@
   
 ***************
 *** 713,718 ****
---- 827,858 ----
+--- 830,861 ----
   
       ParserHandler pParser(ParseAlloc());
   
@@ -465,7 +468,7 @@
       enum {
 ***************
 *** 1110,1115 ****
---- 1250,1260 ----
+--- 1253,1263 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -479,7 +482,7 @@
   			(it != end && is_stem_preventer(*it))) {
 ***************
 *** 1123,1128 ****
---- 1268,1284 ----
+--- 1271,1287 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -499,7 +502,7 @@
   		continue;
 ***************
 *** 1253,1258 ****
---- 1409,1421 ----
+--- 1412,1424 ----
   	}
       }
   done:
@@ -515,7 +518,7 @@
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 ***************
 *** 1365,1371 ****
---- 1528,1538 ----
+--- 1531,1541 ----
       Query::op default_op = state->default_op();
       vector<Query> subqs;
       subqs.reserve(terms.size());
@@ -529,7 +532,7 @@
   
 ***************
 *** 1441,1449 ****
---- 1608,1627 ----
+--- 1611,1630 ----
   
   	    // Use the position of the first term for the synonyms.
   	    Xapian::termpos pos = (*begin)->pos;
@@ -552,7 +555,7 @@
   	    Query q_synonym_terms(Query::OP_SYNONYM, subqs2.begin(), subqs2.end());
 ***************
 *** 1608,1613 ****
---- 1786,1796 ----
+--- 1789,1799 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -566,7 +569,7 @@
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
 *** 1616,1621 ****
---- 1799,1805 ----
+--- 1802,1808 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -575,7 +578,7 @@
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
 *** xapian-core-1.2.8/queryparser/termgenerator.cc	2011-12-14 13:28:01.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/termgenerator.cc	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/termgenerator.cc	2012-01-05 14:23:04.000000000 +0800
 ***************
 *** 74,79 ****
 --- 74,90 ----
@@ -597,7 +600,7 @@
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.2.8/queryparser/termgenerator_internal.cc	2011-12-14 13:28:01.000000000 +0800
---- xapian-core-scws-1.2.8/queryparser/termgenerator_internal.cc	2012-01-05 12:29:00.000000000 +0800
+--- xapian-core-scws-1.2.8/queryparser/termgenerator_internal.cc	2012-01-05 14:24:50.000000000 +0800
 ***************
 *** 125,130 ****
 --- 125,164 ----
