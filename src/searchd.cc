@@ -113,6 +113,7 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_SEARCH_DB_TOTAL:
 		case CMD_SEARCH_GET_TOTAL:
 		case CMD_SEARCH_GET_RESULT:
+		case CMD_SEARCH_GET_SYNONYMS:
 		case CMD_QUERY_GET_STRING:
 		case CMD_QUERY_GET_TERMS:
 		case CMD_QUERY_GET_CORRECTED:

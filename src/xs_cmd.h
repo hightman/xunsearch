@@ -160,6 +160,14 @@ struct xs_import_hdr
 #define	CMD_FLUSH_LOGGING	41
 
 /**
+ * Add/Remove synonyms for a term (null passed to remove all synonyms of the term..)
+ * arg1:flag(add|remove|clean)
+ * blen:original_term_len, buf:original_term,
+ * blen1:synonym_term_len, buf1:synonym_term_len
+ */
+#define	CMD_INDEX_SYNONYMS	42
+
+/**
  * ----------------------------------------
  * Commands of search server: 64~95
  * All commands can get respond from server
@@ -180,7 +188,7 @@ struct xs_import_hdr
 /**
  * Get matched search results
  * arg2:default_op, blen:query_len, buf:query
- * blen1:8, buf:int(offset)+int(limit)
+ * blen1:8, buf1:int(offset)+int(limit)
  */
 #define	CMD_SEARCH_GET_RESULT	66
 
@@ -216,6 +224,12 @@ struct xs_import_hdr
  * blen:query_len, buf:query, blen1:4/0, buf1:len
  */
 #define	CMD_SEARCH_ADD_LOG		71
+
+/**
+ * Load and list synonyms for current db
+ * arg1:0/1(no exclue Zxxx), blen1:8, buf1:int(offset)+int(limit)
+ */
+#define	CMD_SEARCH_GET_SYNONYMS	72
 
 /**
  * ----------------------------------------
@@ -495,6 +509,10 @@ struct xs_import_hdr
 #define	CMD_INDEX_REQUEST_ADD		0
 #define	CMD_INDEX_REQUEST_UPDATE	1
 
+// 10. synonyms op
+#define	CMD_INDEX_SYNONYMS_ADD		0
+#define	CMD_INDEX_SYNONYMS_DEL		1
+
 /**
  * ----------------------------------
  * Respond status code (arg of CMD)
@@ -590,6 +608,10 @@ struct xs_import_hdr
 #define	CMD_OK_DB_COMMITED		256
 #define	CMD_OK_DB_REBUILD		257
 #define	CMD_OK_LOG_FLUSHED		258
+
+// for searchd
+// Each record per line, split by '\t'
+#define	CMD_OK_RESULT_SYNONYMS	280
 
 // error str macro call to show err description
 #define	__CMD_REPLACE(x,t)		CMD_##t##_##x

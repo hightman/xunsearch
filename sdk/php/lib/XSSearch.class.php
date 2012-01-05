@@ -724,7 +724,7 @@ class XSSearch extends XSServer
 		{
 			$pos1 = ($pos > 3 && strlen($term) === 6) ? $pos - 3 : $pos;
 			if (($pos2 = strpos($query, $term, $pos1)) === false)
-				break;
+				continue;
 			if ($pos2 === $pos)
 				$log .= $term;
 			else if ($pos2 < $pos)

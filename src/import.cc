@@ -48,11 +48,15 @@
 #define	FETCH_UPDATE		2		// update
 #define	FETCH_DELETE		3		// delete
 #define	FETCH_SKIP			4		// number limit
+#define	FETCH_SYNONYMS		5		// synonyms
+
+#define	HAVE_SYNONYMS_STEM	1		// support stemmer in synonyms
 
 /* local global variables */
 static char *prog_name;
 static int flag, fd, num_skip, bytes_read;
 static int total, total_update, total_delete, total_add, archive_delete;
+static int total_synonyms;
 
 static Xapian::WritableDatabase database, archive;
 static Xapian::TermGenerator indexer;
@@ -124,7 +128,8 @@ static inline void batch_committed(int reopen)
 	flag |= FLAG_COMMITTING;
 	try
 	{
-		if (reopen == 0 && archive_delete > 0)
+		// FIXME: empty committion may cause XAPIAN internal error
+		if (reopen == 0 && (flag & FLAG_ARCHIVE) && (archive_delete > 0 || total_synonyms > 0))
 			archive.commit();
 		if (flag & FLAG_TRANSACTION)
 		{
@@ -177,8 +182,8 @@ int signal_term(int sig)
 	else
 	{
 		batch_committed(0);
-		log_force("interrupted (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
+		log_force("interrupted (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
+			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
 
 		if (!(flag & FLAG_STDIN))
 		{
@@ -216,13 +221,13 @@ void signal_reload(int sig)
 	{
 		// The signal came from keyboard(^Z)
 		// Although printf is not signal safe, but we do not use in other place
-		printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)\n",
-			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
+		printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)\n",
+			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
 	}
 	else
 	{
-		log_force("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, archive_delete, total, database.get_doccount());
+		log_force("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
+			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
 	}
 }
 
@@ -382,7 +387,7 @@ static int doc_fetch()
 	}
 
 	// NOTE: check valid CMD
-	if (cmd.cmd != CMD_INDEX_REQUEST && cmd.cmd != CMD_INDEX_REMOVE)
+	if (cmd.cmd != CMD_INDEX_REQUEST && cmd.cmd != CMD_INDEX_REMOVE && cmd.cmd != CMD_INDEX_SYNONYMS)
 	{
 		log_normal("got invalid command, abort (CMD:%d, BUFSIZE:%d)", cmd.cmd, XS_CMD_BUFSIZE(&cmd));
 		return FETCH_ABORT;
@@ -412,6 +417,80 @@ static int doc_fetch()
 	rc = total < num_skip ? FETCH_SKIP : FETCH_DIRTY;
 	size = lsize = 0;
 	buf = NULL;
+
+	// TODO: check synonyms cmd
+	if (cmd.cmd == CMD_INDEX_SYNONYMS && term != NULL)
+	{
+		if (rc == FETCH_SKIP)
+		{
+			log_verbose("~skip to add/del synonyms (TERM:%.*s, SKIP_LEFT:%d)",
+				cmd.blen, term + 1, num_skip - total - 1);
+		}
+		else
+		{
+			Xapian::WritableDatabase *syn_db;
+			string org_term = Xapian::Unicode::tolower(string(term + 1, cmd.blen));
+			string syn_term = Xapian::Unicode::tolower(string(term + cmd.blen + 1, cmd.blen1));
+#ifdef HAVE_SYNONYMS_STEM
+			string org_stem, syn_stem;
+			if (should_stem(org_term) && org_term.find_first_of(' ') == string::npos)
+			{
+				org_stem = "Z" + stemmer(org_term);
+				syn_stem = (syn_term.size() > 0 && should_stem(syn_term)) ? "Z" + stemmer(syn_term) : syn_term;
+			}
+#endif
+			rc = FETCH_SYNONYMS;
+			syn_db = (flag & FLAG_ARCHIVE) ? &archive : &database;
+			if (cmd.arg1 == CMD_INDEX_SYNONYMS_ADD)
+			{
+				// add
+				syn_db->add_synonym(org_term, syn_term);
+				log_verbose("+add synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
+#ifdef HAVE_SYNONYMS_STEM
+				// stemmed
+				if (org_stem.size() > 0)
+				{
+					syn_db->add_synonym(org_stem, syn_stem);
+					log_verbose("+add stemmed synonym term (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
+				}
+#endif
+			}
+			else
+			{
+				// del
+				if (syn_term.size() > 0)
+				{
+					// del synonym word
+					syn_db->remove_synonym(org_term, syn_term);
+					log_verbose("+remove synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
+#ifdef HAVE_SYNONYMS_STEM
+					// stemmed
+					if (org_stem.size() > 0)
+					{
+						syn_db->remove_synonym(org_stem, syn_stem);
+						log_verbose("+remove stemmed synonym term (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
+					}
+#endif
+				}
+				else
+				{
+					// clear all synonyms
+					syn_db->clear_synonyms(org_term);
+					log_verbose("--clear synonym terms (TERM:%s)", org_term.data());
+#ifdef HAVE_SYNONYMS_STEM
+					// stemmed
+					if (org_stem.size() > 0)
+					{
+						syn_db->clear_synonyms(org_stem);
+						log_verbose("--clear stemmed synonym term (TERM:%s)", org_stem.data());
+					}
+#endif
+				}
+			}
+			total_synonyms++;
+		}
+		goto doc_end;
+	}
 
 	// check the remove cmd
 	if (cmd.cmd == CMD_INDEX_REMOVE && term != NULL)
@@ -493,7 +572,7 @@ static int doc_fetch()
 				else
 				{
 					string tt(buf, size);
-					string pp("");
+					string pp;
 					if (CMD_INDEX_VALUENO(cmd) != XS_DATA_VNO)
 					{
 						vno_to_prefix(CMD_INDEX_VALUENO(cmd), prefix);
@@ -888,9 +967,9 @@ int main(int argc, char *argv[])
 
 	// finished report
 	argc = time(NULL) - t_begin;
-	log_force("%s (ADD:%d, UPDATE:%d, DELETE:%d[%d], PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
+	log_force("%s (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
 		(flag & FLAG_TERMINATED ? "terminated" : "finished"),
-		total_add, total_update, total_delete, archive_delete, total,
+		total_add, total_update, total_delete, archive_delete, total_synonyms, total,
 		database.get_doccount(), argc / 60, argc % 60);
 
 	// check to archive
@@ -926,9 +1005,9 @@ int main(int argc, char *argv[])
 			// 2. rename: db -> db_a
 			system("/bin/mv -f " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a");
 		}
-		
+
 		// re-create empty db
-		database = Xapian::WritableDatabase(DEFAULT_DB_NAME, Xapian::DB_CREATE_OR_OPEN);		
+		database = Xapian::WritableDatabase(DEFAULT_DB_NAME, Xapian::DB_CREATE_OR_OPEN);
 	}
 
 main_end:

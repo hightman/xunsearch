@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2011/12/28 12:58 */
+/* Automatically generated at 2011/12/31 11:29 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -18,6 +18,7 @@ define('CMD_DELETE_PROJECT',	38);
 define('CMD_INDEX_COMMIT',	39);
 define('CMD_INDEX_REBUILD',	40);
 define('CMD_FLUSH_LOGGING',	41);
+define('CMD_INDEX_SYNONYMS',	42);
 define('CMD_SEARCH_DB_TOTAL',	64);
 define('CMD_SEARCH_GET_TOTAL',	65);
 define('CMD_SEARCH_GET_RESULT',	66);
@@ -27,6 +28,7 @@ define('CMD_SEARCH_ADD_DB',	68);
 define('CMD_SEARCH_FINISH',	69);
 define('CMD_SEARCH_DRAW_TPOOL',	70);
 define('CMD_SEARCH_ADD_LOG',	71);
+define('CMD_SEARCH_GET_SYNONYMS',	72);
 define('CMD_QUERY_GET_STRING',	96);
 define('CMD_QUERY_GET_TERMS',	97);
 define('CMD_QUERY_GET_CORRECTED',	98);
@@ -92,6 +94,8 @@ define('CMD_INDEX_FLAG_CHECKSTEM',	0x80);
 define('CMD_VALUE_FLAG_NUMERIC',	0x80);
 define('CMD_INDEX_REQUEST_ADD',	0);
 define('CMD_INDEX_REQUEST_UPDATE',	1);
+define('CMD_INDEX_SYNONYMS_ADD',	0);
+define('CMD_INDEX_SYNONYMS_DEL',	1);
 define('CMD_ERR_UNKNOWN',	600);
 define('CMD_ERR_NOPROJECT',	401);
 define('CMD_ERR_TOOLONG',	402);
@@ -139,6 +143,7 @@ define('CMD_OK_PROJECT_DEL',	255);
 define('CMD_OK_DB_COMMITED',	256);
 define('CMD_OK_DB_REBUILD',	257);
 define('CMD_OK_LOG_FLUSHED',	258);
+define('CMD_OK_RESULT_SYNONYMS',	280);
 define('PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('PACKAGE_NAME',	"xunsearch");
 define('PACKAGE_TARNAME',	"xunsearch");

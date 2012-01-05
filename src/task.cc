@@ -952,6 +952,66 @@ static int zcmd_task_get_result(XS_CONN *conn)
 }
 
 /**
+ * List synonyms
+ * @param conn
+ * @return CMD_RES_CONT
+ */
+static int zcmd_task_get_synonyms(XS_CONN *conn)
+{
+	XS_CMD *cmd = conn->zcmd;
+	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
+	unsigned int off, limit;
+
+	// check db
+	if (zarg->db == NULL)
+		return CONN_RES_ERR(NODB);
+
+	// check input (off+limit) in buf1
+	if (XS_CMD_BLEN1(cmd) != (sizeof(int) + sizeof(int)))
+	{
+		if (XS_CMD_BLEN1(cmd) != 0)
+			return CONN_RES_ERR(WRONGFORMAT);
+		off = 0;
+		limit = MAX_SEARCH_RESULT;
+	}
+	else
+	{
+		off = *((unsigned int *) XS_CMD_BUF1(cmd));
+		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof(int)));
+	}
+	log_debug_conn("list synonyms (USER:%s, OFF:%d, LIMIT:%d)", conn->user->name, off, limit);
+
+	// list data
+	string result;
+	Xapian::TermIterator kb = zarg->db->synonym_keys_begin();
+	Xapian::TermIterator ke = zarg->db->synonym_keys_end();
+	while (kb != ke && limit > 0)
+	{
+		string term = *kb++;
+		if (cmd->arg1 == 0 && term[0] == 'Z')
+			continue;
+		else if (off > 0)
+			off--;
+		else
+		{
+			Xapian::TermIterator sb = zarg->db->synonyms_begin(term);
+			Xapian::TermIterator se = zarg->db->synonyms_end(term);
+			result += term;
+			while (sb != se)
+			{
+				result += "\t" + *sb++;
+			}
+			result += "\n";
+			limit--;
+		}
+	}
+
+	// return result
+	limit = result.size() > 0 ? result.size() - 1 : 0;
+	return CONN_RES_OK3(RESULT_SYNONYMS, result.data(), limit);
+}
+
+/**
  * Add subquery to current query
  * Query types: term, string, range, valcmp
  * @param conn
@@ -1569,6 +1629,7 @@ static zcmd_exec_tab zcmd_task_tab[] = {
 	{CMD_SEARCH_ADD_DB, zcmd_task_set_db},
 	{CMD_SEARCH_GET_TOTAL, zcmd_task_get_total},
 	{CMD_SEARCH_GET_RESULT, zcmd_task_get_result},
+	{CMD_SEARCH_GET_SYNONYMS, zcmd_task_get_synonyms},
 	{CMD_QUERY_TERM, zcmd_task_add_query},
 	{CMD_QUERY_RANGE, zcmd_task_add_query},
 	{CMD_QUERY_VALCMP, zcmd_task_add_query},
