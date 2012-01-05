@@ -34,7 +34,7 @@ class XSSearch extends XSServer
 	 * 搜索结果默认分页数量
 	 */
 	const PAGE_SIZE = 10;
-	const LOB_DB = 'log_db';
+	const LOG_DB = 'log_db';
 
 	private $_defaultOp = CMD_QUERY_OP_AND;
 	private $_prefix, $_fieldSet, $_resetScheme = false;
@@ -84,6 +84,49 @@ class XSSearch extends XSServer
 	{
 		$this->_defaultOp = $value === true ? CMD_QUERY_OP_OR : CMD_QUERY_OP_AND;
 		return $this;
+	}
+
+	/**
+	 * 开启自动同义词搜索功能
+	 * @param bool $value 设为 true 表示开启同义词功能, 设为 false 关闭同义词功能
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.3.0
+	 */
+	public function setAutoSynonyms($value = true)
+	{
+		$flag = CMD_PARSE_FLAG_BOOLEAN | CMD_PARSE_FLAG_PHRASE | CMD_PARSE_FLAG_LOVEHATE;
+		if ($value === true)
+			$flag |= CMD_PARSE_FLAG_AUTO_MULTIWORD_SYNONYMS;
+		$cmd = array('cmd' => CMD_QUERY_PARSEFLAG, 'arg' => $flag);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
+	 * 获取当前库内的全部同义词列表
+	 * @param int $limit 数量上限, 若设为 0 则启用默认值 100 个
+	 * @param int $offset 偏移量, 即跳过的结果数量, 默认为 0
+	 * @param bool $stemmed 是否包含处理过的词根同义词, 默认为 false 表示否
+	 * @return array 同义词记录数组, 每个词条为键, 同义词条组成的数组为值
+	 * @since 1.3.0
+	 */
+	public function getAllSynonyms($limit = 0, $offset = 0, $stemmed = false)
+	{
+		$page = $limit > 0 ? pack('II', intval($offset), intval($limit)) : '';
+		$cmd = array('cmd' => CMD_SEARCH_GET_SYNONYMS, 'buf1' => $page);
+		$cmd['arg1'] = $stemmed == true ? 1 : 0;
+		$res = $this->execCommand($cmd, CMD_OK_RESULT_SYNONYMS);
+		$ret = array();
+		if (!empty($res->buf))
+		{
+			foreach (explode("\n", $res->buf) as $line)
+			{
+				$value = explode("\t", $line);
+				$key = array_shift($value);
+				$ret[$key] = $value;
+			}
+		}
+		return $ret;
 	}
 
 	/**
@@ -397,7 +440,8 @@ class XSSearch extends XSServer
 	 */
 	public function search($query = null)
 	{
-		$this->_highlight = $query;
+		if ($this->_curDb !== self::LOG_DB)
+			$this->_highlight = $query;
 		$query = $query === null ? '' : $this->preQueryString($query);
 		$page = pack('II', $this->_offset, $this->_limit > 0 ? $this->_limit : self::PAGE_SIZE);
 
@@ -464,6 +508,8 @@ class XSSearch extends XSServer
 			$this->_count = $tmp['count'];
 			// trigger to logQuery
 			$this->logQuery();
+			// trigger to initHighlight
+			$this->initHighlight();
 		}
 		$this->_limit = $this->_offset = 0;
 		return $ret;
@@ -506,7 +552,7 @@ class XSSearch extends XSServer
 		$this->xs->setScheme(XSFieldScheme::logger());
 		try
 		{
-			$this->setDb(self::LOB_DB)->setLimit($limit);
+			$this->setDb(self::LOG_DB)->setLimit($limit);
 			if ($type !== 'lastnum' && $type !== 'currnum')
 				$type = 'total';
 			$result = $this->search($type . ':1');
@@ -550,7 +596,7 @@ class XSSearch extends XSServer
 		$this->xs->setScheme(XSFieldScheme::logger());
 		try
 		{
-			$result = $this->setDb(self::LOB_DB)->setFuzzy()->setLimit($limit + 1)->search($query);
+			$result = $this->setDb(self::LOG_DB)->setFuzzy()->setLimit($limit + 1)->search($query);
 			foreach ($result as $doc) /* @var $doc XSDocument */
 			{
 				$doc->setCharset($this->_charset);

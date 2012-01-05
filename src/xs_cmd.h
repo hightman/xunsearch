@@ -161,7 +161,7 @@ struct xs_import_hdr
 
 /**
  * Add/Remove synonyms for a term (null passed to remove all synonyms of the term..)
- * arg1:flag(add|remove|clean)
+ * arg1:flag(add|remove)
  * blen:original_term_len, buf:original_term,
  * blen1:synonym_term_len, buf1:synonym_term_len
  */

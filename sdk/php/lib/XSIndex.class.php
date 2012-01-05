@@ -239,6 +239,7 @@ class XSIndex extends XSServer
 		// CMD_IMPORT_HEADER, CMD_INDEX_REQUEST, CMD_INDEX_REMOVE, CMD_INDEX_EXDATA
 		$first = ord(substr($data, 0, 1));
 		if ($first != CMD_IMPORT_HEADER && $first != CMD_INDEX_REQUEST
+			&& $first != CMD_INDEX_SYNONYMS
 			&& $first != CMD_INDEX_REMOVE && $first != CMD_INDEX_EXDATA)
 		{
 			throw new XSException('Invalid start command of exdata (CMD:' . $first . ')');
@@ -247,6 +248,52 @@ class XSIndex extends XSServer
 		// create cmd & execute it
 		$cmd = array('cmd' => CMD_INDEX_EXDATA, 'buf' => $data);
 		$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+		return $this;
+	}
+
+	/**
+	 * 添加同义词
+	 * @param string $raw 需要同义的原词, 英文词汇支持用空格分开多个单词并强制被转换为小写
+	 * @param string $synonym 同义词条, 最小语素, 勿带空格等分隔符
+	 * @return XSIndex 返回自身对象以支持串接操作
+	 * @throw XSException 出错时抛出异常
+	 * @since 1.3.0
+	 */
+	public function addSynonym($raw, $synonym)
+	{
+		$raw = strval($raw);
+		$synonym = strval($synonym);
+		if ($raw !== '' && $synonym !== '')
+		{
+			$cmd = new XSCommand(CMD_INDEX_SYNONYMS, CMD_INDEX_SYNONYMS_ADD, 0, $raw, $synonym);
+			if ($this->_bufSize > 0)
+				$this->appendBuffer(strval($cmd));
+			else
+				$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+		}
+		return $this;
+	}
+
+	/**
+	 * 删除某个同义词
+	 * @param string $raw 需要同义的原词, 英文词汇支持用空格分开多个单词并强制被转换为小写
+	 * @param string $synonym 要删除的同义词条, 默认 null 表示删除原词下的所有同义词
+	 * @return XSIndex 返回自身对象以支持串接操作
+	 * @throw XSException 出错时抛出异常
+	 * @since 1.3.0
+	 */
+	public function delSynonym($raw, $synonym = null)
+	{
+		$raw = strval($raw);
+		$synonym = $synonym === null ? '' : strval($synonym);
+		if ($raw !== '')
+		{
+			$cmd = new XSCommand(CMD_INDEX_SYNONYMS, CMD_INDEX_SYNONYMS_DEL, 0, $raw, $synonym);
+			if ($this->_bufSize > 0)
+				$this->appendBuffer(strval($cmd));
+			else
+				$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+		}
 		return $this;
 	}
 

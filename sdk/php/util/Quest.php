@@ -17,6 +17,7 @@ XSUtil::parseOpt(array('p', 'q', 'c', 'd', 'project', 'query', 'db', 'limit', 'c
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
+$synonyms = XSUtil::getOpt(null, 'list-synonyms');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
@@ -24,7 +25,7 @@ XSUtil::setCharset($charset);
 $query = XSUtil::convertIn($query);
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$hot && !is_string($query)))
+	|| (!$hot && !$synonyms && !is_string($query)))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
@@ -39,7 +40,8 @@ Quest - 搜索查询和测试工具 ($version)
                  如果指定的是名称，则使用 ../app/<name>.ini 作为配置文件
     --query=<query>	
     -q <query>   指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来
-    --fuzzy      将搜索默认设为模糊搜索	
+    --fuzzy      将搜索默认设为模糊搜索
+    --synonym    开启自动同义词搜索功能
     --charset=<gbk|utf-8>
     -c <charset> 指定您当前在用的字符集，以便系统进行智能转换（默认：UTF-8）
     --db=<name[,name2 ...]>
@@ -50,8 +52,11 @@ Quest - 搜索查询和测试工具 ($version)
     --suggest    根据当前搜索词展开常用搜索词建议，如查询“中”，即显示“中”开头的词
     --correct    根据当前搜索词进行同音、拼写纠错，输出更合适的关键词
     --related    根据当前搜索词查找相关搜索词
+    --list-synonyms[=stemmed]
+                 列出库内的全部同义词，每行显示一个，可以搭配 --limit 使用，默认显示前 100 个
+                 如果设置了 stemmed 值则连同词根同义词也列出
     --limit=<num>用于设置 suggest|hot|related 的返回数量，两者默认值均为 10 个
-                 对于普通搜索模式，还支持用 --limit=offset,num 的格式
+                 对于普通搜索和列出同义词时，还支持用 --limit=offset,num 的格式
     --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
     -h|--help    显示帮助信息
 
@@ -114,6 +119,36 @@ try
 			}
 		}
 	}
+	else if ($synonyms !== null)
+	{
+		if ($limit === null)
+			$offset = $limit1 = 0;
+		else if (($pos = strpos($limit, ',')) === false)
+			$offset = 0;
+		else
+		{
+			$limit1 = intval(substr($limit, $pos + 1));
+			$offset = intval($limit);
+		}
+
+		$synonyms = $search->getAllSynonyms($limit1, $offset, $synonyms === 'stemmed');
+		if (count($synonyms) == 0)
+		{
+			echo "暂无相关的同义词记录";
+			if ($offset != 0)
+				echo "，反正总数不超过 $offset 个";
+			echo "。\n";
+		}
+		else
+		{
+			$i = $offset + 1;
+			printf("   %s %s\n%s\n", XSUtil::fixWidth('原词', 32), '同义词', XSUtil::fixWidth('', 56, '-'));
+			foreach ($synonyms as $raw => $list)
+			{
+				printf("%4d. %s %s\n", $i++, XSUtil::fixWidth($raw, 29), implode(", ", $list));
+			}
+		}
+	}
 	else if ($correct !== null)
 	{
 		$result = $search->getCorrectedQuery($query);
@@ -163,6 +198,8 @@ try
 		// fuzzy search
 		if (XSUtil::getOpt(null, 'fuzzy') !== null)
 			$search->setFuzzy();
+		if (XSUtil::getOpt(null, 'synonym') !== null)
+			$search->setAutoSynonyms();
 
 		if (($pos = strpos($limit, ',')) === false)
 			$offset = 0;

@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/XSDataSource.class.php';
 
 // check arguments
 //ini_set('memory_limit', '1024M');
-XSUtil::parseOpt(array('p', 'c', 'd', 'project', 'charset', 'db', 'source', 'file', 'sql', 'csv-delimiter'));
+XSUtil::parseOpt(array('p', 'c', 'd', 'project', 'charset', 'db', 'source', 'file', 'sql', 'csv-delimiter', 'add-synonym', 'del-synonym'));
 $project = XSUtil::getOpt('p', 'project', true);
 
 // magick output charset
@@ -24,6 +24,8 @@ XSUtil::setCharset($charset);
 
 // long options
 $params = array('source', 'file', 'sql', 'rebuild', 'clean', 'flush', 'flush-log', 'info', 'csv-delimiter', 'filter');
+$params[] = 'add-synonym';
+$params[] = 'del-synonym';
 foreach ($params as $_)
 {
 	$k = strtr($_, '-', '_');
@@ -36,7 +38,7 @@ $db = XSUtil::getOpt('d', 'db');
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$flush && !$flush_log && !$info && !$clean && !$source))
+	|| (!$flush && !$flush_log && !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
@@ -62,13 +64,18 @@ Indexer - 索引批量管理、导入工具 ($version)
     --source=csv 指定数据源为 csv 格式，逗号分隔字段，每行一条记录，可在首行指定字段名
     --csv-delimiter[=,] 指定 csv 数据源的字段分割符，默认为逗号，支持 \\t\\r\\n..\\xNN
 	             使用 \\ 开头及其它与 shell 有岐议的分割符时请使用引号包围。
-    --file <file>当数据源为 json 或 csv 格式时指定数据源文件，默认读取标准输入
-    --sql <sql>  当数据源为 sql 类型时指定 sql 搜索语句，默认情况下，
+    --file=<file>当数据源为 json 或 csv 格式时指定数据源文件，默认读取标准输入
+    --sql=<sql>  当数据源为 sql 类型时指定 sql 搜索语句，默认情况下，
                  如果在 --source 包含 table 则载入该表数据。
                  警告：请勿在 SQL 语句中包含 `` 反引号，这在 SHELL 中有特殊函义可能会出错
     --filter <name|path>
                  指定数据过滤器，可为内置的 debug 或自定义的过滤器文件路径(不包含 .php)
                  过滤器必须实现接口 XSDataFilter
+    --add-synonym=<raw1:synonym1[,raw2:synonym2]...>
+                 添加一个或多个同义词, 多个之间用半角逗号分隔, 原词和同义词之间用冒号分隔
+    --del-synonym=<raw1[:synonym1[,raw2[:synonym2]]]...>
+                 删除一个或多个同义词, 多个之间用半角逗号分隔, 原词和同义词之间用冒号分隔
+                 省略同义词则表示删除该原词的所有同义词
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
     --clean      清空库内当前的索引数据
     --flush      强制提交刷新索引服务端的缓冲索引，与 --source 分开用
@@ -242,6 +249,62 @@ try
 			}
 			$index->closeBuffer();
 			echo "完成索引导入：成功 $total_ok 条，失败 $total_failed 条\n";
+		}
+
+		// add synonyms
+		if (is_string($add_synonym))
+		{
+			$rec = array();
+			foreach (explode(",", $add_synonym) as $tmp)
+			{
+				if (strpos($tmp, ':') === false)
+					continue;
+				list($raw, $syn) = explode(':', $tmp, 2);
+				$raw = trim($raw);
+				$syn = trim($syn);
+				if ($raw !== '' && $syn !== '')
+					$rec[] = array($raw, $syn);
+			}
+
+			echo "报告：开始添加同义词记录 " . count($rec) . "　条...\n";
+			if (count($rec) > 1)
+				$index->openBuffer();
+			foreach ($rec as $tmp)
+			{
+				$index->addSynonym($tmp[0], $tmp[1]);
+			}
+			if (count($rec) > 1)
+				$index->closeBuffer();
+		}
+
+		// del synonyms
+		if (is_string($del_synonym))
+		{
+			$rec = array();
+			foreach (explode(",", $del_synonym) as $tmp)
+			{
+				$syn = '';
+				if (strpos($tmp, ':') === false)
+					$raw = trim($tmp);
+				else
+				{
+					list($raw, $syn) = explode(':', $tmp, 2);
+					$raw = trim($raw);
+					$syn = trim($syn);
+				}
+				if ($raw !== '')
+					$rec[] = array($raw, $syn);
+			}
+
+			echo "报告：开始删除同义词记录 " . count($rec) . "　条...\n";
+			if (count($rec) > 1)
+				$index->openBuffer();
+			foreach ($rec as $tmp)
+			{
+				$index->delSynonym($tmp[0], $tmp[1]);
+			}
+			if (count($rec) > 1)
+				$index->closeBuffer();
 		}
 
 		// end rebuild
