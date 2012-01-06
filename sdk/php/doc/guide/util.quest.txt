@@ -34,6 +34,7 @@ $prefix/sdk/php/util/Quest.php --help
   * _-d|--db <name[,name2 ...]>_ 指定要搜索的数据库名称，默认是名为 db 的库，
     多个库之间用逗号分隔。
 
+  * _--show-query_ 在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
 
 经典用法示例
 -----------

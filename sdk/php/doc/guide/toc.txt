@@ -51,3 +51,6 @@ Xunsearch PHP-SDK 权威指南
     - [SearchSkel 生成搜索代码](util.skel)
     - [IniWizzard 配置文件向导](util.ini)
     - [Logger 搜索日志管理](util.logger)
+
+* 专题
+    - [同义词搜索功能](special.synonym)

@@ -1,0 +1,5 @@
+同义词搜索
+=========
+
+
+<div class="revision">$Id$</div>
