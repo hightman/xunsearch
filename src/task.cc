@@ -1161,6 +1161,9 @@ static int zcmd_task_get_query(XS_CONN *conn)
 
 				if (ub == ue)
 				{
+					int i = 0;
+					while (tt[i] >= 'A' && tt[i] <= 'Z') i++;
+					if (i > 0) tt = tt.substr(i);
 					ins = terms.insert(tt);
 					if (ins.second == true)
 						str += tt + " ";

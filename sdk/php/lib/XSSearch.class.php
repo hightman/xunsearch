@@ -398,7 +398,6 @@ class XSSearch extends XSServer
 			$tmps = explode(' ', $res->buf);
 			for ($i = 0; $i < count($tmps); $i++)
 			{
-				$chr = ord(substr($tmps[$i], 0, 1));
 				if ($tmps[$i] === '' || strpos($tmps[$i], ':') !== false)
 					continue;
 				$ret[] = $tmps[$i];
