@@ -50,6 +50,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			$doc->setFields($tmp);
 			$index->add($doc);
 		}
+		$index->addSynonym('project', '项目');
 		$index->flushIndex();
 
 		// create another db
@@ -61,6 +62,19 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			$doc->setFields($tmp);
 			$index->add($doc);
 		}
+		// create synonyms on db2
+		$synonyms = array(
+			'test' => '测试',
+			'hello world' => '有意思',
+			'迅搜' => 'xunsearch',
+		);
+		$index->openBuffer();
+		foreach ($synonyms as $raw => $syn)
+		{
+			$index->addSynonym($raw, $syn);
+		}
+		$index->addSynonym('test', 'quiz');
+		$index->closeBuffer();
 
 		// flush index & logging
 		$index->flushIndex();
@@ -76,7 +90,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		self::$xs->index->clean();
 		self::$xs->index->setDb('db2');
 		self::$xs->index->clean();
-		self::$xs->index->setDb(XSSearch::LOB_DB);
+		self::$xs->index->setDb(XSSearch::LOG_DB);
 		self::$xs->index->clean();
 		self::$xs = null;
 	}
@@ -155,7 +169,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('测试', 'Xapian::Query(测试:(pos=1))'),
 			array('subject:测试', 'Xapian::Query(B测试:(pos=1))'),
 			array('subject:项目测试', 'Xapian::Query((B项目:(pos=1) AND B测试:(pos=2)))'),
-			array('subject2:测试', 'Xapian::Query((subject2:(pos=1) PHRASE 2 测试:(pos=2)))'),
+			array('subject2:测试', 'Xapian::Query((Zsubject2:(pos=1) AND 测试:(pos=2)))'),
+			array('subject2:Hello', 'Xapian::Query((subject2:(pos=1) PHRASE 2 hello:(pos=2)))'),
+			array('项目管理制度', 'Xapian::Query((项目:(pos=1) AND (管理制度:(pos=2) SYNONYM (管理:(pos=90) AND 制度:(pos=91)))))'),
+			array('subject:项目管理制度', 'Xapian::Query((B项目:(pos=1) AND (B管理制度:(pos=2) SYNONYM (B管理:(pos=90) AND B制度:(pos=91)))))'),
+			array('几句说明', 'Xapian::Query((几句:(pos=1) AND 说明:(pos=2)))'),
+			array('说明几句', 'Xapian::Query((说明:(pos=1) AND 几句:(pos=2)))'),
 		);
 	}
 
@@ -305,7 +324,6 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		$search->query = 'subject:项目测试 working';
 		$this->assertEquals(array('项目', '测试', 'working'), $search->terms());
-
 		$this->assertEquals(array('项目', 'working'), $search->terms('项目working'));
 	}
 
@@ -384,12 +402,95 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		sleep(2);
 		self::$xs->setScheme(XSFieldScheme::logger());
 		$search->reopen(true);
-		$docs = $search->setDb(XSSearch::LOB_DB)->search('php');
+		$docs = $search->setDb(XSSearch::LOG_DB)->search('php');
 		$search->setDb(null);
 		self::$xs->restoreScheme();
 		$this->assertEquals($docs[0]->total, 999);
 		$this->assertEquals($docs[1]->total, 2);
 		$this->assertEquals($docs[2]->total, 1);
+	}
+
+	public function testGetAllSynonyms()
+	{
+		$search = self::$xs->search; /* @var $search XSSearch */
+		$synonyms = $search->getAllSynonyms(0, 0, true);
+		$this->assertEquals(2, count($synonyms));
+		$this->assertEquals('项目', $synonyms['Zproject'][0]);
+		$this->assertEquals('项目', $synonyms['project'][0]);
+
+		$search->addDb('db2');
+		$synonyms = $search->getAllSynonyms(2);
+		$this->assertEquals(2, count($synonyms));
+		$synonyms = $search->getAllSynonyms(2, 3);
+		$this->assertEquals(1, count($synonyms));
+		$synonyms = $search->getAllSynonyms(2, 4);
+		$this->assertEquals(0, count($synonyms));
+
+		$synonyms = $search->getAllSynonyms();
+		$this->assertEquals('项目', $synonyms['project'][0]);
+		$this->assertEquals('有意思', $synonyms['hello world'][0]);
+		$this->assertEquals(4, count($synonyms));
+		$search->setDb(null);
+	}
+
+	public function testSearchSynonyms()
+	{
+		$search = self::$xs->search; /* @var $search XSSearch */
+		$search->setDb('db2');
+		
+		// test fuzzy multi query
+		$search->setFuzzy();
+		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
+		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');	
+		$search->setFuzzy(false);
+		
+		// test without synonyms
+		$queries = array(
+			'项目test' => 'Xapian::Query((项目:(pos=1) AND Ztest:(pos=2)))',
+			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND ZBtest:(pos=3)))',
+			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND Zhello:(pos=2) AND Zworld:(pos=3)))',
+			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND 迅搜:(pos=2)))',
+			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
+			'testing' => 'Xapian::Query(Ztest:(pos=1))',
+		);
+		foreach ($queries as $raw => $expect)
+		{
+			$this->testQuery($raw, $expect);
+		}		
+		
+		// test synonym query
+		$search->setAutoSynonyms();
+		$queries = array(
+			'项目test' => 'Xapian::Query((项目:(pos=1) AND (Ztest:(pos=2) SYNONYM quiz:(pos=79) SYNONYM 测试:(pos=80))))',
+			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND (ZBtest:(pos=3) SYNONYM Bquiz:(pos=80) SYNONYM B测试:(pos=81))))',
+			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND ((Zhello:(pos=2) AND Zworld:(pos=3)) SYNONYM 有意思:(pos=68))))',
+			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND (迅搜:(pos=2) SYNONYM xunsearch:(pos=90))))',
+			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
+			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',			
+		);
+		foreach ($queries as $raw => $expect)
+		{
+			$this->testQuery($raw, $expect);
+		}
+		
+		// test search result & highlight
+		$docs = $search->setAutoSynonyms(false)->search('项目test');
+		$this->assertEquals(0, count($docs));
+		$docs = $search->setAutoSynonyms(true)->search('subject:项目test');
+		$this->assertEquals(2, count($docs));
+		
+		// search with query
+		$docs = $search->setAutoSynonyms(true)->setFuzzy(true)->search('项目testing');
+		$this->assertEquals(1, count($docs));
+		$this->assertEquals('test和<em>Quiz</em>以及<em>测试</em>', $search->highlight('test和Quiz以及测试'));
+		
+		// default search
+		$docs = $search->setAutoSynonyms(true)->setFuzzy(false)->setQuery('hello world 项目')->search();
+		$this->assertEquals(1, count($docs));
+		$this->assertEquals('<em>有意思</em>的<em>项目</em>', $search->highlight('有意思的项目'));
+		
+		// restore db
+		$search->setDb(null);
 	}
 
 	public function testSetDb()

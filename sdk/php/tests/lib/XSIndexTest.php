@@ -58,16 +58,17 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 
 	public function testChange()
 	{
-		$search = $this->object->xs->search;		
+		$search = $this->object->xs->search;
 		// without primary key
 		try
 		{
 			$e = null;
 			$doc = new XSDocument;
-			$this->object->add($doc);			
+			$this->object->add($doc);
 		}
 		catch (XSException $e)
-		{			
+		{
+			
 		}
 		$this->assertInstanceOf('XSException', $e);
 		$this->assertEquals('Missing value of primarky key (FIELD:pid)', $e->getMessage());
@@ -75,31 +76,31 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		// Adding use default charset		
 		$doc = new XSDocument(self::$data_gbk);
 		$this->object->add($doc);
-		
+
 		// Adding use utf8 charset
 		$doc = new XSDocument(self::$data, 'utf-8');
 		$this->object->add($doc);
 		$this->object->flushIndex();
 		sleep(2);
-		
+
 		// test result
 		$search->setCharset('utf-8');
 		$this->assertEquals(2, $search->dbTotal);
 		$this->assertEquals(2, $search->count('pid:1234'));
 		$this->assertEquals(2, $search->count('subject:测试标题'));
-		
+
 		// test update
 		$this->assertTrue($this->object->flushIndex()); // nothing to flush
 		$doc->subject = 'none empty';
 		$this->object->update($doc);
-		$this->assertTrue($this->object->flushIndex());	// flushing
+		$this->assertTrue($this->object->flushIndex()); // flushing
 		$this->assertFalse($this->object->flushIndex()); // busy (false)
 		sleep(2);
 		$this->assertEquals(1, $search->reopen(true)->dbTotal);
 		$this->assertEquals(1, $search->count('pid:1234'));
 		$this->assertEquals(0, $search->count('subject:测试标题'));
 		$this->assertEquals(1, $search->count('subject:none'));
-		
+
 		// test del by pid
 		$doc->pid = 567;
 		$this->object->add($doc);
@@ -108,7 +109,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->object->flushIndex();
 		sleep(2);
 		$this->assertEquals(3, $search->reopen(true)->dbTotal);
-		
+
 		// del by pk
 		$this->object->del(567);
 		$this->object->del(array('1234'), 'pid');
@@ -118,23 +119,77 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(0, $search->count('pid:1234'));
 		$this->assertEquals(1, $search->count('pid:890'));
 	}
-	
+
 	public function testRebuild()
 	{
 		$search = $this->object->xs->search;
 		$doc = new XSDocument(self::$data_gbk);
 		$this->object->add($doc);
-		$this->object->add($doc);		
-		$this->object->flushIndex();		
+		$this->object->add($doc);
+		$this->object->flushIndex();
 		sleep(2);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
-		
+
 		$this->object->beginRebuild();
 		$this->object->add($doc);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
 		$this->object->endRebuild();
 		$this->object->flushIndex();
 		sleep(2);
-		$this->assertEquals(1, $search->reopen(true)->dbTotal);		
+		$this->assertEquals(1, $search->reopen(true)->dbTotal);
+	}
+
+	public function testSynonyms($buffer = false)
+	{
+		$index = $this->object;
+		$search = $this->object->xs->search;
+
+		// simple add synonyms
+		if ($buffer)
+			$index->openBuffer();
+		$index->addSynonym('foo', 'bar');
+		$index->addSynonym('FOO', 'Bra');
+		$index->addSynonym('Hello World', 'hi');
+		$index->addSynonym('检索', '搜索');
+		$index->addSynonym('search', '搜索');
+		if ($buffer)
+			$index->closeBuffer();
+		$index->flushIndex();
+		sleep(2);
+
+		$synonyms = $search->reopen(true)->getAllSynonyms(0, 0, true);
+		$this->assertArrayNotHasKey('FOO', $synonyms);
+		$this->assertArrayNotHasKey('Zhello world', $synonyms);
+		$this->assertArrayNotHasKey('Z检索', $synonyms);
+		$this->assertEquals('bar bra', implode(' ', $synonyms['foo']));
+		$this->assertEquals('Zbar Zbra', implode(' ', $synonyms['Zfoo']));
+		$this->assertEquals('hi', implode(' ', $synonyms['hello world']));
+		$this->assertEquals('搜索', implode(' ', $synonyms['检索']));
+		$this->assertEquals('搜索', implode(' ', $synonyms['Zsearch']));
+		$this->assertEquals('搜索', implode(' ', $synonyms['search']));
+
+		// simple del synonyms
+		if ($buffer)
+			$index->openBuffer();
+		$index->delSynonym('FOO', 'Bra');
+		$index->delSynonym('Hello World');
+		$index->delSynonym('检索', '搜索');
+		if ($buffer)
+			$index->closeBuffer();
+		$index->flushIndex();
+		sleep(2);
+
+		$synonyms = $search->reopen(true)->getAllSynonyms(0, 0, true);
+		$this->assertArrayNotHasKey('检索', $synonyms);
+		$this->assertArrayNotHasKey('hello world', $synonyms);
+		$this->assertEquals('bar', implode(' ', $synonyms['foo']));
+		$this->assertEquals('Zbar', implode(' ', $synonyms['Zfoo']));
+		$this->assertEquals('搜索', implode(' ', $synonyms['Zsearch']));
+		$this->assertEquals('搜索', implode(' ', $synonyms['search']));
+	}
+
+	public function testSynonyms2()
+	{
+		$this->testSynonyms(true);
 	}
 }
