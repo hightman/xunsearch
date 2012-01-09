@@ -10,6 +10,7 @@
 $prefix/sdk/php/util/Indexer.php --help
 ~~~
 
+
 主要参数和选项
 -------------
 
@@ -30,6 +31,10 @@ $prefix/sdk/php/util/Indexer.php --help
   * _-d|--db <..name..>_ 指定要更新的索引数据库名称，默认是名为 db 的库。
 
   * _--filter_ 指定数据过滤器，针对资深用户使用，在提交索引前可以处理一次数据。
+
+  * _--add-synonym=<raw1:synonym1[,raw2:synonym2]...>_ 添加同义词。
+
+  * _--del-synonym=<raw1[:synonym1[,raw2[:synonym2]]]...>_ 删除同义词。
 
 
 经典用法示例
@@ -209,6 +214,55 @@ class XSXyzFilter implements XSDataFilter
 
 > note: 由于我们使用 [parse_url][1] 解析 SQL 数据源连接参数，它并不支持用下划线作 scheme 。
 > 如果要直接使用 PDO 数据源，请把 dbtype 设为 pdo.xxx 而不是 pdo_xxx 。
+
+
+同义词管理
+----------
+
+通常每条记录包含“原词(标准词)“和”同义词”两个元素，同义词记录是和当前索引库绑定的，并非和项目绑定。
+如果您通过 [XSIndex::setDb] 修改了当前索引库名，那么您所进行的同义词变动将作用到该库上。
+
+#### 添加同义词 ####
+
+通过带参数的选项 `--add-synonym` 来实现，参数值为单条或多条同义词记录，每条记录之间用冒号(:)
+分隔原词和同义词，多条记录之间用逗号分割。您可以对同一个“原词”增加多个不同的“同义词”，
+如果库内已存在完全一致的记录，则指令不起作用也不会报错。用法如下：
+
+~~~
+# 给 search 增加同义词 find
+util/Indexer.php demo --add-synonym search:find
+
+# 再给 search 增加另一个同义词 seek
+util/Indexer.php demo --add-synonym search:seek
+
+# 给 "搜索" 增加 "检索" "查找" 两个同义词
+util/Indexer.php demo -add-synonym 搜索:检索,搜索:查找
+
+# 给 "Hello world" 增加同义词 "你好"，参数含空格请用引号包围
+util/Indexer.php demo --add-synonym "Hello world:你好"
+~~~
+
+#### 删除同义词 ####
+
+删除同义词作法和添加同义词很相似，只不过采用选项 `--del-synonym`，同时参数中的同义词可以
+省略表示删除该“原词”的所有同义词记录。用法如下：
+
+~~~
+# 删除 search 的全部同义词、同时删除 "搜索" 的同义词 "检索"
+util/Indexer.php demo --del-synonym search,搜索:检索
+~~~
+
+#### 浏览全部同义词 ####
+
+查看同义词列表的功能请参见 [Quest 搜索工具](util.Quest#ch2)
+
+
+> tip: 同义词功能是 *1.3.0* 版本引入的新功能，详情参见[同义词专题文档](special.synonym)。  
+> 通常**原词(标准词)**和**同义词**都必须是独立的词汇，也就是最小的索引单位。但对于纯英文字母**原词**，
+> 允许用空格连接多个单词，英文字母都会统一转换为**小写**。
+>
+> 单个英文原词会同时保存词根同义词记录。如：设置 `find` 是 _search_ 的同义词，那么检索 _searching_
+> 也会匹配包含 `finding` 或 `finds` 等同根词的结果。
 
 
 [1]: http://php.net/manual/en/function.parse-url.php

@@ -36,6 +36,8 @@ $prefix/sdk/php/util/Quest.php --help
 
   * _--show-query_ 在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
 
+  * _--synonym_ 启用自动同义词搜索，这依赖于您的同义词库设置
+
 经典用法示例
 -----------
 
@@ -60,5 +62,29 @@ util/Quest.php --related demo 测试
 # 查看 demo 项目上周的 5 条最热门搜索词
 util/Quest.php --hot=last --limit=5 demo
 ~~~
+
+查看同义词表
+------------
+
+使用 `--list-synonyms` 可以列出当前库的全部同义词记录，此选项不需要带参数。
+但特殊参数值 *stemmed* 表示同时列出隐藏的词根同义词。结合选项 `--limit` 
+可以设置返回的数量和偏移量，默认只返回前 100 个。例如：
+
+~~~
+# 默认查看当前库的前 100 个同义词记录
+util/Quest.php demo --list-synonyms 
+
+# 查看当前库第 6~10 条同义词记录
+util/Quest.php demo --list-synonyms --limit 5,5
+
+# 查看包含隐藏同义词根在内的记录
+util/Quest.php demo --list-synonyms=stemmed
+~~~
+
+> tip: 同义词功能是 *1.3.0* 版本引入的新功能，详情参见[同义词专题文档](special.synonym)。 
+> 添加、删除同义词的功能请参见 [Indexer 索引工具](util.Indexer#ch8) 
+>
+> 词根同义词是自动生成的，以大写字母 Z 开头，请勿试图进行删除
+
 
 <div class="revision">$Id$</div>
