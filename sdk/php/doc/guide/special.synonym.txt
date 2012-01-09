@@ -42,7 +42,7 @@
 管理同义词库
 ------------
 
-您可以通过 [XSIndex::addSynonym] 和 [XSInex::delSynonym] 来添加和删除同义词记录。
+您可以通过 [XSIndex::addSynonym] 和 [XSIndex::delSynonym] 来添加和删除同义词记录。
 多次调用这两个接口函数的时候支持使用[索引缓冲区](index.buffer)来提高效率。
 
 参数 `$raw` 是字符串，表示记录中的原词（标准词），`$synonym` 也是字符串，表示记录中的同义词，
