@@ -245,25 +245,34 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd)
 		string data;
 		int vno;
 		struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
-		Xapian::Document d = zarg->db->get_document(rd->docid);
-		Xapian::ValueIterator v = d.values_begin();
-
-		// send other fields (value)
-		while (v != d.values_end() && rc == CMD_RES_CONT)
+		try
 		{
-			vno = v.get_valueno();
-			data = *v++;
+			Xapian::Document d = zarg->db->get_document(rd->docid);
+			Xapian::ValueIterator v = d.values_begin();
+
+			// send other fields (value)
+			while (v != d.values_end() && rc == CMD_RES_CONT)
+			{
+				vno = v.get_valueno();
+				data = *v++;
+
+				cut_matched_string(data, vno, rd->docid, (struct search_zarg *) conn->zarg);
+				rc = conn_respond(conn, CMD_SEARCH_RESULT_FIELD, vno, data.data(), data.size());
+			}
+
+			// send data (body)
+			data = d.get_data();
+			vno = XS_DATA_VNO;
 
 			cut_matched_string(data, vno, rd->docid, (struct search_zarg *) conn->zarg);
 			rc = conn_respond(conn, CMD_SEARCH_RESULT_FIELD, vno, data.data(), data.size());
 		}
-
-		// send data (body)
-		data = d.get_data();
-		vno = XS_DATA_VNO;
-
-		cut_matched_string(data, vno, rd->docid, (struct search_zarg *) conn->zarg);
-		rc = conn_respond(conn, CMD_SEARCH_RESULT_FIELD, vno, data.data(), data.size());
+		catch (const Xapian::Error &e)
+		{
+			// ignore the error simply
+			log_printf("xapian ERROR: %s", e.get_msg().data());
+			rc = CMD_RES_CONT;
+		}
 	}
 	return rc;
 }

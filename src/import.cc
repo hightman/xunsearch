@@ -71,6 +71,13 @@ using std::string;
 #define	log_normal		if (~flag & FLAG_QUIET) log_printf
 #define	log_verbose		if (flag & FLAG_VERBOSE) log_printf
 
+/* xapian try block */
+#define	__TRY_FETCH_BEGIN__	try {
+#define	__TRY_FETCH_END__	} catch (const Xapian::Error &e) { \
+	log_printf("xapian ERROR: %s", e.get_msg().data()); \
+	rc = FETCH_DIRTY; \
+}
+
 /**
  * Show version information
  */
@@ -418,6 +425,9 @@ static int doc_fetch()
 	size = lsize = 0;
 	buf = NULL;
 
+	// add try block for debugging
+	__TRY_FETCH_BEGIN__
+
 	// TODO: check synonyms cmd
 	if (cmd.cmd == CMD_INDEX_SYNONYMS && term != NULL)
 	{
@@ -668,6 +678,7 @@ static int doc_fetch()
 		log_verbose("~skip to update/add the document (ID:%s, SKIP_LEFT:%d)",
 			term == NULL ? "NULL" : term, num_skip - total - 1);
 	}
+	__TRY_FETCH_END__
 
 doc_end:
 	if (buf != NULL) free(buf);
