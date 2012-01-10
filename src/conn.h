@@ -134,6 +134,12 @@ void conn_server_set_timeout(int sec);
 /* set conn server running as multi-threads supported */
 void conn_server_set_multi_threads();
 
+/* get number of all accepted request for the server */
+int conn_server_get_num_accept();
+
+/* set the max number of request to be processed */
+void conn_server_set_max_accept(int max_accept);
+
 /* push-back the conn event to listening thread */
 void conn_server_push_back(XS_CONN *conn);
 

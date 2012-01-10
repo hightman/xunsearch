@@ -38,6 +38,8 @@ struct xs_server
 	struct event listen_ev;
 	struct event pipe_ev;
 	struct timeval tv; // timeout of listening socket
+	int max_accept; // max accept number for the server
+	int num_accept; // current accepted socket number
 
 	zcmd_exec_t zcmd_handler; // called to execute zcmd
 	void (*pause_handler)(XS_CONN *); // called to run external task
@@ -716,6 +718,7 @@ static void server_ev_cb(int fd, short event, void *arg)
 		{
 			XS_CONN *conn;
 
+			conn_server.num_accept++;
 			log_printf("new connection built (SOCKET:%d, FROM:%s)", sock, inet_ntoa(sin.sin_addr));
 			conn = (XS_CONN *) malloc(sizeof(XS_CONN));
 			log_debug("malloc(%d), addr: %p", sizeof(XS_CONN), conn);
@@ -742,7 +745,14 @@ static void server_ev_cb(int fd, short event, void *arg)
 		}
 		// put back the event if necessary
 		if ((conn_server.flag & (CONN_SERVER_STOPPED | CONN_SERVER_TIMEOUT)) == CONN_SERVER_TIMEOUT)
+		{
 			event_add(&conn_server.listen_ev, &conn_server.tv);
+			if (conn_server.max_accept > 0 && conn_server.num_accept >= conn_server.max_accept)
+			{
+				log_printf("reach max accept number[%d], shutdown gracefully", conn_server.max_accept);
+				conn_server_push_back(NULL);
+			}
+		}
 	}
 
 	// timeout event
@@ -846,6 +856,22 @@ void conn_server_set_timeout(int sec)
 void conn_server_set_multi_threads()
 {
 	conn_server.flag |= CONN_SERVER_THREADS;
+}
+
+/**
+ * get number of all accepted request for the server
+ */
+int conn_server_get_num_accept()
+{
+	return conn_server.num_accept;
+}
+
+/**
+ * set the max number of request to be processed
+ */
+void conn_server_set_max_accept(int max_accept)
+{
+	conn_server.max_accept = max_accept > 0 ? max_accept : 0;
 }
 
 /**

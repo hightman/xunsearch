@@ -58,9 +58,11 @@
 #define	FLAG_SIG_EXIT_EXCEPTION	0x0400
 #define	FLAG_SIG_CHILD			0x1000
 #define	FLAG_SIG_RELOAD			0x2000
+#define	FLAG_SIG_ALARM			0x4000
+#define	FLAG_SIG_TSTP			0x8000
 
 #define	RESET_FLAG_SIG()		main_flag &= ~FLAG_SIG_MASK
-#define	CHECK_FLAG_SIG(x)		main_flag & x
+#define	CHECK_FLAG_SIG(x)		main_flag & FLAG_SIG_##x
 
 /**
  * Global variables
@@ -78,7 +80,13 @@ Xapian::SimpleStopper stopper;
 /**
  * Local static variables
  */
-static pid_t * volatile worker_pids;
+typedef struct
+{
+	pid_t pid;
+	time_t chrono; // born time
+} worker_t;
+
+static worker_t * volatile worker_pids;
 static volatile int main_flag;
 static char *prog_name;
 static int worker_num, listen_sock;
@@ -228,6 +236,9 @@ static void worker_start()
 	conn_server_set_zcmd_handler(worker_zcmd_exec);
 	conn_server_set_pause_handler(worker_submit_task);
 	conn_server_set_timeout_handler(worker_server_timeout);
+#ifdef MAX_WORKER_ACCEPT
+	conn_server_set_max_accept(MAX_WORKER_ACCEPT);
+#endif
 	conn_server_start(listen_sock);
 }
 
@@ -343,9 +354,9 @@ void signal_child(pid_t pid, int status)
 
 		for (i = 1; i <= worker_num; i++)
 		{
-			if (worker_pids[i] == pid)
+			if (worker_pids[i].pid == pid)
 			{
-				worker_pids[i] = 0;
+				worker_pids[i].pid = 0;
 				break;
 			}
 		}
@@ -366,7 +377,7 @@ void signal_int()
 		main_flag |= FLAG_SIG_EXIT_GRACEFUL;
 	else
 	{
-		// BUG: signal received before conn server become ready
+		// FIXME: signal received before conn server become ready
 		worker_shutdown();
 	}
 }
@@ -376,9 +387,22 @@ void signal_int()
  */
 void signal_reload(int sig)
 {
-	log_printf("caught reload signal[%d], but nothing to do", sig);
+	if (sig == SIGHUP)
+		log_printf("caught reload signal[%d], but nothing to do", sig);
 	if (IS_MASTER())
-		main_flag |= FLAG_SIG_RELOAD;
+	{
+		if (sig == SIGTSTP)
+			main_flag |= FLAG_SIG_TSTP;
+		else if (sig == SIGALRM)
+			main_flag |= FLAG_SIG_ALARM;
+		else
+			main_flag |= FLAG_SIG_RELOAD;
+	}
+	else if (sig == SIGTSTP)
+	{
+		// show request number on worker process
+		log_printf("accepted request number (NUM:%d)", conn_server_get_num_accept());
+	}
 }
 
 #ifdef __cplusplus
@@ -424,7 +448,8 @@ static void spawn_worker(int idx, sigset_t *sigmask)
 	else
 	{
 		// parent, just save the pid
-		worker_pids[idx] = pid;
+		worker_pids[idx].pid = pid;
+		time(&worker_pids[idx].chrono);
 		log_printf("succesful to spawn child worker[%d] process (PID:%d)", idx, pid);
 	}
 }
@@ -589,15 +614,15 @@ int main(int argc, char *argv[])
 	// init global variables
 	// TODO: check malloc return value & mm_global?
 	log_debug("init global states");
-	cc = sizeof(pid_t) * (worker_num + 1);
-	worker_pids = (pid_t *) malloc(cc);
+	cc = sizeof(worker_t) * (worker_num + 1);
+	worker_pids = (worker_t *) malloc(cc);
 	memset(worker_pids, 0, cc);
 
 	G_INIT(msize);
 	G_VAR_ALLOC(user_base, void *);
 	xs_user_init();
 	main_flag |= FLAG_G_INITED;
-	
+
 	// init the py_dict
 	py_dict_load("etc/py.xdb");
 
@@ -638,7 +663,10 @@ int main(int argc, char *argv[])
 	// master ready
 	log_setid("~master");
 	setproctitle("master");
-	log_printf("search server is ready for waiting system signal (WORKER_NUM:%d)", worker_num);
+	log_printf("ready, waiting for system signal (WORKER_NUM:%d)", worker_num);
+
+	// setitimer
+	alarm(300);
 
 	// loop to wait signals
 	while (1)
@@ -647,32 +675,77 @@ int main(int argc, char *argv[])
 		sigsuspend(&oldmask);
 
 		// check signal flag
-		if (CHECK_FLAG_SIG(FLAG_SIG_CHILD))
+		if (CHECK_FLAG_SIG(CHILD))
 		{
 			// respawn died worker
 			for (cc = 1; cc <= worker_num; cc++)
 			{
-				if (worker_pids[cc] == 0)
+				if (worker_pids[cc].pid == 0)
 					spawn_worker(cc, &oldmask);
 			}
 		}
-		else if (CHECK_FLAG_SIG(FLAG_SIG_EXIT))
+		else if (CHECK_FLAG_SIG(TSTP))
+		{
+#if defined(MAX_WORKER_LIFE) && MAX_WORKER_LIFE > 0
+			// check to log worker info
+			for (cc = 1; cc <= worker_num; cc++)
+			{
+				if (worker_pids[cc].pid == 0)
+					msize = 0;
+				else
+				{
+					msize = (int) (time(NULL) - worker_pids[cc].chrono);
+					msize = MAX_WORKER_LIFE - msize;
+					kill(worker_pids[cc].pid, SIGTSTP);
+				}
+				log_printf("worker[%d] info (PID:%d, LIFE:%d'%d\")",
+					cc, worker_pids[cc].pid, msize / 60, msize % 60);
+			}
+#endif
+		}
+		else if (CHECK_FLAG_SIG(ALARM))
+		{
+			// check to kill some workers
+			for (cc = 1; cc <= worker_num; cc++)
+			{
+				if (worker_pids[cc].pid == 0)
+					continue;
+				if (worker_pids[cc].chrono == 0)
+				{
+					kill(worker_pids[cc].pid, SIGKILL);
+					log_printf("worker[%d] early reach the maximum life time, kill it", cc);
+				}
+				else
+				{
+					msize = (int) (time(NULL) - worker_pids[cc].chrono);
+					if (msize > MAX_WORKER_LIFE)
+					{
+						kill(worker_pids[cc].pid, SIGINT);
+						worker_pids[cc].chrono = 0;
+						log_printf("worker[%d] reach the maximum life time, shutdown it", cc);
+					}
+				}
+			}
+			// set next timer
+			alarm(300);
+		}
+		else if (CHECK_FLAG_SIG(EXIT))
 		{
 			// exit by signal
-			int sig = (CHECK_FLAG_SIG(FLAG_SIG_EXIT_GRACEFUL)) ? SIGINT : SIGTERM;
+			int sig = (CHECK_FLAG_SIG(EXIT_GRACEFUL)) ? SIGINT : SIGTERM;
 
 			// now should allow child reaper signal (blocked when sigsuspend() return)
 			sigprocmask(SIG_UNBLOCK, &tmpmask, NULL);
 			log_printf("broadcast exit signal[%d] to all worker processes", sig);
 			for (cc = 1; cc <= worker_num; cc++)
 			{
-				if (worker_pids[cc] <= 0)
+				if (worker_pids[cc].pid <= 0)
 					continue;
-				if (kill(worker_pids[cc], sig) == 0)
+				if (kill(worker_pids[cc].pid, sig) == 0)
 					main_flag |= FLAG_HAS_CHILD;
 				else
 				{
-					worker_pids[cc] = 0;
+					worker_pids[cc].pid = 0;
 					log_printf("give up to send signal[%d] to worker[%d] (ERROR:%s)",
 						sig, cc, strerror(errno));
 				}
@@ -685,7 +758,7 @@ int main(int argc, char *argv[])
 				main_flag ^= FLAG_HAS_CHILD;
 				for (cc = 1; cc <= worker_num; cc++)
 				{
-					if (worker_pids[cc] > 0)
+					if (worker_pids[cc].pid > 0)
 					{
 						main_flag |= FLAG_HAS_CHILD;
 						break;
@@ -699,8 +772,8 @@ int main(int argc, char *argv[])
 				log_printf("timeout to wait, forced to send SIGKILL to lived workers");
 				for (cc = 1; cc <= worker_num; cc++)
 				{
-					if (worker_pids[cc] > 0)
-						kill(worker_pids[cc], SIGKILL);
+					if (worker_pids[cc].pid > 0)
+						kill(worker_pids[cc].pid, SIGKILL);
 				}
 			}
 
@@ -711,7 +784,7 @@ int main(int argc, char *argv[])
 	}
 
 	// exit normally or gracefully
-	if (!CHECK_FLAG_SIG(FLAG_SIG_EXIT_EXCEPTION))
+	if (!CHECK_FLAG_SIG(EXIT_EXCEPTION))
 		main_flag |= FLAG_NO_ERROR;
 
 main_end:

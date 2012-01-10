@@ -15,6 +15,10 @@
 #define	MAX_THREAD_NUM			32			// max number of work threads
 #define	MAX_WORKER_TIME			60			// unit: seconds (< socket_timeout of client)
 
+// worker process protection
+#define	MAX_WORKER_ACCEPT		10000		// 每个工作进程在处理多少个请求后自杀，０不自杀
+#define	MAX_WORKER_LIFE			3600		// 每个工作进程的最大存活时间
+
 // NOTE: cache 的锁定设计可能会导致 bug
 // 当 cache 命中并且操作的时候有可能被其它线程/进程删除, 这种情况下的行为无法确定
 // 根据 LRU 的策略, 一取得数据就提到最前, 发生的机率不大.

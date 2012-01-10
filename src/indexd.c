@@ -566,6 +566,11 @@ void signal_int()
  */
 void signal_reload(int sig)
 {
+	if (sig == SIGTSTP)
+	{
+		log_printf("accepted request number (NUM:%d)", conn_server_get_num_accept());
+		return;
+	}
 	log_printf("caught reload signal[%d], but nothing to do", sig);
 }
 
