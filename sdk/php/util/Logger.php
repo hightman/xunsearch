@@ -91,7 +91,7 @@ if (!file_exists($ini))
 
 try
 {
-	$db = XSSearch::LOB_DB;
+	$db = XSSearch::LOG_DB;
 	$log_ready = false;
 	$xs = new XS($ini);
 	$xs->setScheme(XSFieldScheme::logger());

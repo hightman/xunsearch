@@ -292,7 +292,7 @@ cd ..
 echo
 echo "+=================================================+"
 echo "| Installation completed successfully, Thanks you |"
-echo "| 安装成功，感谢谢选择和使用 xunsearch            |"
+echo "| 安装成功，感谢选择和使用 xunsearch              |"
 echo "+-------------------------------------------------+"
 echo "| 说明和注意事项：                                |"
 echo "| 1. 开启/重新开启 xunsearch 服务程序，命令如下： |"
