@@ -82,11 +82,8 @@ void conn_free_cmds(XS_CONN *conn)
 	while ((cmds = conn->zhead) != NULL)
 	{
 		conn->zhead = cmds->next;
-
-		log_debug_conn("free(%d), addr: %p", XS_CMD_SIZE(cmds->cmd), cmds->cmd);
-		free(cmds->cmd);
-		log_debug_conn("free(%d), addr: %p", sizeof(XS_CMDS), cmds);
-		free(cmds);
+		debug_free(cmds->cmd, XS_CMD_SIZE(cmds->cmd));
+		debug_free(cmds, sizeof(XS_CMDS));
 	}
 	conn->ztail = conn->zhead;
 }
@@ -102,7 +99,7 @@ int conn_data_send(XS_CONN *conn, void *buf, int size)
 	// forced to flush
 	if (buf == NULL)
 	{
-		log_debug_conn("flush output data (SIZE:%d)", conn->snd_size);
+		log_debug_conn("flush transfer data (SIZE:%d)", conn->snd_size);
 		if (conn->snd_size == 0)
 			return 0;
 		buf = conn->snd_buf;
@@ -184,29 +181,29 @@ int conn_quit(XS_CONN *conn, int res)
 	switch (res)
 	{
 		case CMD_RES_CLOSED:
-			log_conn("quit for connection closed by client");
+			log_conn("quit, closed by client");
 			break;
 		case CMD_RES_IOERR:
-			log_conn("quit for io error: %s(#%d)", strerror(errno), errno);
+			log_conn("quit, IO error (ERROR:%s)", strerror(errno));
 			break;
 		case CMD_RES_NOMEM:
-			log_conn("quit for memory not enough");
+			log_conn("quit, out of memory");
 			break;
 		case CMD_RES_TIMEOUT:
-			log_conn("quit for io timeout: %d sec", (int) conn->tv.tv_sec);
+			log_conn("quit, IO timeout (TIMEOUT:%d)", (int) conn->tv.tv_sec);
 			break;
 		case CMD_RES_STOPPED:
-			log_conn("quit for accept server stopped");
+			log_conn("quit, server stopped");
 			break;
 		case CMD_RES_QUIT:
-			log_conn("quit normally");
+			log_conn("quit, normally");
 			break;
 		case CMD_RES_ERROR:
-			log_conn("quit for error code: %d", (int) conn->last_res);
+			log_conn("quit, result error (CODE:%d)", (int) conn->last_res);
 			break;
 		case CMD_RES_OTHER:
 		default:
-			log_conn("quit for unknown reason, res: %d", res);
+			log_conn("quit, unknown reason (RES:%d)", res);
 			break;
 	}
 
@@ -216,19 +213,15 @@ int conn_quit(XS_CONN *conn, int res)
 	// check to free zcmd
 	if (conn->zcmd != NULL && (conn->flag & CONN_FLAG_ZMALLOC))
 	{
-		log_debug_conn("free(%d), addr: %p", XS_CMD_SIZE(conn->zcmd), conn->zcmd);
-		free(conn->zcmd);
+		debug_free(conn->zcmd, XS_CMD_SIZE(conn->zcmd));
 	}
 
 	// check to free cmds group
 	conn_free_cmds(conn);
-
 	// close socket & free-self
 	close(CONN_FD());
 
-	log_debug("free(%d), addr: %p", sizeof(XS_CONN), conn);
-	free(conn);
-
+	debug_free(conn, sizeof(XS_CONN));
 	conn_server.num_burst--;
 	return CMD_RES_QUIT;
 }
@@ -242,12 +235,10 @@ XS_CONN *conn_new(int sock)
 {
 	XS_CONN *conn;
 
-	conn = (XS_CONN *) malloc(sizeof(XS_CONN));
-	log_debug("malloc(%d), addr: %p", sizeof(XS_CONN), conn);
-
+	debug_malloc(conn, sizeof(XS_CONN), XS_CONN);
 	if (conn == NULL)
 	{
-		log_printf("out of memory when create new connection (SOCK:%d)", sock);
+		log_printf("not enough memory to create a new connection (SOCK:%d)", sock);
 		close(sock);
 		return NULL;
 	}
@@ -260,7 +251,7 @@ XS_CONN *conn_new(int sock)
 		fcntl(sock, F_SETFL, O_NONBLOCK);
 
 		// put to event list
-		log_debug("init the connection event & add to loop (CONN:%p)", conn);
+		log_debug_conn("initialization and add to the event loop (CONN:%p)", conn);
 		memset(conn, 0, sizeof(XS_CONN));
 		conn->tv.tv_sec = CONN_TIMEOUT;
 		event_set(&conn->ev, sock, EV_READ, client_ev_cb, conn);
@@ -298,7 +289,7 @@ int conn_data_recv(XS_CONN *conn)
 recv_try:
 	if ((n = recv(CONN_FD(), buf, len, 0)) < 0)
 	{
-		log_debug_conn("failed to recv(%d) (ERRNO:%d)", len, errno);
+		log_debug_conn("failed to recv data (SIZE:%d, ERRNO:%d)", len, errno);
 		/* In theory, there should not be EAGAIN */
 		if (errno == EINTR || errno == EAGAIN)
 		{
@@ -422,7 +413,7 @@ static int conn_zcmd_first(XS_CONN *conn)
 	// check project
 	if (conn->user == NULL && cmd->cmd != CMD_USE && cmd->cmd != CMD_QUIT && cmd->cmd != CMD_TIMEOUT)
 	{
-		log_conn("do not specify a project (CMD:%d)", cmd->cmd);
+		log_conn("project not specified (CMD:%d)", cmd->cmd);
 		return XS_CMD_DONT_ANS(cmd) ? CMD_RES_CONT : CONN_RES_ERR(NOPROJECT);
 	}
 
@@ -465,7 +456,7 @@ static int conn_zcmd_first(XS_CONN *conn)
 	{
 		// set timeout
 		conn->tv.tv_sec = XS_CMD_ARG(cmd);
-		log_debug_conn("set new timeout (SECOND:%d)", conn->tv.tv_sec);
+		log_debug_conn("timeout modified (SECOND:%d)", conn->tv.tv_sec);
 		rc = CONN_RES_OK(TIMEOUT_SET);
 	}
 	return rc;
@@ -483,15 +474,12 @@ static int conn_zcmd_save(XS_CONN *conn)
 	// change RETURN value to CONT
 	log_debug_conn("save the command into CMDS (CMD:%d)", conn->zcmd->cmd);
 
-	cmds = (XS_CMDS *) malloc(sizeof(XS_CMDS));
-	log_debug_conn("malloc(%d), addr: %p", sizeof(XS_CMDS), cmds);
-
+	debug_malloc(cmds, sizeof(XS_CMDS), XS_CMDS);
 	if (cmds == NULL)
 	{
 
 		log_conn("unable to allocate memory for CMDS (SIZE:%d)", sizeof(XS_CMDS));
 		return CMD_RES_NOMEM;
-
 	}
 
 	cmds->next = NULL;
@@ -504,17 +492,13 @@ static int conn_zcmd_save(XS_CONN *conn)
 	else
 	{
 		// copy zcmd
-		cmds->cmd = (XS_CMD *) malloc(XS_CMD_SIZE(conn->zcmd));
-		log_debug_conn("malloc(%d), addr: %p", XS_CMD_SIZE(conn->zcmd), cmds->cmd);
-
+		debug_malloc(cmds->cmd, XS_CMD_SIZE(conn->zcmd), XS_CMD);
 		if (cmds->cmd != NULL)
 			memcpy(cmds->cmd, conn->zcmd, XS_CMD_SIZE(conn->zcmd));
 		else
 		{
-
-			log_conn("unable to allocate memory for CMDS->CMD { %d } (SIZE:%d)", conn->zcmd->cmd, XS_CMD_SIZE(conn->zcmd));
-			log_debug_conn("free(%d), addr: %p", sizeof(XS_CMDS), cmds);
-			free(cmds);
+			log_conn("unable to allocate memory for CMDS->cmd (CMD:%d, SIZE:%d)", conn->zcmd->cmd, XS_CMD_SIZE(conn->zcmd));
+			debug_free(cmds, sizeof(XS_CMDS));
 			return CMD_RES_NOMEM;
 		}
 	}
@@ -546,12 +530,12 @@ int conn_zcmd_exec(XS_CONN *conn, zcmd_exec_t func)
 		if (handlers[i] == NULL)
 			continue;
 		rc = (*handlers[i])(conn);
-		log_debug_conn("zcmd execution (CMD:%d, FUNC[%d]:%p, RC:0x%04x)",
+		log_debug_conn("zcmd executing (CMD:%d, FUNC[%d]:%p, RET:0x%04x)",
 			conn->zcmd->cmd, i, handlers[i], rc);
 		if (rc != CMD_RES_NEXT)
 			break;
 	}
-	log_debug_conn("finish executing (CMD:%d, RETURN:0x%04x)", conn->zcmd->cmd, rc);
+	log_debug_conn("zcmd execution finished (CMD:%d, RET:0x%04x)", conn->zcmd->cmd, rc);
 
 	// check special flag
 	if (rc & CMD_RES_SAVE) // save zcmd into cmds chain
@@ -574,8 +558,7 @@ int conn_zcmd_exec(XS_CONN *conn, zcmd_exec_t func)
 	if (conn->flag & CONN_FLAG_ZMALLOC)
 	{
 		conn->flag ^= CONN_FLAG_ZMALLOC;
-		log_debug_conn("free(%d), addr: %p", XS_CMD_SIZE(conn->zcmd), conn->zcmd);
-		free(conn->zcmd);
+		debug_free(conn->zcmd, XS_CMD_SIZE(conn->zcmd));
 	}
 	conn->zcmd = NULL;
 
@@ -602,8 +585,8 @@ int conn_cmds_parse(XS_CONN *conn, zcmd_exec_t func)
 			off = (conn->zcmd_left > conn->rcv_size ? conn->rcv_size : conn->zcmd_left);
 			memcpy(buf, conn->rcv_buf, off);
 
-			log_debug_conn("copy rcv_buf to zcmd, rcv_size: %d, zcmd_left: %d, len: %d",
-				conn->rcv_size, conn->zcmd_left, off);
+			log_debug_conn("copy rcv_buf to zcmd (SIZE:%d, RCV_SIZE:%d, ZCMD_LEFT:%d)",
+				off, conn->rcv_size, conn->zcmd_left);
 			conn->zcmd_left -= off;
 		}
 
@@ -619,7 +602,7 @@ int conn_cmds_parse(XS_CONN *conn, zcmd_exec_t func)
 		conn->zcmd = (XS_CMD *) (conn->rcv_buf + off);
 		off += sizeof(XS_CMD);
 
-		log_debug_conn("got command {cmd:%d, arg1:%d, arg2:%d, blen1:%d, blen:%d}",
+		log_debug_conn("get a complete command {cmd:%d, arg1:%d, arg2:%d, blen1:%d, blen:%d}",
 			conn->zcmd->cmd, conn->zcmd->arg1, conn->zcmd->arg2,
 			conn->zcmd->blen1, conn->zcmd->blen);
 
@@ -628,9 +611,7 @@ int conn_cmds_parse(XS_CONN *conn, zcmd_exec_t func)
 		{
 			XS_CMD *cmd;
 
-			cmd = (XS_CMD *) malloc(XS_CMD_SIZE(conn->zcmd));
-			log_debug_conn("malloc(%d), addr: %p", XS_CMD_SIZE(conn->zcmd), cmd);
-
+			debug_malloc(cmd, XS_CMD_SIZE(conn->zcmd), XS_CMD);
 			if (cmd == NULL)
 			{
 				log_conn("unable to allocate memory for ZCMD (CMD:%d, SIZE:%d)",
@@ -683,7 +664,7 @@ static void client_ev_cb(int fd, short event, void *arg)
 	{
 		int rc = CONN_RECV();
 
-		log_debug_conn("data received (SIZE:%d)", rc);
+		log_debug_conn("incoming data received (SIZE:%d)", rc);
 		if (rc < 0)
 			rc = CMD_RES_IOERR;
 		else if (rc == 0)
@@ -691,13 +672,13 @@ static void client_ev_cb(int fd, short event, void *arg)
 		else
 		{
 			rc = conn_cmds_parse(conn, NULL);
-			log_debug_conn("conn_cmds_parse() executed (RETURN:0x%04x)", rc);
+			log_debug_conn("command parsing and execution is completed (RET:0x%04x)", rc);
 		}
 		switch (rc)
 		{
 			case CMD_RES_PAUSE:
 				// task should start safely from HERE
-				log_debug_conn("connection pause to run async task");
+				log_debug_conn("connection paused to run other async task");
 				if (conn_server.pause_handler != NULL)
 					(*conn_server.pause_handler)(conn);
 				break;
@@ -721,10 +702,7 @@ static void client_ev_cb(int fd, short event, void *arg)
 
 	// timeout event
 	if (event & EV_TIMEOUT)
-	{
-		log_debug_conn("client io timeout");
 		CONN_QUIT(TIMEOUT);
-	}
 }
 
 /**
@@ -733,26 +711,25 @@ static void client_ev_cb(int fd, short event, void *arg)
  */
 static void server_ev_cb(int fd, short event, void *arg)
 {
+	log_debug("executing server event callback (EVENT:0x%04x)", event);
 	// read event
 	if (event & EV_READ)
 	{
 		struct sockaddr_in sin;
 		int sock, val = sizeof(sin);
 
-		log_debug("try to accept new connection in listen thread");
 		sock = accept(fd, (struct sockaddr *) &sin, (socklen_t *) & val);
+		log_debug("try to accept new connection (RET:%d)", sock);
 		if (sock < 0)
 		{
-			log_debug("accept() failed (ERROR:%s)", strerror(errno));
 			if (errno != EINTR && errno != EWOULDBLOCK)
 			{
 				event_del(&conn_server.listen_ev);
-				if (conn_server.flag & CONN_SERVER_THREADS)
-					event_del(&conn_server.pipe_ev);
+				event_del(&conn_server.pipe_ev);
 
 				conn_server.flag |= CONN_SERVER_STOPPED;
 				close(fd);
-				log_printf("accept() failed, server stop gracefully (ERROR:%s)", strerror(errno));
+				log_printf("accept() failed, shutdown gracefully (ERROR:%s)", strerror(errno));
 			}
 		}
 		else
@@ -760,7 +737,7 @@ static void server_ev_cb(int fd, short event, void *arg)
 			conn_server.num_accept++;
 			if (conn_new(sock) != NULL)
 			{
-				log_printf("new connection built (SOCK:%d, IP:%s, BURST: %d)",
+				log_printf("new connection (SOCK:%d, IP:%s, BURST:%d)",
 					sock, inet_ntoa(sin.sin_addr), conn_server.num_burst);
 			}
 		}
@@ -770,7 +747,7 @@ static void server_ev_cb(int fd, short event, void *arg)
 			event_add(&conn_server.listen_ev, &conn_server.tv);
 			if (conn_server.max_accept > 0 && conn_server.num_accept >= conn_server.max_accept)
 			{
-				log_printf("reach max accept number[%d], shutdown gracefully", conn_server.max_accept);
+				log_printf("reach the max accept number[%d], shutdown gracefully", conn_server.max_accept);
 				conn_server_push_back(NULL);
 			}
 		}
@@ -793,20 +770,19 @@ static void server_ev_cb(int fd, short event, void *arg)
 static void pipe_ev_cb(int fd, short event, void *arg)
 {
 	log_debug("executing pipe event callback (EVENT:0x%04x)", event);
-
 	if (event & EV_READ)
 	{
 		XS_CONN *conn;
 
 		while (read(fd, &conn, sizeof(XS_CONN *)) == sizeof(XS_CONN *))
 		{
-			log_debug("pull connection from pipe in listening thread (CONN:%p)", conn);
+			log_debug("pull a connection from pipe (CONN:%p)", conn);
 			if (conn == NULL)
 			{
 				if (conn_server.flag & CONN_SERVER_STOPPED)
 					continue;
 
-				log_printf("NULL connection pointer received, server quit gracefully");
+				log_printf("get NULL pointer from pipe, shutdown gracefully");
 				event_del(&conn_server.listen_ev);
 				event_del(&conn_server.pipe_ev);
 
@@ -822,6 +798,7 @@ static void pipe_ev_cb(int fd, short event, void *arg)
 					CONN_QUIT(STOPPED);
 				else
 				{
+					log_debug("revival the paused connection (CONN:%p)", conn);
 					CONN_EVENT_ADD();
 				}
 			}
@@ -903,7 +880,7 @@ void conn_server_set_max_accept(int max_accept)
 void conn_server_push_back(XS_CONN *conn)
 {
 	// TODO: check pipe_fd?
-	log_debug("push socket back to listening thread (CONN:%p)", conn);
+	log_debug("push connection back to pipe (CONN:%p)", conn);
 
 	if (conn_server.flag & CONN_SERVER_STOPPED)
 	{
@@ -961,7 +938,7 @@ int conn_server_listen(const char *bind_path)
 			host[sock_len] = '\0';
 		}
 	}
-	log_debug("start to bind server (BIND:%s, PORT:%d)", bind_path, port);
+	log_debug("start to bind listen server (BIND:%s, PORT:%d)", bind_path, port);
 
 	if (port <= 0)
 	{
@@ -970,7 +947,7 @@ int conn_server_listen(const char *bind_path)
 
 		if (path_len >= sizeof(sa.sun.sun_path)) // path too long.
 		{
-			log_printf("local path too long to bind, len: %d, maxlen: %d",
+			log_printf("local path too long to bind (LEN:%d, MAXLEN:%d)",
 				path_len, sizeof(sa.sun.sun_path));
 			return -1;
 		}
@@ -999,11 +976,11 @@ int conn_server_listen(const char *bind_path)
 	}
 
 	// create the socket
-	log_debug("create listen socket & set options");
 	sock = socket(sa.sa.sa_family, SOCK_STREAM, 0);
+	log_debug("create listen socket (SOCK:%d)", sock);
 	if (sock < 0)
 	{
-		log_printf("socket() failed, error: %s(#%d)", strerror(errno), errno);
+		log_printf("socket() failed (ERROR:%s)", strerror(errno));
 		return -1;
 	}
 
@@ -1016,11 +993,11 @@ int conn_server_listen(const char *bind_path)
 	ld.l_onoff = ld.l_linger = 0;
 	setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *) &ld, sizeof(ld));
 
-	log_debug("bind the socket & start listening (SOCKET:%d)", sock);
+	log_debug("bind and listen the socket (SOCK:%d)", sock);
 	if ((bind(sock, (struct sockaddr *) &sa, sock_len) < 0) ||
 		(listen(sock, DEFAULT_BACKLOG) < 0))
 	{
-		log_printf("bind() or listen() failed, error: %s(#%d)", strerror(errno), errno);
+		log_printf("bind() or listen() failed (ERROR:%s)", strerror(errno));
 		close(sock);
 		sock = -1;
 	}
@@ -1036,8 +1013,15 @@ void conn_server_start(int listen_sock)
 {
 	short listen_event = (EV_READ | EV_PERSIST);
 
+	// check socket
+	if (listen_sock < 0)
+	{
+		log_debug("invalid listen socket (SOCK:%d)", listen_sock);
+		return;
+	}
+
 	// initlize the conn_server flag
-	log_debug("init the server events");
+	log_debug("init the listen events");
 	event_init();
 	if (conn_server.timeout_handler != NULL && conn_server.tv.tv_sec > 0)
 	{
@@ -1046,11 +1030,6 @@ void conn_server_start(int listen_sock)
 	}
 
 	// listen event
-	if (listen_sock < 0)
-	{
-		log_debug("invalid listen socket (SOCKET:%d)", listen_sock);
-		return;
-	}
 	fcntl(listen_sock, F_SETFL, O_NONBLOCK);
 	event_set(&conn_server.listen_ev, listen_sock, listen_event, server_ev_cb, NULL);
 
@@ -1058,7 +1037,7 @@ void conn_server_start(int listen_sock)
 	log_debug("init the pipe event");
 	if (pipe(pipe_fd) != 0)
 	{
-		log_printf("pipe() failed, error: %s(#%d)", strerror(errno), errno);
+		log_printf("pipe() failed (ERROR:%s)", strerror(errno));
 		close(listen_sock);
 		return;
 	}

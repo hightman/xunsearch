@@ -419,7 +419,7 @@ static void spawn_worker(int idx, sigset_t *sigmask)
 	pid_t pid;
 
 	if ((pid = fork()) < 0)
-		log_printf("failed to spawn child worker process (INDEX:%d, ERROR:%s)", idx, strerror(errno));
+		log_printf("failed to spawn child worker[%d] process (ERROR:%s)", idx, strerror(errno));
 	else if (pid == 0)
 	{
 		char ident[32];

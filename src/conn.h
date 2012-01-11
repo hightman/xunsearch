@@ -205,8 +205,15 @@ void conn_server_start(int listen_sock);
 #ifdef DEBUG
 #define	log_debug_conn(fmt, ...)	\
 	log_printf("[%s:%d] [sock:%d] " fmt, __FILE__, __LINE__, CONN_FD(), ##__VA_ARGS__)
+#define	debug_free(p,s)		do {	\
+	log_debug_conn("memory free (SIZE:%d, ADDR:%p)", s, p); free(p); } while(0)
+#define	debug_malloc(p,s,t)	do {	\
+	p = (t *) malloc(s);			\
+	log_debug_conn("memory alloc (SIZE:%d, ADDR:%p)", s, p); } while(0)
 #else
 #define	log_debug_conn(fmt, ...)	(void)0
+#define	debug_free(p,s)				free(p)
+#define	debug_malloc(p,s,t)			p = (t *) malloc(s)
 #endif
 
 #ifdef __cplusplus
