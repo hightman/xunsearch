@@ -16,6 +16,8 @@ Xunsearch 包含了后端服务、前端开发包（即 SDK）两大部分，在
 [PHP-SDK 权威指南][1] 是学习和入门的必经之路，它全面介绍相对应的 SDK，是学习和掌握 xunsearch 
 的权威资料。
 
+[最新功能和变动][6] 是为老用户提供的了解最新功能和特点专用渠道。
+
 
 API 文档
 ---------
@@ -42,5 +44,6 @@ Wiki 技巧、经验
 [3]: http://www.xunsearch.com/doc/php/api/index 
 [4]: http://bbs.xunsearch.com/forumdisplay.php?fid=4
 [5]: http://bbs.xunsearch.com/
+[6]: http://www.xunsearch.com/doc/php/guide/start.changelog
 
 <div class="revision">$Id$</div>
