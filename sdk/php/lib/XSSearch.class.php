@@ -504,7 +504,7 @@ class XSSearch extends XSServer
 
 		if ($query === '')
 		{
-			$this->_count = $tmp['count'];
+			$this->_count = $this->_lastCount;
 			// trigger to logQuery
 			$this->logQuery();
 			// trigger to initHighlight
