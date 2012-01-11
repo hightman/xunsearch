@@ -97,6 +97,9 @@ int conn_respond(XS_CONN *conn, int cmd, int arg, const char *buf, int len);
 /* void conn_quit */
 int conn_quit(XS_CONN *conn, int res);
 
+/* create new connection, return NULL on failure */
+XS_CONN *conn_new(int sock);
+
 /* recv data on conn, return bytes received, or 0 -> EOF, -1 -> ERROR */
 int conn_data_recv(XS_CONN *conn);
 

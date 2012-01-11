@@ -27,7 +27,7 @@
 #include "log.h"
 #include "conn.h"
 
-#define	DEFAULT_BACKLOG			7	// default backlog for listen()
+#define	DEFAULT_BACKLOG		63	// default backlog for listen()
 
 /**
  * Type definitions & variable/function declarations
@@ -40,6 +40,7 @@ struct xs_server
 	struct timeval tv; // timeout of listening socket
 	int max_accept; // max accept number for the server
 	int num_accept; // current accepted socket number
+	int num_burst; // number of burst connection now
 
 	zcmd_exec_t zcmd_handler; // called to execute zcmd
 	void (*pause_handler)(XS_CONN *); // called to run external task
@@ -49,6 +50,7 @@ struct xs_server
 static struct xs_server conn_server;
 static int pipe_fd[2];
 static pthread_mutex_t pipe_mutex;
+static void client_ev_cb(int fd, short event, void *arg);
 
 /**
  * Quick macros
@@ -227,7 +229,46 @@ int conn_quit(XS_CONN *conn, int res)
 	log_debug("free(%d), addr: %p", sizeof(XS_CONN), conn);
 	free(conn);
 
+	conn_server.num_burst--;
 	return CMD_RES_QUIT;
+}
+
+/**
+ * Create new connection
+ * @param sock
+ * @return XS_CONN *
+ */
+XS_CONN *conn_new(int sock)
+{
+	XS_CONN *conn;
+
+	conn = (XS_CONN *) malloc(sizeof(XS_CONN));
+	log_debug("malloc(%d), addr: %p", sizeof(XS_CONN), conn);
+
+	if (conn == NULL)
+	{
+		log_printf("out of memory when create new connection (SOCK:%d)", sock);
+		close(sock);
+		return NULL;
+	}
+	else
+	{
+		int val = 1;
+
+		// set socket option
+		setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *) &val, sizeof(val));
+		fcntl(sock, F_SETFL, O_NONBLOCK);
+
+		// put to event list
+		log_debug("init the connection event & add to loop (CONN:%p)", conn);
+		memset(conn, 0, sizeof(XS_CONN));
+		conn->tv.tv_sec = CONN_TIMEOUT;
+		event_set(&conn->ev, sock, EV_READ, client_ev_cb, conn);
+		CONN_EVENT_ADD();
+
+		conn_server.num_burst++;
+		return conn;
+	}
 }
 
 /**
@@ -716,31 +757,11 @@ static void server_ev_cb(int fd, short event, void *arg)
 		}
 		else
 		{
-			XS_CONN *conn;
-
 			conn_server.num_accept++;
-			log_printf("new connection built (SOCKET:%d, FROM:%s)", sock, inet_ntoa(sin.sin_addr));
-			conn = (XS_CONN *) malloc(sizeof(XS_CONN));
-			log_debug("malloc(%d), addr: %p", sizeof(XS_CONN), conn);
-
-			if (conn == NULL)
+			if (conn_new(sock) != NULL)
 			{
-				log_printf("out of memory when create new connection (SOCKET:%d)", sock);
-				close(sock);
-			}
-			else
-			{
-				// set socket options
-				val = 1;
-				setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *) &val, sizeof(val));
-				fcntl(sock, F_SETFL, O_NONBLOCK);
-
-				// initlize the connection struct
-				log_debug("init the connection event & add to loop (CONN:%p)", conn);
-				memset(conn, 0, sizeof(XS_CONN));
-				conn->tv.tv_sec = CONN_TIMEOUT;
-				event_set(&conn->ev, sock, EV_READ, client_ev_cb, conn);
-				CONN_EVENT_ADD();
+				log_printf("new connection built (SOCK:%d, IP:%s, BURST: %d)",
+					sock, inet_ntoa(sin.sin_addr), conn_server.num_burst);
 			}
 		}
 		// put back the event if necessary
