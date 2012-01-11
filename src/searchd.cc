@@ -101,7 +101,7 @@ static tpool_t thr_pool;
 #define	TPOOL_ADD_TASK()		tpool_exec(&thr_pool, task_exec, task_cancel, conn)
 #define	TPOOL_KILL_TIMEOUT()	tpool_cancel_timeout(&thr_pool, MAX_WORKER_TIME)
 #define	TPOOL_LOG_STATUS()		\
-log_conn("add new task to thread pool (CONN:%p, SPARE:%d, TOTAL:%d)", \
+log_conn("add new task (CONN:%p, SPARE:%d, TOTAL:%d)", \
 	conn, thr_pool.cur_spare, thr_pool.cur_total)
 
 /**
@@ -347,7 +347,7 @@ int signal_term(int sig)
 void signal_child(pid_t pid, int status)
 {
 	if (!IS_MASTER())
-		log_printf("child process exit, but I don't know where it came from (PID:%d, EXIT:%d)", pid, status);
+		log_printf("unknown child process exit (PID:%d, EXIT:%d)", pid, status);
 	else
 	{
 		int i;

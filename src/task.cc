@@ -1748,7 +1748,7 @@ void task_cancel(void *arg)
 {
 	XS_CONN *conn = (XS_CONN *) arg;
 
-	log_conn("task canceld, run the cleanup function (ZARG:%p)", conn->zarg);
+	log_conn("task canceld, run the cleanup (ZARG:%p)", conn->zarg);
 	// free zargs!!
 	if (conn->zarg != NULL)
 	{
@@ -1862,7 +1862,7 @@ void task_exec(void *arg)
 
 	// end the task normal
 task_end:
-	log_conn("end the task from thread pool (RC:%d, CONN:%p)", rc, conn);
+	log_conn("end the task (RC:%d, CONN:%p)", rc, conn);
 	// BUG: if thread cancled HERE, may cause some unspecified problems
 	// free objects of zarg
 	zarg_cleanup(&zarg);
