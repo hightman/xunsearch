@@ -347,6 +347,25 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$search = self::$xs->search;
 	}
 
+	public function testEmptyQuery()
+	{
+		$search = self::$xs->search;
+
+		$empty = $search->setQuery(null)->getQuery();
+		$this->assertEquals($empty, 'Xapian::Query(<alldocuments>)');
+		$this->assertEquals(array(), $search->terms());
+		$this->assertEquals(3, count($search->search()));
+
+		$docs = $search->setSort('chrono')->search();
+		$this->assertEquals('11', $docs[0]->pid);
+		$docs = $search->setSort('chrono', true)->search();
+		$this->assertEquals('3', $docs[0]->pid);
+
+		$search->addDb('db2');
+		$this->assertEquals(6, $search->setQuery(null)->count());
+		$search->setDb(null);
+	}
+
 	public function testRelatedQuery()
 	{
 		$search = self::$xs->search;
@@ -437,13 +456,13 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	{
 		$search = self::$xs->search; /* @var $search XSSearch */
 		$search->setDb('db2');
-		
+
 		// test fuzzy multi query
 		$search->setFuzzy();
 		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
-		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');	
+		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');
 		$search->setFuzzy(false);
-		
+
 		// test without synonyms
 		$queries = array(
 			'项目test' => 'Xapian::Query((项目:(pos=1) AND Ztest:(pos=2)))',
@@ -456,8 +475,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		foreach ($queries as $raw => $expect)
 		{
 			$this->testQuery($raw, $expect);
-		}		
-		
+		}
+
 		// test synonym query
 		$search->setAutoSynonyms();
 		$queries = array(
@@ -466,29 +485,29 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND ((Zhello:(pos=2) AND Zworld:(pos=3)) SYNONYM 有意思:(pos=68))))',
 			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND (迅搜:(pos=2) SYNONYM xunsearch:(pos=90))))',
 			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
-			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',			
+			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',
 		);
 		foreach ($queries as $raw => $expect)
 		{
 			$this->testQuery($raw, $expect);
 		}
-		
+
 		// test search result & highlight
 		$docs = $search->setAutoSynonyms(false)->search('项目test');
 		$this->assertEquals(0, count($docs));
 		$docs = $search->setAutoSynonyms(true)->search('subject:项目test');
 		$this->assertEquals(2, count($docs));
-		
+
 		// search with query
 		$docs = $search->setAutoSynonyms(true)->setFuzzy(true)->search('项目testing');
 		$this->assertEquals(1, count($docs));
 		$this->assertEquals('test和<em>Quiz</em>以及<em>测试</em>', $search->highlight('test和Quiz以及测试'));
-		
+
 		// default search
 		$docs = $search->setAutoSynonyms(true)->setFuzzy(false)->setQuery('hello world 项目')->search();
 		$this->assertEquals(1, count($docs));
 		$this->assertEquals('<em>有意思</em>的<em>项目</em>', $search->highlight('有意思的项目'));
-		
+
 		// restore db
 		$search->setDb(null);
 	}

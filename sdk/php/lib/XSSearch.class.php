@@ -875,8 +875,8 @@ class XSSearch extends XSServer
 	{
 		// check to register prefix
 		$query = trim($query);
-		if ($query === '')
-			throw new XSException('Query string cann\'t be empty');
+		//if ($query === '')
+		//	throw new XSException('Query string cann\'t be empty');
 
 		// force to clear query with resetScheme
 		if ($this->_resetScheme === true)
@@ -886,6 +886,8 @@ class XSSearch extends XSServer
 		$parts = preg_split('/[ \t\r\n]+/', $query);
 		foreach ($parts as $part)
 		{
+			if ($part === '')
+				continue;
 			if ($newQuery != '')
 				$newQuery .= ' ';
 			if (($pos = strpos($part, ':', 1)) !== false)

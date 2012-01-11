@@ -759,9 +759,17 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	log_debug_conn("search result (USER:%s, OFF:%d, LIMIT:%d, QUERY:%s, FACETS:%c)",
 		conn->user->name, off, limit, qq.get_description().data() + 13, facets[0]);
 
+#if 0
 	// check to skip empty query
 	if (qq.empty() || limit == 0)
 		return CONN_RES_ERR(EMPTYQUERY);
+#else
+	// empty query allowed
+	if (limit == 0)
+		limit = (MAX_SEARCH_RESULT >> 4) + 1;
+	if (qq.empty())
+		qq = Xapian::Query::MatchAll;
+#endif
 
 #ifdef HAVE_MEMORY_CACHE
 	// Only cache for default db with default sorter, and only top MAX_SEARCH_RESUT items
@@ -1130,7 +1138,9 @@ static int zcmd_task_get_query(XS_CONN *conn)
 	string str;
 	Xapian::Query qq;
 
-	if (XS_CMD_BLEN(cmd) > 0)
+	if (XS_CMD_BLEN(cmd) == 0)
+		qq = *(zarg->qq);
+	else
 	{
 		string qstr = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
 		int flag = zarg->parse_flag > 0 ? zarg->parse_flag : Xapian::QueryParser::FLAG_DEFAULT;
@@ -1151,8 +1161,8 @@ static int zcmd_task_get_query(XS_CONN *conn)
 		std::set<string, string_casecmp> terms;
 		std::pair < std::set<string, string_casecmp>::iterator, bool> ins;
 		string str2, tt;
-		Xapian::TermIterator tb = (XS_CMD_BLEN(cmd) > 0) ? qq.get_terms_begin() : zarg->qq->get_terms_begin();
-		Xapian::TermIterator te = (XS_CMD_BLEN(cmd) > 0) ? qq.get_terms_end() : zarg->qq->get_terms_end();
+		Xapian::TermIterator tb = qq.get_terms_begin();
+		Xapian::TermIterator te = qq.get_terms_end();
 
 		while (tb != te)
 		{
@@ -1201,8 +1211,9 @@ static int zcmd_task_get_query(XS_CONN *conn)
 	}
 	else
 	{
-		str = (XS_CMD_BLEN(cmd) > 0) ? qq.get_description() : zarg->qq->get_description();
-
+		if (qq.empty())
+			qq = Xapian::Query::MatchAll;
+		str = qq.get_description();
 		return CONN_RES_OK3(QUERY_STRING, str.data(), str.size());
 	}
 }
