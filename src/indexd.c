@@ -1176,7 +1176,6 @@ int main(int argc, char *argv[])
 	// basic setup: mask, signal, log_id
 	umask(022);
 	log_setid("indexd");
-	pcntl_base_signal();
 
 	// become daemon or not?
 	log_debug("start the server (FLAG: 0x%04x)", main_flag);
@@ -1198,6 +1197,9 @@ int main(int argc, char *argv[])
 			log_printf("ERROR: unable to save the pid (ERROR:%s)", strerror(errno));
 		goto main_end;
 	}
+
+	// install signal handlers
+	pcntl_base_signal();
 
 	// init global variables
 	log_debug("init global states");
