@@ -22,7 +22,7 @@
 /**
  * max length of query string for CMD_QUERY_
  */
-#define	MAX_QUERY_LENGTH		80
+#define	MAX_QUERY_LENGTH		192
 
 void task_cancel(void *arg); // called on canceling task
 void task_exec(void *arg); // called on executing task
