@@ -24,7 +24,7 @@ error_reporting(E_ALL ^ E_NOTICE);
 //
 // variables
 $eu = '';
-$__ = array('q', 'm', 'f', 's', 'p', 'ie', 'oe', 'xml');
+$__ = array('q', 'm', 'f', 's', 'p', 'ie', 'oe', 'syn', 'xml');
 foreach ($__ as $_)
 	$$_ = isset($_GET[$_]) ? $_GET[$_] : '';
 
@@ -55,6 +55,7 @@ else
 $q = get_magic_quotes_gpc() ? stripslashes($q) : $q;
 $f = empty($f) ? '_all' : $f;
 ${'m_check'} = ($m == 'yes' ? ' checked' : '');
+${'syn_check'} = ($syn == 'yes' ? ' checked' : '');
 ${'f_' . $f} = ' checked';
 ${'s_' . $s} = ' selected';
 
@@ -83,6 +84,9 @@ try
 	{
 		// fuzzy search
 		$search->setFuzzy($m === 'yes');
+
+		// synonym search
+		$search->setAutoSynonyms($syn === 'yes');
 		
 		// set query
 		if (!empty($f) && $f != '_all')

@@ -96,6 +96,7 @@ form#q-form { margin: 0; }
 			@set_filter@
 			<li><input type="radio" name="f" value="_all" <?php echo $f__all; ?> />全文</li>
 			<li><input type="checkbox" name="m" value="yes" <?php echo $m_check; ?> />模糊搜索</li>
+			<li><input type="checkbox" name="syn" value="yes" <?php echo $syn_check; ?> />同义词</li>
 			<li>
 				按
 				<select name="s" size="1">
@@ -165,10 +166,10 @@ form#q-form { margin: 0; }
 		<?php foreach ($docs as $doc): ?>
 		<div class="res-doc">
 			<h2>
-				<a href="javascript:void(alert('@field_id@: <?php echo $doc->@field_id@; ?>'));"><?php echo $doc->rank(); ?>. <?php echo htmlspecialchars($search->highlight($doc->@field_title@)); ?></a>
+				<a href="javascript:void(alert('@field_id@: <?php echo $doc->@field_id@; ?>'));"><?php echo $doc->rank(); ?>. <?php echo $search->highlight(htmlspecialchars($doc->@field_title@)); ?></a>
 				<small>[<?php echo $doc->percent(); ?>%]</small>
 			</h2>
-			<p><?php echo htmlspecialchars($search->highlight($doc->@field_body@)); ?></p>
+			<p><?php echo $search->highlight(htmlspecialchars($doc->@field_body@)); ?></p>
 			<ul>
 				@field_info@
 			</ul>
