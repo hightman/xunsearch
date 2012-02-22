@@ -1002,6 +1002,10 @@ int conn_server_listen(const char *bind_path)
 		sock = -1;
 	}
 
+	// set socket file permission
+	if (sock >=0 && port <= 0)
+		chmod(bind_path, 0666);
+
 	return sock;
 }
 
