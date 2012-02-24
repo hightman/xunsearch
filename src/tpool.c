@@ -3,6 +3,10 @@
  * $Id$
  */
 
+#ifdef HAVE_CONFIG_H
+#    include "config.h"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -18,6 +22,12 @@
 #else
 #    define	debug_printf(...)		(void)0
 #endif
+
+#ifdef DEBUG
+#	undef	debug_printf
+#	include "log.h"
+#	define	debug_printf	log_debug
+#endif	/* DEBUG */
 
 /**
  * Macros to access locks quickly

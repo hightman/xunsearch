@@ -23,7 +23,7 @@
 #include "import.h"
 
 /**
- * Reset debug log macro to contiain tid
+ * Reset debug log macro to contain tid
  */
 #ifdef DEBUG
 #    undef	log_debug
