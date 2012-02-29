@@ -43,6 +43,8 @@ WARNING: input file not specified, read data from <STDIN>
 
 然后我们测试输入下面三条数据，最后一条数据打完后必须敲入回车，然后按 `Ctrl-D` 结束操作。
 
+> note: 在 Windows 的命令行下运行请使用 `Ctrl-Z` 来表示结束。
+
 ~~~
 1,关于 xunsearch 的 DEMO 项目测试,项目测试是一个很有意思的行为！,1314336158
 2,测试第二篇,这里是第二篇文章的内容,1314336160
