@@ -548,7 +548,7 @@ class XS extends XSComponent
 				$cache = apc_fetch($cache_key);
 				$cache_write = 'apc_store';
 			}
-			else if (function_exists('xcache_get'))
+			else if (function_exists('xcache_get') && php_sapi_name() !== 'cli')
 			{
 				$cache = xcache_get($cache_key);
 				$cache_write = 'xcache_set';
