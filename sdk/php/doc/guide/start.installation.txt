@@ -30,7 +30,7 @@ Xunsearch 全部开源，理论上也可以从官方提供的 [git 仓库][1] �
     规划一个目录，而不是混到别的软件目录中。
 
     ~~~
-    cd xunsearch-full/
+    cd xunsearch-full-1.3.0/
     sh setup.sh
     ~~~
 

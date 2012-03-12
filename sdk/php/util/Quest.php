@@ -246,17 +246,9 @@ try
 			// body & title
 			$body = $title = '';
 			if ($ftitle !== false)
-			{
-				$title = $search->highlight($doc->f($ftitle));
-				$title = preg_replace('#<em>(.+?)</em>#', "\033[7m\\1\033[m", $title) . ' ';
-				$title = strtr($title, array('<em>' => '', '</em>' => ''));
-			}
+				$title = cli_highlight($doc->f($ftitle));
 			if ($fbody !== false)
-			{
-				$body = $search->highlight($doc->f($fbody));
-				$body = preg_replace('#<em>(.+?)</em>#', "\033[7m\\1\033[m", $body) . "\n";
-				$body = strtr($body, array('<em>' => '', '</em>' => ''));
-			}
+				$body = cli_highlight($doc->f($fbody));
 
 			// main fields
 			printf("\n%d. \033[4m%s#%s# [%d%%]\033[m\n", $doc->rank(), $title, $doc->f($fid), $doc->percent());
@@ -268,7 +260,7 @@ try
 			{
 				if ($field->isSpeical())
 					continue;
-				$tmp = ucfirst($field->name) . ':' . $doc->f($field);
+				$tmp = ucfirst($field->name) . ':' . cli_highlight($doc->f($field));
 				if ((strlen($tmp) + strlen($line)) > 80)
 				{
 					if (strlen($line) > 0)
@@ -301,4 +293,14 @@ catch (XSException $e)
 	$traceString = str_replace(dirname(__FILE__) . '/', '', $traceString);
 	$traceString = str_replace($start . ($relative === '' ? '/' : ''), $relative, $traceString);
 	echo $e . "\n" . $traceString . "\n";
+}
+
+// local highlight function
+function cli_highlight($str)
+{
+	global $search;
+	$str = $search->highlight($str);
+	$str = preg_replace('#<em>(.+?)</em>#', "\033[7m\\1\033[m", $str) . ' ';
+	$str = strtr($str, array('<em>' => '', '</em>' => ''));
+	return $str;
 }

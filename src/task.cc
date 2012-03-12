@@ -158,7 +158,7 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 		cut = (cut & (CMD_VALUE_FLAG_NUMERIC - 1)) * 10;
 		if (cut != 0 && s.size() > cut)
 		{
-			int i;
+			int i, j;
 			const char *ptr;
 			string tt = string("");
 			Xapian::TermIterator tb = z->eq->get_matching_terms_begin(id);
@@ -169,7 +169,8 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 			{
 				string tm = *tb;
 				ptr = tm.data();
-				if (prefix_to_vno((char *) ptr) == v)
+				j = prefix_to_vno((char *) ptr);
+				if (j == v || j == XS_DATA_VNO)
 				{
 					for (i = 0; ptr[i] >= 'A' && ptr[i] <= 'Z'; i++);
 					if (i > 0) tm = tm.substr(i);
