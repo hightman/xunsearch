@@ -288,19 +288,20 @@ class XSSearch extends XSServer
 	 * @param mixed $field 要进行分组统计的字段或字段组成的数组, 最多同时支持 8 个
 	 * @param bool $exact 是否要求绝对精确搜索, 这会造成较大的系统开销
 	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @throw XSException 在非字符串字段建立分面搜索会抛出异常
 	 * @since 1.1.0
 	 */
 	public function setFacets($field, $exact = false)
 	{
 		$buf = '';
 		if (!is_array($field))
-			$buf = chr($this->xs->getField($field)->vno);
-		else
+			$field = array($field);
+		foreach ($field as $name)
 		{
-			foreach ($field as $ff)
-			{
-				$buf .= chr($this->xs->getField($ff)->vno);
-			}
+			$ff = $this->xs->getField($name);
+			if ($ff->type !== XSFieldMeta::TYPE_STRING)
+				throw new XSException("Field `$name' cann't be used for facets search, can only be string type");
+			$buf .= chr($ff->vno);
 		}
 		$cmd = array('cmd' => CMD_SEARCH_SET_FACETS, 'buf' => $buf);
 		$cmd['arg1'] = $exact === true ? 1 : 0;
@@ -877,7 +878,6 @@ class XSSearch extends XSServer
 		$query = trim($query);
 		//if ($query === '')
 		//	throw new XSException('Query string cann\'t be empty');
-
 		// force to clear query with resetScheme
 		if ($this->_resetScheme === true)
 			$this->clearQuery();
