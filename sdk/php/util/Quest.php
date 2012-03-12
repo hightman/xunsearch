@@ -248,7 +248,7 @@ try
 			if ($ftitle !== false)
 				$title = cli_highlight($doc->f($ftitle));
 			if ($fbody !== false)
-				$body = cli_highlight($doc->f($fbody));
+				$body = cli_highlight($doc->f($fbody)) . "\n";
 
 			// main fields
 			printf("\n%d. \033[4m%s#%s# [%d%%]\033[m\n", $doc->rank(), $title, $doc->f($fid), $doc->percent());
