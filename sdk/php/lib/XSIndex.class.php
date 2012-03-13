@@ -112,7 +112,7 @@ class XSIndex extends XSServer
 							foreach ($terms as $term)
 							{
 								$term = strtolower($term);
-								$cmds[] = new XSCommand(CMD_DOC_TERM, 0, $field->vno, $term);
+								$cmds[] = new XSCommand(CMD_DOC_TERM, 1, $field->vno, $term);
 							}
 						}
 						// mixed: [use default tokenizer]
@@ -134,7 +134,7 @@ class XSIndex extends XSServer
 				foreach ($terms as $term => $wdf)
 				{
 					$term = strtolower($term);
-					$wdf2 = $field->isBoolIndex() ? 0 : $wdf * $field->weight;
+					$wdf2 = $field->isBoolIndex() ? 1 : $wdf * $field->weight;
 					while ($wdf2 > XSFieldMeta::MAX_WDF)
 					{
 						$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf1 | XSFieldMeta::MAX_WDF, $field->vno, $term);
@@ -154,7 +154,7 @@ class XSIndex extends XSServer
 				else
 				{
 					// NOT pos
-					$wdf = $field->isBoolIndex() ? 0 : ($field->weight | CMD_INDEX_FLAG_CHECKSTEM);
+					$wdf = $field->isBoolIndex() ? 1 : ($field->weight | CMD_INDEX_FLAG_CHECKSTEM);
 					$terms = $field->getCustomTokenizer()->getTokens($text, $doc);
 					foreach ($terms as $term)
 					{
