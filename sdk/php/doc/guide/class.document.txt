@@ -76,7 +76,7 @@ class MyDocument extends XSDocument
         return parent::beforeSubmit($index);
     }
 
-    public function beforeSubmit(XSIndex $index)
+    public function afterSubmit(XSIndex $index)
     {
         // 在此编写您的代码，只有加入索引成功后才会执行
         // ...
