@@ -1,5 +1,7 @@
 #!/bin/sh
 # FULL fast install/upgrade script
+# --prefix=...
+# --clean
 # $Id$
 
 # self check
@@ -27,6 +29,16 @@ else
   def_prefix=$HOME/xunsearch
 fi
 
+# get input prefix
+set_prefix=
+if test "$1" != "" ; then
+  arg_name=`echo $1 | cut -d= -f1`
+  arg_value=`echo $1 | cut -d= -f2`
+  if test "$arg_name" = "--prefix"; then
+	set_prefix=$arg_value
+  fi
+fi
+
 # welcome msg
 echo
 echo "+==========================================+"
@@ -39,6 +51,7 @@ echo "+==========================================+"
 echo
 
 # ask prefix
+if test "$set_prefix" = ""; then
 echo "Please specify the installation directory"
 echo "请指定安装目录 (默认为中括号内的值)"
 echo -n "[$def_prefix]:"
@@ -64,6 +77,9 @@ while test -z ""; do
   echo -n "[$set_prefix]:"
 done
 echo
+else
+echo "Specified installation directory: $set_prefix"
+fi
 
 # record it
 prefix=$set_prefix
