@@ -209,7 +209,7 @@ class XSDatabaseDataSource extends XSDataSource
 		$this->sql = $sql;
 		if ($this->limit == 0)
 		{
-			$sql = preg_replace('/SELECT\s+.+?FROM/i', 'SELECT COUNT(*) AS count FROM', $sql);
+			$sql = preg_replace('/SELECT\s+.+?FROM\s/i', 'SELECT COUNT(*) AS count FROM ', $sql);
 			$res = $this->db->query1($sql);
 			$this->limit = $res['count'] - $this->offset;
 		}
