@@ -9,6 +9,8 @@
 - 增加基于搜索服务端的 [XSTokenizerScws] 便于直接使用 SCWS[2] 的分词功能，
   而不再需要额外安装其 php 扩展，用法详见 [SCWS专题文档](special.scws)
 
+- 升级整合最新的 xapian-core-1.2.9、scws-1.2.0
+
 - 大量小优化和小 BUG 修正
 
 
