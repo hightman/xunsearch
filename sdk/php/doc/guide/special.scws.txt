@@ -1,0 +1,81 @@
+在 Xunsearch 使用 SCWS
+=========================
+
+为了便于用户在安装完 `Xunsearch` 后可以通过服务端内置的 scws[1] 实现分词，
+而不需要另外再安装 scws 的 php 扩展。从 `1.3.1` 版本起，`Xunsearch` 
+的 PHP-SDK 中加入 [XSTokenizerScws] 类，可通过搜索服务端执行分词功能。
+
+
+用法简单说明
+----------
+
+这儿只做简单介绍和示范，更多详细的用法请点击阅读类参考手册 [XSTokenizerScws]。
+
+#### 创建分词对象
+
+~~~
+[php]
+$xs = new XS(...);	// 必须先创建一个 xs 实例，否则会抛出异常
+$tokenizer = new XSTokenizerScws;	// 直接创建实例
+~~~
+
+### 获取分词结果
+
+调用 [XSTokenizerScws::getResult] 对参数指定的文本字符串执行分词，
+并返回词汇数组，每个词汇包含 3 个元素，其中：
+
+  - *off* 表示这个词汇在源参数文本 _$text_ 中的起始偏移位置
+  - *attr* 这个词汇的词性，使用北大标注
+  - *word* 分好的词条
+
+~~~
+[php]
+$text = '迅搜(xunsearch)是优秀的开源全文检索解决方案';
+$words = $tokenizer->getResult($text);
+print_r($words);
+~~~
+
+### 提取重要词汇
+
+调用 [XSToenizerScws::getTops] 可以简单提取重要词汇，它支持三个参数，
+返回的词汇数组元素和分词结果类似，只是把 *off* 替换为 *times* 
+表示这个词在文本中出现的总次数。
+
+~~~
+[php]
+$text = '迅搜(xunsearch)是优秀的开源全文检索解决方案';
+// 提取前 5 个重要词，要求词性必须是 n 或v 或 vn
+$tops = $tokenizer->getTops($text, 5, 'n,v,vn');
+print_r($tops);
+~~~
+
+### 判断是否包含指定词性的词汇
+
+这项功能通过 [XSTokenizerScws::hasWord] 完成，主要目的是用于类似黑词判断。
+您可以自制一个词典，并将黑词统一设置为一个独特的属性，比如 "@"，
+那么就可以用该功能判断一段文本是否包含黑词。
+
+~~~
+[php]
+$text = '...';
+if ($tokenizer->hasWord($text, '@')) {
+    // 包含词性为 '@' 的词
+}
+else {
+    // 为包含词性为 '@' 的词
+}
+~~~
+
+
+使用注意事项
+----------
+
+- 这个分词类底层实现是与搜索服务端通讯完成的，因此在使用前必须先初始化一个 [XS] 对象
+
+- 这个分词器虽然实现了 [XSTokenizer::getTokens]，但不推荐直接指定到配置文件的
+  tokenizer 选项中，因为这样做只会让性能更低。
+
+
+[1]: http://www.ftphp.com/scws/
+
+<div class="revision">$Id$</div>

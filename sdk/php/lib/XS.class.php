@@ -258,10 +258,18 @@ class XS extends XSComponent
 	 */
 	private $_search;
 	/**
+	 * @var XSServer scws 分词服务器
+	 */
+	private $_scws;
+	/**
 	 * @var XSFieldScheme 当前字段方案
 	 */
 	private $_scheme, $_bindScheme;
 	private $_config;
+	/**
+	 * @var XS 最近创建的 XS 对象
+	 */
+	private static $_lastXS;
 
 	/**
 	 * 构造函数
@@ -278,6 +286,7 @@ class XS extends XSComponent
 				$file = $file2;
 		}
 		$this->loadIniFile($file);
+		self::$_lastXS = $this;
 	}
 
 	/**
@@ -288,6 +297,15 @@ class XS extends XSComponent
 	{
 		$this->_index = null;
 		$this->_search = null;
+	}
+
+	/**
+	 * 获取最新的 XS 实例
+	 * @return XS 最近创建的 XS　对象
+	 */
+	public static function getLastXS()
+	{
+		return self::$_lastXS;
 	}
 
 	/**
@@ -392,6 +410,20 @@ class XS extends XSComponent
 			$this->_search->setCharset($this->getDefaultCharset());
 		}
 		return $this->_search;
+	}
+
+	/**
+	 * 创建 scws 分词连接
+	 * @return XSServer 分词服务器
+	 */
+	public function getScwsServer()
+	{
+		if ($this->_scws === null)
+		{
+			$conn = isset($this->_config['server.search']) ? $this->_config['server.search'] : 8384;
+			$this->_scws = new XSServer($conn, $this);
+		}
+		return $this->_scws;
 	}
 
 	/**

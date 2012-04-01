@@ -129,6 +129,9 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_SEARCH_SET_DB:
 		case CMD_SEARCH_ADD_DB:
 		case CMD_SEARCH_GET_DB:
+		case CMD_SEARCH_SCWS_GET:
+			if (conn->zcmd->cmd == CMD_SEARCH_SCWS_GET)
+				conn->flag |= CONN_FLAG_ON_SCWS;
 			// paused in event server, submit task to thread pool
 			return CMD_RES_PAUSE | CMD_RES_SAVE;
 		case CMD_SEARCH_SET_SORT:
@@ -144,6 +147,7 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_QUERY_VALCMP:
 		case CMD_QUERY_PREFIX:
 		case CMD_QUERY_PARSEFLAG:
+		case CMD_SEARCH_SCWS_SET:
 			// save the command
 			return CMD_RES_CONT | CMD_RES_SAVE;
 		case CMD_SEARCH_FINISH:
@@ -627,6 +631,9 @@ int main(int argc, char *argv[])
 
 	// init the py_dict
 	py_dict_load("etc/py.xdb");
+
+	// init the default scws
+	task_load_scws();
 
 	// init the memory cache
 #ifdef HAVE_MEMORY_CACHE

@@ -54,3 +54,5 @@ Xunsearch PHP-SDK 权威指南
 
 * 专题
     - [同义词搜索功能](special.synonym)
+    - [在SDK中使用SCWS分词](special.scws)
+

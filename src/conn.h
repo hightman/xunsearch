@@ -160,6 +160,7 @@ void conn_server_start(int listen_sock);
 #define	CONN_FLAG_CH_COLLAPSE	0x10	// not default collapse
 #define	CONN_FLAG_CACHE_LOCKED	0x20	// G_LOCK_CACHE()
 #define	CONN_FLAG_EXACT_FACETS	0x40	// exact facets search
+#define	CONN_FLAG_ON_SCWS		0x80	// for scws only
 
 /* server flag */
 #define	CONN_SERVER_THREADS	1		// multi-threads server flag

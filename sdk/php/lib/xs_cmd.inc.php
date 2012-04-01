@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2012/01/13 14:07 */
+/* Automatically generated at 2012/03/31 16:36 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -29,6 +29,7 @@ define('CMD_SEARCH_FINISH',	69);
 define('CMD_SEARCH_DRAW_TPOOL',	70);
 define('CMD_SEARCH_ADD_LOG',	71);
 define('CMD_SEARCH_GET_SYNONYMS',	72);
+define('CMD_SEARCH_SCWS_GET',	73);
 define('CMD_QUERY_GET_STRING',	96);
 define('CMD_QUERY_GET_TERMS',	97);
 define('CMD_QUERY_GET_CORRECTED',	98);
@@ -49,6 +50,7 @@ define('CMD_SEARCH_SET_NUMERIC',	194);
 define('CMD_SEARCH_SET_COLLAPSE',	195);
 define('CMD_SEARCH_KEEPALIVE',	196);
 define('CMD_SEARCH_SET_FACETS',	197);
+define('CMD_SEARCH_SCWS_SET',	198);
 define('CMD_QUERY_INIT',	224);
 define('CMD_QUERY_PARSE',	225);
 define('CMD_QUERY_TERM',	226);
@@ -96,6 +98,13 @@ define('CMD_INDEX_REQUEST_ADD',	0);
 define('CMD_INDEX_REQUEST_UPDATE',	1);
 define('CMD_INDEX_SYNONYMS_ADD',	0);
 define('CMD_INDEX_SYNONYMS_DEL',	1);
+define('CMD_SCWS_GET_VERSION',	1);
+define('CMD_SCWS_GET_RESULT',	2);
+define('CMD_SCWS_GET_TOPS',	3);
+define('CMD_SCWS_HAS_WORD',	4);
+define('CMD_SCWS_SET_IGNORE',	50);
+define('CMD_SCWS_SET_MULTI',	51);
+define('CMD_SCWS_SET_DUALITY',	52);
 define('CMD_ERR_UNKNOWN',	600);
 define('CMD_ERR_NOPROJECT',	401);
 define('CMD_ERR_TOOLONG',	402);
@@ -148,6 +157,6 @@ define('PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('PACKAGE_NAME',	"xunsearch");
 define('PACKAGE_TARNAME',	"xunsearch");
 define('PACKAGE_URL',	"");
-define('PACKAGE_VERSION',	"1.4.0-dev");
+define('PACKAGE_VERSION',	"1.3.1-dev");
 /* end the cmd defination */
 

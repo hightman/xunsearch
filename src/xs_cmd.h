@@ -232,6 +232,12 @@ struct xs_import_hdr
 #define	CMD_SEARCH_GET_SYNONYMS	72
 
 /**
+ * scws get operators
+ * arg1:op ...
+ */
+#define	CMD_SEARCH_SCWS_GET		73
+
+/**
  * ----------------------------------------
  * Commands of search query: 96~127
  * All commands can get respond from server
@@ -391,6 +397,12 @@ struct xs_import_hdr
 #define	CMD_SEARCH_SET_FACETS	197
 
 /**
+ * scws set operators
+ * arg1:op ...
+ */
+#define	CMD_SEARCH_SCWS_SET		198
+
+/**
  * ----------------------------------
  * Commands for search query: 224~255
  * ----------------------------------
@@ -515,6 +527,20 @@ struct xs_import_hdr
 
 /**
  * ----------------------------------
+ * Constant defined for scws set/get
+ * ----------------------------------
+ */
+#define	CMD_SCWS_GET_VERSION	1
+#define	CMD_SCWS_GET_RESULT		2
+#define	CMD_SCWS_GET_TOPS		3
+#define	CMD_SCWS_HAS_WORD		4
+
+#define	CMD_SCWS_SET_IGNORE		50
+#define	CMD_SCWS_SET_MULTI		51
+#define	CMD_SCWS_SET_DUALITY	52
+
+/**
+ * ----------------------------------
  * Respond status code (arg of CMD)
  * OK: 2xx
  * CLI-ERROR: 4xx
@@ -612,6 +638,10 @@ struct xs_import_hdr
 // for searchd
 // Each record per line, split by '\t'
 #define	CMD_OK_RESULT_SYNONYMS	280
+
+// for scws
+#define	CMD_OK_SCWS_RESULT		290		// int(off|times)/char4(attr)/char[](word)
+#define	CMD_OK_SCWS_TOPS		291		// int(times)/char4(attr)/char[](word)
 
 // error str macro call to show err description
 #define	__CMD_REPLACE(x,t)		CMD_##t##_##x

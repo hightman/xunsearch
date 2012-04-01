@@ -230,4 +230,11 @@ class XSTest extends PHPUnit_Framework_TestCase
 		$str1 = XS::convert($str, 'GBK', 'UTF-8');
 		$this->assertEquals(XS::convert($str1, 'UTF-8', 'GBK'), $str);
 	}
+
+	public function testLastXS()
+	{
+		$lastXS = XS::getLastXS();
+		$this->assertEquals($this->xs2, $lastXS);
+		$this->assertNotEquals($this->xs1, $lastXS);
+	}
 }

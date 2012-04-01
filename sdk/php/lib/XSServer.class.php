@@ -207,7 +207,7 @@ class XSServer extends XSComponent
 			$this->_flag |= self::BROKEN;
 		}
 	}
-	
+
 	/**
 	 * 获取连接资源描述符
 	 * @return mixed 连接标识, 仅用于内部测试等目的

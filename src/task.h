@@ -26,6 +26,7 @@
 
 void task_cancel(void *arg); // called on canceling task
 void task_exec(void *arg); // called on executing task
+void task_load_scws();	// load lib scws
 
 #endif	/* __XS_TASK_20110703_H__ */
 

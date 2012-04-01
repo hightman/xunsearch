@@ -262,7 +262,7 @@ function cmd_recv($args = '')
 			$res->buf = sprintf('{docid:%u, rank:%d, ccount:%d, percent:%d%%, weight:%.2f}', $tmp['docid'], $tmp['rank'], $tmp['ccount'], $tmp['percent'], $tmp['weight']);
 		}
 		// output
-		printf("<<CMD: %s\n<<ARG: %s\n<<BUF1(%d): %s\n<<BUF(%d): %s\n<<END\n", _get_cmd_def($res->cmd), $res->cmd == CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1), $res->buf1, strlen($res->buf), $res->buf);
+		printf("<<<CMD: %s\n<<<ARG: %s\n<<<BUF1(%d): %s\n<<<BUF(%d): %s\n<<<END\n", _get_cmd_def($res->cmd), $res->cmd == CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1), $res->buf1, strlen($res->buf), $res->buf);
 		// break
 		if ($wait == 0 || $res->cmd == CMD_ERR || $res->cmd == $wait)
 			break;

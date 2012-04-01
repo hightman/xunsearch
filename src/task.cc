@@ -526,7 +526,13 @@ static int zcmd_task_default(XS_CONN *conn)
 			log_debug("new (Xapian::ValueRangeProcessor *): %p", vrp);
 		}
 			break;
-		default: rc = CMD_RES_NEXT; // passed to next
+		case CMD_SEARCH_SCWS_SET:
+		case CMD_SEARCH_SCWS_GET:
+			rc = CMD_RES_UNIMP;
+			break;
+		default:
+			rc = CMD_RES_NEXT;
+			break; // passed to next
 	}
 	return rc;
 }
@@ -1645,6 +1651,7 @@ static int zcmd_task_get_expanded(XS_CONN *conn)
 	// send end declare
 	return CONN_RES_OK2(RESULT_END, qq.get_description().data());
 }
+
 /**
  * Task command table
  */
@@ -1666,16 +1673,186 @@ static zcmd_exec_tab zcmd_task_tab[] = {
 };
 
 /**
+ * scws result struct
+ */
+struct scws_response
+{
+	int off; // for tops: times
+	char attr[4]; // attribute
+	char word[0]; // dynamic
+};
+
+/**
+ * Load common scws
+ */
+#include <scws/scws.h>
+static scws_t _scws;
+
+static inline char *fetch_scws_xattr(XS_CMD *cmd)
+{
+	char *xattr = NULL;
+	if (XS_CMD_BLEN1(cmd) > 0
+		&& (xattr = (char *) malloc(XS_CMD_BLEN1(cmd) + 1)) != NULL)
+	{
+		memcpy(xattr, XS_CMD_BUF1(cmd), XS_CMD_BLEN1(cmd));
+		*(xattr + XS_CMD_BLEN1(cmd)) = '\0';
+	}
+	return xattr;
+}
+
+void task_load_scws()
+{
+	_scws = scws_new();
+	scws_set_charset(_scws, "utf8");
+	scws_set_ignore(_scws, SCWS_YEA);
+	scws_set_duality(_scws, SCWS_YEA);
+	scws_set_rule(_scws, SCWS_ETCDIR "/rules.utf8.ini");
+	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
+	scws_add_dict(_scws, SCWS_ETCDIR "/dict_user.txt", SCWS_XDICT_TXT);
+	scws_set_multi(_scws, 3 << 12);
+}
+
+/**
+ * scws set options
+ */
+static int zcmd_scws_set(XS_CONN *conn)
+{
+	XS_CMD *cmd = conn->zcmd;
+	scws_t scws = (scws_t) conn->zarg;
+
+	if (cmd->arg1 == CMD_SCWS_SET_DUALITY)
+	{
+		scws_set_duality(scws, cmd->arg2 == 0 ? SCWS_NA : SCWS_YEA);
+	}
+	else if (cmd->arg1 == CMD_SCWS_SET_MULTI)
+	{
+		scws_set_multi(scws, (cmd->arg2 << 12));
+	}
+	else if (cmd->arg1 == CMD_SCWS_SET_IGNORE)
+	{
+		scws_set_ignore(scws, cmd->arg2 == 0 ? SCWS_NA : SCWS_YEA);
+	}
+	return CMD_RES_CONT;
+}
+
+/**
+ * scws get result
+ */
+static int zcmd_scws_get(XS_CONN *conn)
+{
+	XS_CMD *cmd = conn->zcmd;
+	scws_t scws = (scws_t) conn->zarg;
+
+	if (cmd->arg1 == CMD_SCWS_GET_VERSION)
+	{
+		return CONN_RES_OK2(INFO, SCWS_VERSION);
+	}
+	else if (cmd->arg1 == CMD_SCWS_HAS_WORD)
+	{
+		int count;
+		char *xattr = fetch_scws_xattr(cmd);
+
+		scws_send_text(scws, XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
+		count = scws_has_word(scws, xattr);
+		if (xattr != NULL)
+			free(xattr);
+		return CONN_RES_OK2(INFO, count > 0 ? "OK" : "NO");
+	}
+	else if (cmd->arg1 == CMD_SCWS_GET_TOPS)
+	{
+		scws_top_t top, cur;
+		int wlen, size = 0;
+		struct scws_response *rep = NULL;
+		char *xattr = fetch_scws_xattr(cmd);
+
+		scws_send_text(scws, XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
+		cur = top = scws_get_tops(scws, cmd->arg2, xattr);
+		while (cur != NULL)
+		{
+			wlen = strlen(cur->word);
+			if (!size || wlen > (size - sizeof(struct scws_response)))
+			{
+				size = sizeof(struct scws_response) +wlen;
+				rep = (struct scws_response *) realloc(rep, size);
+			}
+			// FIXME:
+			if (rep == NULL)
+				break;
+			rep->off = cur->times;
+			memcpy(rep->attr, cur->attr, 2);
+			memcpy(rep->word, cur->word, wlen);
+			CONN_RES_OK3(SCWS_TOPS, (const char *) rep, wlen + sizeof(struct scws_response));
+			cur = cur->next;
+		}
+		scws_free_tops(top);
+		if (xattr != NULL)
+			free(xattr);
+		if (rep != NULL)
+			free(rep);
+		return CONN_RES_OK2(SCWS_TOPS, NULL);
+	}
+	else
+	{
+		scws_res_t res, cur;
+		int size = 0;
+		char *text = XS_CMD_BUF(cmd);
+		struct scws_response *rep = NULL;
+
+		scws_send_text(scws, text, XS_CMD_BLEN(cmd));
+		while ((cur = res = scws_get_result(scws)) != NULL)
+		{
+			while (cur != NULL)
+			{
+				if (!size || cur->len > (size - sizeof(struct scws_response)))
+				{
+					size = sizeof(struct scws_response) +cur->len;
+					rep = (struct scws_response *) realloc(rep, size);
+				}
+				// FIXME:
+				if (rep == NULL)
+					break;
+				rep->off = cur->off;
+				memcpy(rep->attr, cur->attr, 2);
+				memcpy(rep->word, text + cur->off, cur->len);
+				CONN_RES_OK3(SCWS_RESULT, (const char *) rep, cur->len + sizeof(struct scws_response));
+				cur = cur->next;
+			}
+			scws_free_result(res);
+		}
+		if (rep != NULL)
+			free(rep);
+		return CONN_RES_OK2(SCWS_RESULT, NULL);
+	}
+}
+
+/**
+ * scws zcmd default
+ */
+static int zcmd_scws_default(XS_CONN *conn)
+{
+	return CMD_RES_UNIMP;
+}
+
+/**
+ * Scws command table
+ */
+static zcmd_exec_tab zcmd_scws_tab[] = {
+	{CMD_SEARCH_SCWS_SET, zcmd_scws_set},
+	{CMD_SEARCH_SCWS_GET, zcmd_scws_get},
+	{CMD_DEFAULT, zcmd_scws_default}
+};
+
+/**
  * Execute zcmd during task execution
  * @param conn current connection
- * @return RES_CMD_CONT/RES_CMD_PAUSE/CMD_RES_xxx
+ * @return CMD_RES_CONT/CMD_RES_PAUSE/CMD_RES_xxx
  */
 static int zcmd_exec_task(XS_CONN * conn)
 {
 	try
 	{
 		// exec the commands accord to task tables
-		return conn_zcmd_exec_table(conn, zcmd_task_tab);
+		return conn_zcmd_exec_table(conn, (conn->flag & CONN_FLAG_ON_SCWS) ? zcmd_scws_tab : zcmd_task_tab);
 	}
 	catch (const Xapian::Error &e)
 	{
@@ -1741,6 +1918,76 @@ static int task_exec_other(XS_CONN * conn)
 }
 
 /**
+ * do scws task
+ * @param conn connection
+ */
+static void task_do_scws(XS_CONN *conn)
+{
+	int rc, tv_sec;
+	XS_CMDS *cmds;
+
+	// init the params
+	tv_sec = conn->tv.tv_sec;
+	conn->tv.tv_sec = CONN_TIMEOUT;
+	conn->zarg = (void *) scws_fork(_scws);
+	if (conn->zarg == NULL)
+	{
+		log_conn("scws_fork ERROR: out of memory?");
+		CONN_RES_ERR(NOMEM);
+		rc = CMD_RES_ERROR;
+		goto scws_end;
+	}
+
+	// begin the task, parse & execute cmds list
+	// TODO: is need to check conn->zhead, conn->ztail should not be NULL
+	log_debug_conn("scws begin (HEAD:%d, TAIL:%d)", conn->zhead->cmd->cmd, conn->ztail->cmd->cmd);
+	while ((cmds = conn->zhead) != NULL)
+	{
+		// run as zcmd
+		conn->zcmd = cmds->cmd;
+		conn->zhead = cmds->next;
+		conn->flag |= CONN_FLAG_ZMALLOC; // force the zcmd to be free after execution
+
+		// free the cmds, cmds->cmd/zcmd will be free in conn_zcmd_exec()
+		log_debug_conn("free(%d), addr: %p", sizeof(XS_CMDS), cmds);
+		free(cmds);
+
+		// execute the zcmd (CMD_RES_CONT accepted only)
+		if ((rc = conn_zcmd_exec(conn, zcmd_exec_task)) != CMD_RES_CONT)
+			goto scws_end;
+	}
+	// flush output cache
+	conn->ztail = NULL;
+	if (CONN_FLUSH() != 0)
+	{
+		rc = CMD_RES_IOERR;
+		goto scws_end;
+	}
+
+	// try to check other command in rcv_buf/io_buf
+	rc = task_exec_other(conn);
+
+	// end the task normal
+scws_end:
+	log_conn("end the scws (RC:%d, CONN:%p)", rc, conn);
+
+	// free scws
+	if (conn->zarg != NULL)
+		scws_free((scws_t) conn->zarg);
+
+	// push back or force to quit the connection
+	if (rc != CMD_RES_PAUSE && rc != CMD_RES_TIMEOUT)
+		conn_quit(conn, rc);
+	else
+	{
+		conn->zarg = NULL;
+		conn->flag ^= CONN_FLAG_ON_SCWS;
+		conn->tv.tv_sec = tv_sec;
+		conn_server_push_back(conn);
+	}
+}
+
+/**
  * Cleanup function called when task forced to canceld on timeoud
  * We can free all related resource HERE (NOTE: close/push back the conn)
  * @param arg connection
@@ -1753,8 +2000,10 @@ void task_cancel(void *arg)
 	// free zargs!!
 	if (conn->zarg != NULL)
 	{
-
-		zarg_cleanup((struct search_zarg *) conn->zarg);
+		if (conn->flag & CONN_FLAG_ON_SCWS)
+			scws_free((scws_t) conn->zarg);
+		else
+			zarg_cleanup((struct search_zarg *) conn->zarg);
 		conn->zarg = NULL;
 	}
 	// free cache locking
@@ -1776,6 +2025,13 @@ void task_exec(void *arg)
 	struct search_zarg zarg;
 	XS_CMDS *cmds;
 	XS_CONN *conn = (XS_CONN *) arg;
+
+	// task scws
+	if (conn->flag & CONN_FLAG_ON_SCWS)
+	{
+		task_do_scws(conn);
+		return;
+	}
 
 	// init the zarg
 	log_debug_conn("init the zarg of search");
