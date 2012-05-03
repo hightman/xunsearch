@@ -640,8 +640,10 @@ struct xs_import_hdr
 #define	CMD_OK_RESULT_SYNONYMS	280
 
 // for scws
-#define	CMD_OK_SCWS_RESULT		290		// int(off|times)/char4(attr)/char[](word)
-#define	CMD_OK_SCWS_TOPS		291		// int(times)/char4(attr)/char[](word)
+// int(off|times)/char4(attr)/char[](word)
+#define	CMD_OK_SCWS_RESULT		290		
+// int(times)/char4(attr)/char[](word)
+#define	CMD_OK_SCWS_TOPS		291		
 
 // error str macro call to show err description
 #define	__CMD_REPLACE(x,t)		CMD_##t##_##x

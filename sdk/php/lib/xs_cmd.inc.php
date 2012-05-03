@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2012/04/05 10:42 */
+/* Automatically generated at 2012/05/03 13:08 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -153,10 +153,12 @@ define('CMD_OK_DB_COMMITED',	256);
 define('CMD_OK_DB_REBUILD',	257);
 define('CMD_OK_LOG_FLUSHED',	258);
 define('CMD_OK_RESULT_SYNONYMS',	280);
+define('CMD_OK_SCWS_RESULT',	290);
+define('CMD_OK_SCWS_TOPS',	291);
 define('PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('PACKAGE_NAME',	"xunsearch");
 define('PACKAGE_TARNAME',	"xunsearch");
 define('PACKAGE_URL',	"");
-define('PACKAGE_VERSION',	"1.3.1");
+define('PACKAGE_VERSION',	"1.3.2-dev");
 /* end the cmd defination */
 
