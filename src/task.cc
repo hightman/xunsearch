@@ -1779,6 +1779,7 @@ static int zcmd_scws_get(XS_CONN *conn)
 			if (rep == NULL)
 				break;
 			rep->off = cur->times;
+			rep->attr[3] = '\0';
 			memcpy(rep->attr, cur->attr, 2);
 			memcpy(rep->word, cur->word, wlen);
 			CONN_RES_OK3(SCWS_TOPS, (const char *) rep, wlen + sizeof(struct scws_response));
@@ -1812,6 +1813,7 @@ static int zcmd_scws_get(XS_CONN *conn)
 				if (rep == NULL)
 					break;
 				rep->off = cur->off;
+				rep->attr[3] = '\0';
 				memcpy(rep->attr, cur->attr, 2);
 				memcpy(rep->word, text + cur->off, cur->len);
 				CONN_RES_OK3(SCWS_RESULT, (const char *) rep, cur->len + sizeof(struct scws_response));
