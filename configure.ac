@@ -134,9 +134,10 @@ yes
 	# Check libevent library
 	AC_CHECK_LIB(event, event_init,
 		[
-            tmp_extra_added=`echo $ac_extra_added | sed "s# $LIBEVENT_DIR##"`
+            tmp_extra_added=`echo $ac_extra_added | sed "s#$LIBEVENT_DIR##"`
 			if test "$ac_extra_added" = "$tmp_extra_added" ; then
               ac_extra_added="$ac_extra_added $LIBEVENT_DIR"
+			  ac_extra_added=`echo $ac_extra_added | sed "s#^\s*##"`
 			  LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/lib -Wl,-rpath,$LIBEVENT_DIR/lib"
 			  CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
 			  CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
@@ -188,9 +189,10 @@ if test "$with_scws" != "no" ; then
 	# Check scws library
 	AC_CHECK_LIB(scws, scws_new,
 		[
-            tmp_extra_added=`echo $ac_extra_added | sed "s# $SCWS_DIR##"`
+            tmp_extra_added=`echo $ac_extra_added | sed "s#$SCWS_DIR##"`
 			if test "$ac_extra_added" = "$tmp_extra_added" ; then
               ac_extra_added="$ac_extra_added $SCWS_DIR"
+			  ac_extra_added=`echo $ac_extra_added | sed "s#^\s*##"`
 			  LDFLAGS="$LDFLAGS -L$SCWS_DIR/lib -Wl,-rpath,$SCWS_DIR/lib"
 			  CFLAGS="$CFLAGS -I$SCWS_DIR/include"
 			  CXXFLAGS="$CXXFLAGS -I$SCWS_DIR/include"
@@ -266,9 +268,10 @@ indexer.set_document(doc);
 		], [ 
 			LIBS=$saved_libs
 			CXXFLAGS=$saved_cxxflags
-            tmp_extra_added=`echo $ac_extra_added | sed "s# $XAPIAN_DIR##"`
+            tmp_extra_added=`echo $ac_extra_added | sed "s#$XAPIAN_DIR##"`
 			if test "$ac_extra_added" = "$tmp_extra_added" ; then
               ac_extra_added="$ac_extra_added $XAPIAN_DIR"
+			  ac_extra_added=`echo $ac_extra_added | sed "s#^\s*##"`
 			  CXXFLAGS="$CXXFLAGS -I$XAPIAN_DIR/include"
 			  LDFLAGS="$LDFLAGS -L$XAPIAN_DIR/lib -Wl,-rpath,$XAPIAN_DIR/lib"
             fi
@@ -325,6 +328,21 @@ else
   ac_install_prefix=$prefix
 fi
 AC_DEFINE_UNQUOTED(PREFIX, ["$ac_install_prefix"], [Install prefix of the software])
+
+#php option
+AC_ARG_ENABLE(php,
+	AS_HELP_STRING( [--enable-php], [install php sdk (yes|no, default=yes)]),
+	[
+		case "${enableval}" in
+			yes) enable_php=yes ;;
+			no)  enable_php=no ;;
+			*)   AC_MSG_ERROR(bad value ${enableval} for --enable-php) ;;
+		esac
+	], [
+		enable_php=yes
+	]
+)
+AM_CONDITIONAL([ENABLE_PHP], [test ${enable_php} = yes])
 
 # Generate the make file
 AC_CONFIG_FILES([Makefile src/Makefile sdk/Makefile])

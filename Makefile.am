@@ -3,7 +3,11 @@
 #
 AUTOMAKE_OPTIONS = 1.5 subdir-objects
 
-SUBDIRS = . src sdk
+SUBDIRS = . src
+if ENABLE_PHP
+SUBDIRS += sdk
+endif
+sysconfDATA_INSTALL = $(INSTALL_DATA)
 
 DIST_SUBDIRS = src sdk
 
