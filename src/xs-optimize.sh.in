@@ -14,7 +14,7 @@ fi
 
 # home
 cd $prefix
-home = $prefix/data/$1
+home=$prefix/data/$1
 if ! test -d $home ; then
   echo "ERROR: project dose not exists: $project"
   exit 2
