@@ -77,5 +77,5 @@ Xunsearch 基于 GPL 许可证免费开源发布，附加要求是希望每一�
 
 - libevent     BSD 协议
 - xapian-core  GPL 协议
-- scws-1.x.y   未明确，但与 BSD 协议较为相似
+- scws-1.2.x   BSD 协议
 
