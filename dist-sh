@@ -39,6 +39,9 @@ else
     ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
   fi
   scp VERSION xunsearch:./web/protected/data/$filetype
+  # also update dev
+  scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full-dev.tar.bz2
+  scp VERSION xunsearch:./web/protected/data
 fi
 
 # clean local file
