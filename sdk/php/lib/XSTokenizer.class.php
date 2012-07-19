@@ -171,7 +171,7 @@ class XSTokenizerScws implements XSTokenizer
 	const MULTI_MASK = 15;
 
 	/* @var string 字符集，默认为项目字符集 */
-	private $_charset;
+	private static $_charset;
 
 	/* @var array 选项设置记录 */
 	private $_setting = array();
@@ -192,7 +192,7 @@ class XSTokenizerScws implements XSTokenizer
 				throw new XSException('An XS instance should be created before using ' . __CLASS__);
 			self::$_server = $xs->getScwsServer();
 			self::$_server->setTimeout(0);
-			$this->_charset = $xs->getDefaultCharset();
+			self::$_charset = $xs->getDefaultCharset();
 			// constants
 			if (!defined('SCWS_MULTI_NONE'))
 			{
@@ -213,15 +213,15 @@ class XSTokenizerScws implements XSTokenizer
 		$tokens = array();
 		$this->setIgnore(true);
 		// save charset, force to use UTF-8
-		$_charset = $this->_charset;
-		$this->_charset = 'UTF-8';
+		$_charset = self::$_charset;
+		self::$_charset = 'UTF-8';
 		$words = $this->getResult($value);
 		foreach ($words as $word)
 		{
 			$tokens[] = $word['word'];
 		}
 		// restore charset
-		$this->_charset = $_charset;
+		self::$_charset = $_charset;
 		return $tokens;
 	}
 
@@ -233,9 +233,9 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setCharset($charset)
 	{
-		$this->_charset = strtoupper($charset);
-		if ($this->_charset == 'UTF8')
-			$this->_charset = 'UTF-8';
+		self::$_charset = strtoupper($charset);
+		if (self::$_charset == 'UTF8')
+			self::$_charset = 'UTF-8';
 		return $this;
 	}
 
@@ -300,7 +300,7 @@ class XSTokenizerScws implements XSTokenizer
 		while ($res->buf !== '')
 		{
 			$tmp = unpack('Ioff/a4attr/a*word', $res->buf);
-			$tmp['word'] = XS::convert($tmp['word'], $this->_charset, 'UTF-8');
+			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
 			$words[] = $tmp;
 			$res = self::$_server->getRespond();
 		}
@@ -323,7 +323,7 @@ class XSTokenizerScws implements XSTokenizer
 		while ($res->buf !== '')
 		{
 			$tmp = unpack('Itimes/a4attr/a*word', $res->buf);
-			$tmp['word'] = XS::convert($tmp['word'], $this->_charset, 'UTF-8');
+			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
 			$words[] = $tmp;
 			$res = self::$_server->getRespond();
 		}
@@ -351,6 +351,6 @@ class XSTokenizerScws implements XSTokenizer
 		{
 			self::$_server->execCommand($cmd);
 		}
-		return XS::convert($text, 'UTF-8', $this->_charset);
+		return XS::convert($text, 'UTF-8', self::$_charset);
 	}
 }
