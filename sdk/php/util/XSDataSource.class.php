@@ -478,7 +478,7 @@ class XSDatabaseMySQL extends XSDatabase
 		$user = isset($param['user']) ? $param['user'] : ini_get('mysql.default_user');
 		$pass = isset($param['pass']) ? $param['pass'] : ini_get('mysql.default_pw');
 		if (($this->link = mysql_connect($host, $user, $pass)) === false)
-			throw new XSException("Can not connect to mysql server: '$uesr@$host'");
+			throw new XSException("Can not connect to mysql server: '$user@$host'");
 		if (!mysql_select_db($param['dbname'], $this->link))
 		{
 			$this->close();
@@ -559,7 +559,7 @@ class XSDatabaseMySQLI extends XSDatabase
 		$port = isset($param['port']) ? $param['port'] : ini_get('mysqli.default_port');
 		$this->obj = new mysqli($host, $user, $pass, '', $port);
 		if ($this->obj->connect_error)
-			throw new XSException("Can not connect to mysql server: '$uesr@$host'");
+			throw new XSException("Can not connect to mysql server: '$user@$host'");
 		if (!$this->obj->select_db($param['dbname']))
 		{
 			$this->close();
