@@ -159,6 +159,7 @@ try
 				echo "要导入的文件 [$import] 不存在或无法读取！\n";
 			else
 			{
+				$search->setTimeout(0);
 				echo "开始导入搜索日志文件 ...\n";
 				while (($line = fgets($fd, 1024)) !== false)
 				{
