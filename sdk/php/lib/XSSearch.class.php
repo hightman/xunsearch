@@ -506,10 +506,12 @@ class XSSearch extends XSServer
 		if ($query === '')
 		{
 			$this->_count = $this->_lastCount;
-			// trigger to logQuery
-			$this->logQuery();
-			// trigger to initHighlight
-			$this->initHighlight();
+			// trigger log & highlight
+			if ($this->_curDb !== self::LOG_DB)
+			{
+				$this->logQuery();
+				$this->initHighlight();
+			}
 		}
 		$this->_limit = $this->_offset = 0;
 		return $ret;
