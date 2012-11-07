@@ -101,6 +101,7 @@ try
 	{
 		// NOTE: use setQuery to call preQueryString for preparing fieldset		
 		$search->setDb($db)->setQuery('dummy');
+		$search->setTimeout(0);	// sometimes user may import lots of terms
 		$log_ready = true;
 	}
 	catch (Exception $e)
