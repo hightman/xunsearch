@@ -282,7 +282,7 @@ if test "$do_install" = "yes" ; then
 fi
 
 # install/upgrade xunsearch
-new_file=`ls ./packages/xunsearch-*`
+new_file=`ls ./packages/xunsearch-*.tar.bz2`
 new_version=`echo $new_file | sed 's#^.*xunsearch-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$new_version" ; then
   echo "ERROR: Missing xunsearch package (缺少 xunsearch 安装包)"

@@ -26,9 +26,6 @@ ln -s xunsearch-full xunsearch-full-$fileinfo
 tar -cHjf xunsearch-full-$fileinfo.tar.bz2 xunsearch-full-$fileinfo
 rm -f xunsearch-full-$fileinfo
 
-# sdk package
-sdk_package = xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip
-
 # upload to web server
 echo "Uploading file to web server ($filetype) ..."
 if test "$fileinfo" = "dev" ; then
