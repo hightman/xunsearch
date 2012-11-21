@@ -26,17 +26,19 @@ ln -s xunsearch-full xunsearch-full-$fileinfo
 tar -cHjf xunsearch-full-$fileinfo.tar.bz2 xunsearch-full-$fileinfo
 rm -f xunsearch-full-$fileinfo
 
+# sdk package
+sdk_package = xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip
+
 # upload to web server
 echo "Uploading file to web server ($filetype) ..."
 if test "$fileinfo" = "dev" ; then
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download
-  #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch-dev.tar.bz2
   scp VERSION xunsearch:./web/protected/data
 else
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
-  #scp xunsearch-full/packages/xunsearch-*.tar.bz2 xunsearch:./web/download/xunsearch
   if test "$filetype" = "RELEASE" ; then
     ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
+	scp xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip xunsearch:./web/download/xunsearch-sdk-latest.zip
   fi
   scp VERSION xunsearch:./web/protected/data/$filetype
   # also update dev

@@ -12,7 +12,7 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
   <thead>
     <tr>
       <th> </th>
-      <th>Xunsearch-Full (完整安装包)</th>
+      <th>Xunsearch-Full (完整安装包，含SDK)</th>
     </tr>
   </thead>
   <tbody>
@@ -21,6 +21,13 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
       <td>
         <a href="/download/xunsearch-full-latest.tar.bz2" target="_blank">xunsearch-full-latest.tar.bz2</a>
         ($RELEASE，<a href="https://github.com/hightman/xunsearch/commits/$RELEASE0" target="_blank">修改日志</a>)
+      </td>
+    </tr>
+    <tr>
+      <th>SDK单独下载</th>
+      <td>
+        <a href="/download/xunsearch-sdk-latest.zip" target="_blank">xunsearch-sdk-latest.zip</a>
+        ($RELEASE0，PHP-SDK，不含服务端)
       </td>
     </tr>
 	<!--

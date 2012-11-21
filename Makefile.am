@@ -52,11 +52,19 @@ uninstall-customDATA:
 
 dist-hook:
 
+dist-sdk: distdir
+	cd $(distdir) \
+		&& cp -pR sdk xunsearch-sdk \
+		&& rm -f xunsearch-sdk/Makefile* xunsearch-sdk/*.sh \
+		&& sed -e 's#838#demo.xunsearch.com:838#g' \
+			sdk/php/app/demo.ini > xunsearch-sdk/php/app/demo.ini \
+		&& zip -qr9 ../xunsearch-sdk-$(VERSION).zip xunsearch-sdk \
+		&& rm -rf xunsearch-sdk
 	
-dist-full: dist-bzip2
+dist-full: dist-sdk dist-bzip2
 	sh -c 'cd xunsearch-full ; ./setup.sh --clean'	
 	rm -f xunsearch-full/packages/xunsearch-*
-	mv $(distdir).tar.bz2 xunsearch-full/packages
+	mv $(distdir).tar.bz2 xunsearch-sdk-$(VERSION).zip xunsearch-full/packages
 	@echo "Running distribute script ..."
 	@sh dist-sh
 
