@@ -56,7 +56,7 @@ dist-sdk: distdir
 	cd $(distdir) \
 		&& cp -pR sdk xunsearch-sdk \
 		&& rm -f xunsearch-sdk/Makefile* xunsearch-sdk/*.sh \
-		&& sed -e 's#838#demo.xunsearch.com:838#g' \
+		&& sed -e 's#838#demo.xunsearch.com:939#g' \
 			sdk/php/app/demo.ini > xunsearch-sdk/php/app/demo.ini \
 		&& zip -qr9 ../xunsearch-sdk-$(VERSION).zip xunsearch-sdk \
 		&& rm -rf xunsearch-sdk
