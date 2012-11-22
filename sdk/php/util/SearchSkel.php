@@ -63,6 +63,10 @@ try
 	echo "解析字段，生成变量清单 ...\n";
 	$vars = array();
 
+	// timezone
+	if (!ini_get('date.timezone'))
+		date_default_timezone_set('Asia/Chongqing');
+
 	// basic
 	$vars['@project@'] = $project;
 	$vars['@charset@'] = $xs->getDefaultCharset();
