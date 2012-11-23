@@ -60,7 +60,7 @@ ${'f_' . $f} = ' checked';
 ${'s_' . $s} = ' selected';
 
 // base url
-$bu = $_SERVER['SCRIPT_NAME'] . '?q=' . urlencode($_GET['q']) . '&m=' . $m . '&f=' . $f . '&s=' . $s . $eu;
+$bu = $_SERVER['SCRIPT_NAME'] . '?q=' . urlencode($q) . '&m=' . $m . '&f=' . $f . '&s=' . $s . $eu;
 
 // other variable maybe used in tpl
 $count = $total = $search_cost = 0;
