@@ -54,7 +54,8 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
     <tr>
       <th>最新开发版</th>
       <td>
-        <a href="/download/xunsearch-full-dev.tar.bz2" target="_blank">xunsearch-full-dev.tar.bz2</a>
+        <a href="/download/xunsearch-full-dev.tar.bz2" target="_blank">xunsearch-full-dev.tar.bz2</a><br />
+        <a href="/download/xunsearch-sdk-dev.zip" target="_blank">xunsearch-sdk-dev.zip</a>
         (开发版：$VERSION，<a href="https://github.com/hightman/xunsearch/commits/master" target="_blank">修改日志</a>)
       </td>
     </tr>
