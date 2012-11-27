@@ -78,4 +78,6 @@ extern MM *mm_global;
 
 #endif	/* HAVE_MM */
 
+#define	XS_HACK_UUID			"201109231337"
+
 #endif	/* __XS_GLOBAL_20090531_H__ */

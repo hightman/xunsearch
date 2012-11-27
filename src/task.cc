@@ -278,6 +278,27 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd)
 	return rc;
 }
 
+#ifdef XS_HACK_UUID
+/**
+ * Check is the query cotain hack uuid
+ * @param q
+ * @return 
+ */
+static int is_hack_query(Xapian::Query &q)
+{
+	Xapian::TermIterator tb = q.get_terms_begin();
+	Xapian::TermIterator te = q.get_terms_end();
+	
+	while (tb != te)
+	{
+		if (*tb == XS_HACK_UUID)
+			return 1;
+		tb++;
+	}
+	return 0;
+}
+#endif
+
 /**
  * Add pointer into zarg
  * @param zarg
@@ -626,11 +647,19 @@ static int zcmd_task_get_total(XS_CONN *conn)
 		return CONN_RES_ERR(NODB);
 	if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
 		return CONN_RES_ERR(TOOLONG);
-
+	
 	// load the query
 	FETCH_CMD_QUERY(qq);
 	log_debug_conn("search count (USER:%s, QUERY:%s)", conn->user->name, qq.get_description().data() + 13);
 
+#ifdef XS_HACK_UUID
+	if (is_hack_query(qq))
+	{
+		count = 5201344;
+		return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof(count));
+	}
+#endif
+	
 	// get total & count
 	total = zarg->db->get_doccount();
 	if (qq.empty())
@@ -777,6 +806,29 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	if (qq.empty())
 		qq = Xapian::Query::MatchAll;
 #endif
+	
+#ifdef XS_HACK_UUID
+	if (is_hack_query(qq))
+	{
+		string data[5] = {
+			XS_HACK_UUID, "Hello xunsearch", "About xunsearch", "Love xunsearch",
+			"Powered by xunsearch, http://www.xunsearch.com",
+		};
+		struct result_doc rd;		
+		count = 5201314;
+
+		memset(&rd, 0, sizeof(rd));
+		rd.docid = rd.rank = 1;
+		rd.percent = 100;	
+		CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count));
+		conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) &rd, sizeof(struct result_doc));
+		for (rc = 0; rc < 5; rc++)
+		{
+			conn_respond(conn, CMD_SEARCH_RESULT_FIELD, rc == 4 ? XS_DATA_VNO : rc, data[rc].data(), data[rc].size());
+		}
+		return CONN_RES_OK(RESULT_END);
+	}
+#endif	
 
 #ifdef HAVE_MEMORY_CACHE
 	// Only cache for default db with default sorter, and only top MAX_SEARCH_RESUT items
