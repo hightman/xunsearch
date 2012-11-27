@@ -873,11 +873,20 @@ interface XSDataFilter
 {
 
 	/**
-	 * 数据处理函数, 返回 false 则跳过不处理
+	 * 字段数据处理函数
 	 * @param array $data 字段名和值组成的数据数组
-	 * @param mixed $cs 数据字符集, 如无法确定则为 false
+	 * @param mixed $cs 数据字符集, 默认 false 表示无法确定源字符集
+	 * @return mixed 返回处理后的数据数组, 返回 false 表示本条数据不加入索引
 	 */
 	public function process($data, $cs = false);
+
+	/**
+	 * 索引文档处理函数
+	 * 在此通过 {@link XSDocument::addIndex} 或 {@link XSDocument::addTerm} 做索引相关调整
+	 * @param XSDocument $doc 索引文档
+	 * @since 1.3.4
+	 */
+	public function processDoc($doc);
 }
 
 /**
@@ -895,5 +904,10 @@ class XSDebugFilter implements XSDataFilter
 		echo "\n----- DEBUG DATA INFO -----\n";
 		print_r($data);
 		return $data;
+	}
+
+	public function processDoc($doc)
+	{
+		
 	}
 }

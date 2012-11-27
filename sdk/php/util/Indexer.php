@@ -233,6 +233,8 @@ try
 				$doc->setFields($data);
 				try
 				{
+					if ($filter !== null && method_exists($filter, 'processDoc'))
+						$filter->processDoc($doc);
 					$total++;
 					$index->update($doc);
 					$total_ok++;
