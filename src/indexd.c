@@ -1033,6 +1033,7 @@ static int index_zcmd_exec(XS_CONN *conn)
 						db->flag &= ~XS_DBF_REBUILD_MASK;
 						db->flag |= XS_DBF_FORCE_COMMIT;
 					}
+					rc = CONN_RES_OK(DB_REBUILD);
 				}
 				else
 				{
@@ -1046,8 +1047,8 @@ static int index_zcmd_exec(XS_CONN *conn)
 					{
 						rebuild_wdb_end(db, conn->user);
 					}
+					rc = CONN_RES_OK(DB_REBUILD);
 				}
-				rc = CONN_RES_OK(DB_REBUILD);
 			}
 			break;
 		case CMD_INDEX_CLEAN_DB:
