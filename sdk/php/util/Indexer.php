@@ -26,6 +26,7 @@ XSUtil::setCharset($charset);
 $params = array('source', 'file', 'sql', 'rebuild', 'clean', 'flush', 'flush-log', 'info', 'csv-delimiter', 'filter');
 $params[] = 'add-synonym';
 $params[] = 'del-synonym';
+$params[] = 'stop-rebuild';
 foreach ($params as $_)
 {
 	$k = strtr($_, '-', '_');
@@ -77,6 +78,7 @@ Indexer - 索引批量管理、导入工具 ($version)
                  删除一个或多个同义词, 多个之间用半角逗号分隔, 原词和同义词之间用冒号分隔
                  省略同义词则表示删除该原词的所有同义词
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
+    --stop-rebuild 强制中止没未完成的索引重建状态 (慎用)
     --clean      清空库内当前的索引数据
     --flush      强制提交刷新索引服务端的缓冲索引，与 --source 分开用
     --flush-log	 强制提交刷新搜索日志，与 --source 分开用
@@ -188,6 +190,13 @@ try
 		{
 			echo "清空现有索引数据 ...\n";
 			$index->clean();
+		}
+
+		// stop rebuild
+		if ($stop_rebuild !== null)
+		{
+			echo "中止索引重建 ...\n";
+			$index->stopRebuild();
 		}
 
 		// begin rebuild

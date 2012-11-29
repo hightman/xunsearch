@@ -139,6 +139,38 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(1, $search->reopen(true)->dbTotal);
 	}
 
+	public function testRebuild2()
+	{
+		$search = $this->object->xs->search;
+		$doc = new XSDocument(self::$data_gbk);
+		$this->object->add($doc);
+		$this->object->add($doc);
+		$this->object->flushIndex();
+		sleep(2);
+		$this->assertEquals(2, $search->reopen(true)->dbTotal);
+
+		$this->object->beginRebuild();
+		$this->object->add($doc);
+		$this->object->add($doc);
+		$this->assertEquals(2, $search->reopen(true)->dbTotal);
+		$this->object->beginRebuild();
+		$this->object->add($doc);
+		$this->assertEquals(2, $search->reopen(true)->dbTotal);
+		$this->object->endRebuild();
+		$this->object->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $search->reopen(true)->dbTotal);
+
+		$this->object->beginRebuild();
+		$this->object->add($doc);
+		$this->object->add($doc);
+		$this->object->endRebuild();
+		$this->object->stopRebuild();
+		$this->object->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $search->reopen(true)->dbTotal);
+	}
+
 	public function testSynonyms($buffer = false)
 	{
 		$index = $this->object;

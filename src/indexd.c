@@ -472,7 +472,8 @@ static void rebuild_wdb_end(XS_DB *db, XS_USER *user)
 	}
 
 	// clean flag
-	db->flag &= ~(XS_DBF_REBUILD_BEGIN | XS_DBF_REBUILD_END | XS_DBF_REBUILD_WAIT);
+	db->flag &= ~XS_DBF_REBUILD_MASK;
+	db->flag |= XS_DBF_FORCE_COMMIT;
 }
 
 /**
@@ -530,8 +531,23 @@ void signal_child(pid_t pid, int status)
 			rmdir_r(sndfile);
 		}
 	}
+	else if (db->flag & XS_DBF_REBUILD_STOP)
+	{
+		db->flag &= ~XS_DBF_REBUILD_MASK;
+		db->flag |= XS_DBF_FORCE_COMMIT;
+		unlink(sndfile);
+		log_debug_conn("rebuild stopped");
+	}
 	else if (db->flag & XS_DBF_REBUILD_WAIT)
 	{
+		// clean exists rebuild db
+		char repath[256];
+		sprintf(repath, "%s/%s.re", user->home, db->name);
+		if (!access(repath, R_OK))
+		{
+			log_debug_conn("removing rebuilding database (PATH:%s)", repath);
+			rmdir_r(repath);
+		}
 		// marked as rebuild
 		db->flag ^= XS_DBF_REBUILD_WAIT;
 		unlink(sndfile);
@@ -638,6 +654,35 @@ static inline void check_eff_size(int fd)
 }
 
 /**
+ * Clean uncommited index data
+ * @param db
+ * @param user
+ */
+static inline void clean_uncommitted_data(XS_DB *db, XS_USER *user)
+{
+	// clean splitted file
+#if SIZEOF_OFF_T < 8
+	int i = 0;
+	char fpath[256], *suffix;
+
+	sprintf(fpath, DEFAULT_TEMP_DIR "%s_%s.rcv", user->name, db->name);
+	suffix = fpath + strlen(fpath);
+	for (i = MAX_SPLIT_FILES; i > 0; i--)
+	{
+		sprintf(suffix, ".%d", i);
+		if (!access(fpath, R_OK))
+		{
+			unlink(fpath);
+		}
+	}
+#endif	/* LARGEFILE */
+	// clean current file
+	lseek(db->fd, 0, SEEK_SET);
+	update_eff_size(db->fd);
+	db->count = db->lcount = 0;
+}
+
+/**
  * Begin to rebuild current db
  * @param conn
  * @return CMD_RES_xxx
@@ -651,24 +696,33 @@ static int rebuild_conn_wdb(XS_CONN *conn)
 		return CONN_RES_ERR(NODB);
 	else if (db->flag & XS_DBF_STUB)
 		return CMD_RES_UNIMP;
-	else if (db->flag & XS_DBF_REBUILD_BEGIN)
+		/* allow rebuild during rebuilding, just clean exists data */
+	else if (db->flag & XS_DBF_REBUILD_STOP)
 		return CONN_RES_ERR(REBUILDING);
 	else
 	{
-		// NOTE: may need to clean db_name.re, .rcv[.X] first?
 		// clean un-committed data (.rcv)
 		if (db->fd >= 0)
 		{
 			log_debug_conn("clean uncommitted index data for rebuilding");
-			lseek(db->fd, 0, SEEK_SET);
-			update_eff_size(db->fd);
-			db->count = db->lcount = 0;
+			clean_uncommitted_data(db, conn->user);
 		}
 		if (db->pid > 0 && !(db->flag & XS_DBF_TOCLEAN) && !kill(db->pid, SIGTERM))
 		{
-			// BUG: if import exit normal HERE may cause some problem	
+			// BUG: if import exit normal HERE may cause some problem
 			db->flag |= XS_DBF_REBUILD_WAIT;
 			log_debug_conn("notify running import to quit & set rebuild_wait flag");
+		}
+		else
+		{
+			// clean exists rebuild db
+			char repath[256];
+			sprintf(repath, "%s/%s.re", conn->user->home, db->name);
+			if (!access(repath, R_OK))
+			{
+				log_debug_conn("removing rebuilding database (PATH:%s)", repath);
+				rmdir_r(repath);
+			}
 		}
 		db->flag |= XS_DBF_REBUILD_BEGIN;
 		return CONN_RES_OK(DB_REBUILD);
@@ -717,9 +771,7 @@ static int remove_conn_wdb(XS_CONN *conn)
 		if (db->fd >= 0)
 		{
 			log_debug_conn("clean uncommitted index data");
-			lseek(db->fd, 0, SEEK_SET);
-			update_eff_size(db->fd);
-			db->count = db->lcount = 0;
+			clean_uncommitted_data(db, conn->user);
 		}
 
 		if (db->pid > 0 && !kill(db->pid, SIGTERM))
@@ -958,22 +1010,44 @@ static int index_zcmd_exec(XS_CONN *conn)
 				rc = rebuild_conn_wdb(conn);
 			else
 			{
-				if (!conn->wdb || !(conn->wdb->flag & XS_DBF_REBUILD_BEGIN))
+				XS_DB *db = conn->wdb;
+				if (!db || !(db->flag & XS_DBF_REBUILD_BEGIN))
 					rc = CONN_RES_ERR(WRONGPLACE);
-				else
+				else if (cmd->arg1 == 2) // force to stop rebuild
 				{
-					if (conn->wdb->pid > 0 || conn->wdb->count > 0)
+					// clean un-committed data
+					if (db->fd >= 0)
 					{
-						conn->wdb->flag |= (XS_DBF_REBUILD_END | XS_DBF_FORCE_COMMIT);
-						log_debug_conn("save the rebuild end flag for next committing (PID:%d,COUNT:%d,FLAG:0x%04x)",
-							conn->wdb->pid, conn->wdb->count, conn->wdb->flag);
+						log_debug_conn("clean uncommitted index data for stopping rebuild");
+						clean_uncommitted_data(db, conn->user);
+					}
+					if (db->pid > 0 && !(db->flag & XS_DBF_TOCLEAN) && !kill(db->pid, SIGTERM))
+					{
+						db->flag &= ~XS_DBF_REBUILD_WAIT;
+						db->flag |= XS_DBF_REBUILD_STOP;
+						log_debug_conn("notify running import to quit & set rebuild_stop flag");
 					}
 					else
 					{
-						rebuild_wdb_end(conn->wdb, conn->user);
+						log_debug_conn("rebuild stopped");
+						db->flag &= ~XS_DBF_REBUILD_MASK;
+						db->flag |= XS_DBF_FORCE_COMMIT;
 					}
-					rc = CONN_RES_OK(DB_REBUILD);
 				}
+				else
+				{
+					if (db->pid > 0 || db->count > 0)
+					{
+						db->flag |= (XS_DBF_REBUILD_END | XS_DBF_FORCE_COMMIT);
+						log_debug_conn("save the rebuild end flag for next committing (PID:%d,COUNT:%d,FLAG:0x%04x)",
+							db->pid, db->count, db->flag);
+					}
+					else
+					{
+						rebuild_wdb_end(db, conn->user);
+					}
+				}
+				rc = CONN_RES_OK(DB_REBUILD);
 			}
 			break;
 		case CMD_INDEX_CLEAN_DB:

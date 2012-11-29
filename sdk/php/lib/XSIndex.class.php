@@ -331,7 +331,7 @@ class XSIndex extends XSServer
 	 * {@link endRebuild} 实现平滑重建索引, 重建过程仍可搜索旧的索引库,
 	 * 如直接用 {@link clean} 清空数据, 则会导致重建过程搜索到不全的数据
 	 * @return XSIndex 返回自身对象以支持串接操作
-	 * @see endRebuild	
+	 * @see endRebuild
 	 */
 	public function beginRebuild()
 	{
@@ -352,6 +352,28 @@ class XSIndex extends XSServer
 		{
 			$this->_rebuild = false;
 			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 1), CMD_OK_DB_REBUILD);
+		}
+		return $this;
+	}
+
+	/**
+	 * 中止索引重建
+	 * 丢弃重建临时库的所有数据, 恢复成当前搜索库, 主要用于偶尔重建意外中止的情况
+	 * @return XSIndex 返回自身对象以支持串接操作
+	 * @see beginRebuild
+	 * @since 1.3.4
+	 */
+	public function stopRebuild()
+	{
+		try
+		{
+			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 2), CMD_OK_DB_REBUILD);
+			$this->_rebuild = false;
+		}
+		catch (XSException $e)
+		{
+			if ($e->getCode() !== CMD_ERR_WRONGPLACE)
+				throw $e;
 		}
 		return $this;
 	}
