@@ -39,7 +39,7 @@ $db = XSUtil::getOpt('d', 'db');
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$flush && !$flush_log && !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
+	|| (!$stop_rebuild && !$flush && !$flush_log && !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
