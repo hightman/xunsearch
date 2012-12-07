@@ -4,6 +4,9 @@
 Xunsearch 包含了后端服务、前端开发包（即 SDK）两大部分，在开发过程中几乎不需要关注后端，
 所以我们提供的文档大部分都是 SDK 文档，用于二次开发。
 
+为便于新手用户快速接触和了解 `xunsearch` 我们还制作了一份 PDF 格式的快速参考文档
+[《XUNSEARCH 10分钟入门》][7]。
+
 开始&安装
 ---------
 
@@ -45,5 +48,6 @@ Wiki 技巧、经验
 [4]: http://bbs.xunsearch.com/forumdisplay.php?fid=4
 [5]: http://bbs.xunsearch.com/
 [6]: http://www.xunsearch.com/doc/php/guide/start.changelog
+[7]: http://www.xunsearch.com/download/xs_quickstart.pdf
 
 <div class="revision">$Id$</div>
