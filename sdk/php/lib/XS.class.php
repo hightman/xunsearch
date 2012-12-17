@@ -648,7 +648,8 @@ spl_autoload_register('XS::autoload', true, true);
  */
 function xs_error_handler($errno, $error, $file, $line)
 {
-	if ($errno & ini_get('error_reporting'))
+	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT)))	
 		throw new XSErrorException($errno, $error, $file, $line);
+	return false;
 }
 set_error_handler('xs_error_handler');
