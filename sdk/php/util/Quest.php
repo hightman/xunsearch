@@ -13,16 +13,20 @@ require_once dirname(__FILE__) . '/../lib/XS.php';
 require_once dirname(__FILE__) . '/XSUtil.class.php';
 
 // check arguments
-XSUtil::parseOpt(array('p', 'q', 'c', 'd', 'project', 'query', 'db', 'limit', 'charset'));
+XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort'));
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
 $synonyms = XSUtil::getOpt(null, 'list-synonyms');
+$terms = XSUtil::getOpt(null, 'terms');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
 XSUtil::setCharset($charset);
 $query = XSUtil::convertIn($query);
+
+// sort scheme
+$sort = XSUtil::getOpt('s', 'sort');
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
 	|| (!$hot && !$synonyms && !is_string($query)))
@@ -46,6 +50,8 @@ Quest - 搜索查询和测试工具 ($version)
     -c <charset> 指定您当前在用的字符集，以便系统进行智能转换（默认：UTF-8）
     --db=<name[,name2 ...]>
     -d <db[,db2 ...]> 指定项目中的数据库名称，默认是名为 db 的库，多个库之间用逗号分隔
+    --sort=<field1[,field2[,...]]
+    -s <field1[,field2[,...]] 指定排序字段，在字段前加上 ~ 符号表示逆序
     --hot[=total|last|cur] 
                  用于显示指定项目的热门搜索词，此时 <query> 参数无意义，可省略
                  其值含义分别表示总搜索量、上周搜索量、本周搜索量，默认为总搜索量。
@@ -58,6 +64,7 @@ Quest - 搜索查询和测试工具 ($version)
     --limit=<num>用于设置 suggest|hot|related 的返回数量，两者默认值均为 10 个
                  对于普通搜索和列出同义词时，还支持用 --limit=offset,num 的格式
     --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
+    --terms      列出搜索词被切分后的词（不含排除及权重词）
     -h|--help    显示帮助信息
 
     若未指定 -p 或 -q 则会依次把附加的参数当作 <project> 和 <query> 处理，例：
@@ -149,6 +156,12 @@ try
 			}
 		}
 	}
+	else if ($terms !== null)
+	{
+		$result = $search->terms($query);
+		echo "列出\033[7m" . $query . "\033[m的内部切分结果：\n";
+		print_r($result);
+	}
 	else if ($correct !== null)
 	{
 		$result = $search->getCorrectedQuery($query);
@@ -207,6 +220,23 @@ try
 		{
 			$limit1 = intval(substr($limit, $pos + 1));
 			$offset = intval($limit);
+		}
+
+		// sort
+		if ($sort !== null)
+		{
+			$fields = array();
+			$tmps = explode(',', $sort);
+			foreach ($tmps as $tmp)
+			{
+				$tmp = trim($tmp);
+				if ($tmp === '') continue;
+				if (substr($tmp, 0, 1) === '~')
+					$fields[substr($tmp, 1)] = false;
+				else
+					$fields[$tmp] = true;
+			}
+			$search->setMultiSort($fields);
 		}
 
 		// special fields
