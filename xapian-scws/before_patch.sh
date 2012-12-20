@@ -23,5 +23,5 @@ cp -rf xapian-core-${version} xapian-core-scws-${version}
 
 echo "3. OK, you can run patch command now!! and then run the after_patch.sh"
 echo "   cd xapian-core-scws-${version}"
-echo "   patch -p1 < ../patch.xapian-core"
+echo "   patch -p1 < ../patch.xapian-core-scws"
 

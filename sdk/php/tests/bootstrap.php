@@ -3,7 +3,7 @@
 // Force to restart the xs-backend servers
 // $Id$
 $prefix = trim(file_get_contents(getenv('HOME') . '/.xs_installed'));
-shell_exec($prefix . '/bin/xs-ctl.sh start');
+shell_exec($prefix . '/bin/xs-ctl.sh restart');
 
 // global temp ini files
 $GLOBALS['fixIniData'] = array(

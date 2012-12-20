@@ -325,6 +325,10 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$search->query = 'subject:项目测试 working';
 		$this->assertEquals(array('项目', '测试', 'working'), $search->terms());
 		$this->assertEquals(array('项目', 'working'), $search->terms('项目working'));
+
+		$this->assertEquals(array('项目', 'working'), $search->terms('项目working -测试'));
+		$search->setQuery('项目working')->addWeight('subject', '测试');
+		$this->assertEquals(array('项目', 'working'), $search->terms());
 	}
 
 	public function testCount()

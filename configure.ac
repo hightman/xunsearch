@@ -262,7 +262,7 @@ yes
 			], [
 Xapian::Document doc;
 Xapian::TermGenerator indexer;
-indexer.load_libscws(NULL, 0, 0);
+indexer.load_scws(NULL, 0, 0);
 indexer.set_document(doc);
 			])
 		], [ 

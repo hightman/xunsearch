@@ -724,8 +724,8 @@ child_begin:
 		indexer.set_database(database);
 		indexer.set_flags(Xapian::TermGenerator::FLAG_SPELLING);
 
-		log_verbose("load libscws dictionary into memory");
-		indexer.load_libscws(NULL, true, DEFAULT_SCWS_MULTI);
+		log_verbose("load scws dictionary into memory");
+		indexer.load_scws(NULL, true, DEFAULT_SCWS_MULTI);
 	}
 	catch (const Xapian::Error &e)
 	{

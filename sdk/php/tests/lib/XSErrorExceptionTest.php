@@ -15,16 +15,16 @@ class XSErrorExceptionTest extends PHPUnit_Framework_TestCase
 	{
 		error_reporting(E_ALL & ~(E_NOTICE | E_USER_NOTICE));
 		trigger_error('test user notice', E_USER_NOTICE);
-		trigger_error('test user warning', E_USER_WARNING);
+		throw new XSErrorException(E_USER_WARNING, 'test user warning', __FILE__, 18);
 	}
 	
 	public function test__toString()
 	{
 		try
 		{
-			trigger_error('test user warning', E_USER_WARNING);
+			throw new XSErrorException(E_USER_WARNING, 'test user warning', __FILE__, 25);
 		}
-		catch (XSErrorException $e)
+		catch (Exception $e)
 		{			
 		}
 		

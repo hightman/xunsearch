@@ -106,7 +106,7 @@ static void show_usage()
 	printf("  -k <num>         Set the number of documents to be skipped\n");
 	printf("                   Default: read from file header (CMD_IMPORT_HEADER)\n");
 	printf("  -l <num>         Set the maximum documents to be imported(Not include skipped)\n");
-	printf("  -m <multi level> Set the multi level to libSCWS, range is from 1 to 15, (default: %d)\n",
+	printf("  -m <multi level> Set the multi level to SCWS, range is from 1 to 15, (default: %d)\n",
 		DEFAULT_SCWS_MULTI);
 	printf("                   1|2|4|8 = short|duality|zmain|zall, see scws documents pl.\n");
 	printf("  -n <num>         Set the batch number of each transaction or progress report\n");
@@ -901,7 +901,7 @@ int main(int argc, char *argv[])
 		indexer.set_stemmer(stemmer);
 		indexer.set_stopper(&stopper);
 		indexer.set_database(database);
-		indexer.load_libscws(NULL, true, multi);
+		indexer.load_scws(NULL, true, multi);
 
 		if (flag & FLAG_CORRECTION)
 			indexer.set_flags(Xapian::TermGenerator::FLAG_SPELLING);

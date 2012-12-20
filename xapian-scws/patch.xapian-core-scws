@@ -1,5 +1,5 @@
 *** xapian-core-1.2.12/configure.ac	2012-06-27 21:07:59.000000000 +0800
---- xapian-core-scws-1.2.12/configure.ac	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/configure.ac	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 1009,1014 ****
 --- 1009,1070 ----
@@ -66,43 +66,68 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.2.12/include/xapian/queryparser.h	2012-06-27 21:07:20.000000000 +0800
---- xapian-core-scws-1.2.12/include/xapian/queryparser.h	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/include/xapian/queryparser.h	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 500,505 ****
---- 500,514 ----
+--- 500,526 ----
        */
       void set_max_wildcard_expansion(Xapian::termcount limit);
   
 + #if 1	/* HAVE_SCWS */
-+     /** hightman.20070706: Specify the dict and rules file for scws, only used when HAVE_SCWS.
-+      *  @param fpath	path for dict file and rule file (char *) 
-+      *  @param xmem	whether to load whold dict into memory(default to false)
-+      *  @param multi	multiset (int 0~15)
++     /** Load scws dict and rule (hightman.070706)
++      *
++      *  @param fpath    The directory of dict and rule file
++      *  @param xmem     Whether to load whole dict into memory (default to false)
++      *  @param multi    Options of scws  multi set (int 0~15)
 +      */
-+     void load_libscws(const char *fpath, bool xmem = false, int multi = 0);
++     void load_scws(const char *fpath, bool xmem = false, int multi = 0);
++ 
++     /** Specify the scws handle (hightman.121219)
++      *
++      *  Note: this will free exists scws handle automatically
++      *
++      *  @param scws     Type of scws_t defined in scws.h
++      */
++     void set_scws(void *scws);
++ 
++     /** Clear parsed query data (hightman.121219) */
++     void clear();
 + #endif
 + 
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.2.12/include/xapian/termgenerator.h	2012-06-27 21:07:20.000000000 +0800
---- xapian-core-scws-1.2.12/include/xapian/termgenerator.h	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/include/xapian/termgenerator.h	2012-12-20 20:04:48.000000000 +0800
 ***************
-*** 82,87 ****
---- 82,92 ----
-      /// Set the database to index spelling data to.
-      void set_database(const Xapian::WritableDatabase &db);
+*** 91,96 ****
+--- 91,114 ----
+      /// Stemming strategies, for use with set_stemming_strategy().
+      typedef enum { STEM_NONE, STEM_SOME, STEM_ALL, STEM_ALL_Z } stem_strategy;
   
 + #if 1	/* HAVE_SCWS */
-+     /// hightman.20070706: Specify the dict and rules file for scws, only used when HAVE_SCWS.
-+     void load_libscws(const char *fpath, bool xmem = false, int multi = 0);
++     /** Load scws dict and rule (hightman.070706)
++      *
++      *  @param fpath    The directory of dict and rule file
++      *  @param xmem     Whether to load whole dict into memory (default to false)
++      *  @param multi    Options of scws  multi set (int 0~15)
++      */
++     void load_scws(const char *fpath, bool xmem = false, int multi = 0);
++ 
++     /** Specify the scws handle (hightman.121219)
++      *
++      *  Note: this will free exists scws handle automatically
++      *
++      *  @param scws     Type of scws_t defined in scws.h
++      */
++     void set_scws(void *scws);
 + #endif
 + 
-      /// Flags to OR together and pass to TermGenerator::set_flags().
-      enum flags {
-  	/// Index data required for spelling correction.
+      /** Set flags.
+       *
+       *  The new value of flags is: (flags & mask) ^ toggle
 *** xapian-core-1.2.12/api/omqueryinternal.cc	2012-06-27 21:07:26.000000000 +0800
---- xapian-core-scws-1.2.12/api/omqueryinternal.cc	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/api/omqueryinternal.cc	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 370,375 ****
 --- 370,380 ----
@@ -118,7 +143,7 @@
       }
   }
 *** xapian-core-1.2.12/queryparser/queryparser_internal.h	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser_internal.h	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser_internal.h	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -160,7 +185,7 @@
   	default_op(Query::OP_OR), errmsg(NULL), max_wildcard_expansion(0) { }
 + #ifdef HAVE_SCWS
 +     ~Internal();
-+     void load_libscws(const char *fpath, bool xmem, int multi);
++     void load_scws(const char *fpath, bool xmem, int multi);
 + #endif
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
 + 
@@ -168,7 +193,7 @@
   
   }
 *** xapian-core-1.2.12/queryparser/termgenerator_internal.h	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.h	2012-07-02 12:55:15.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.h	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 26,31 ****
 --- 26,35 ----
@@ -202,27 +227,57 @@
   	flags(TermGenerator::flags(0)) { }
 + #ifdef HAVE_SCWS
 +     ~Internal();
-+     void load_libscws(const char *fpath, bool xmem, int multi);
++     void load_scws(const char *fpath, bool xmem, int multi);
 + #endif
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.2.12/queryparser/queryparser.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser.cc	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser.cc	2012-12-20 20:04:48.000000000 +0800
+***************
+*** 22,27 ****
+--- 22,28 ----
+  
+  #include <config.h>
+  
++ 
+  #include <xapian/queryparser.h>
+  #include <xapian/termiterator.h>
+  
 ***************
 *** 110,115 ****
---- 110,126 ----
+--- 111,147 ----
       internal->max_wildcard_expansion = max;
   }
   
 + #if 1	/* HAVE_SCWS */
-+ /// hightman.20070701: load the specified dict file for scws
 + void
-+ QueryParser::load_libscws(const char *fpath, bool xmem, int multi)
++ QueryParser::load_scws(const char *fpath, bool xmem, int multi)
 + {
 + #ifdef HAVE_SCWS
-+     internal->load_libscws(fpath, xmem, multi);
++     internal->load_scws(fpath, xmem, multi);
 + #endif
++ }
++ 
++ void
++ QueryParser::set_scws(void *scws)
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws != NULL)
++     	scws_free(internal->scws);
++     internal->scws = (scws_t) scws; 
++ #endif
++ }
++ 
++ void
++ QueryParser::clear()
++ {
++     internal->prefixmap.clear();
++     internal->valrangeprocs.clear();
++     internal->stoplist.clear();
++     internal->unstem.clear();
++     internal->errmsg = NULL;
++     internal->corrected_query.resize(0);
 + }
 + #endif
 + 
@@ -230,7 +285,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.2.12/queryparser/queryparser_internal.cc	2012-06-27 21:16:08.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser_internal.cc	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser_internal.cc	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 164,169 ****
 --- 164,172 ----
@@ -263,7 +318,7 @@
   	Xapian::Database db = state->get_database();
 ***************
 *** 329,344 ****
---- 337,364 ----
+--- 337,363 ----
   	if (syn == end && stem != QueryParser::STEM_NONE) {
   	    // If that has no synonyms, try the stemmed form:
   	    term = 'Z';
@@ -284,7 +339,6 @@
 + 		if (sterm[0] == 'Z') sterm = "Z" + *piter + sterm.substr(1);
 + 		else sterm = *piter + sterm;
 + 	    }
-+ 
 + 	    q = Query(Query::OP_SYNONYM, q, Query(sterm, 1, mpos++));
 + #else
   	    q = Query(Query::OP_SYNONYM, q, Query(*syn, 1, pos));
@@ -294,7 +348,7 @@
       }
 ***************
 *** 456,461 ****
---- 476,510 ----
+--- 475,509 ----
       vector<Query> prefix_cjk;
       const list<string> & prefixes = prefix_info->prefixes;
       list<string>::const_iterator piter;
@@ -332,7 +386,7 @@
   	    string cjk = *piter;
 ***************
 *** 463,468 ****
---- 512,518 ----
+--- 511,517 ----
   	    prefix_cjk.push_back(Query(cjk, 1, pos));
   	}
       }
@@ -342,43 +396,43 @@
       return q;
 ***************
 *** 573,584 ****
---- 623,700 ----
+--- 622,699 ----
      }
   }
   
-+ /// hightman.20110701: load libscws
++ /// hightman.20110701: load scws
 + #ifdef HAVE_SCWS
 + QueryParser::Internal::~Internal()
 + {
 +     if (rptr != NULL) {
 + 	scws_free_result(rptr);
 + 	rptr = NULL;
-+     }    
++     }
 +     if (scws != NULL) {
 + 	scws_free(scws);
 + 	scws = NULL;
-+     }    
++     }
 + }
 + 
 + void
-+ QueryParser::Internal::load_libscws(const char *fpath, bool xmem, int multi)
++ QueryParser::Internal::load_scws(const char *fpath, bool xmem, int multi)
 + {
++     string temp;
 +     if (scws == NULL) {
-+ 	string temp;
-+ 
 + 	scws = scws_new();
 + 	scws_set_charset(scws, "utf8");
 + 	scws_set_ignore(scws, SCWS_NA);
 + 	scws_set_duality(scws, SCWS_YEA);
-+ 
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/rules.utf8.ini");
-+ 	scws_set_rule(scws, temp.data());
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict.utf8.xdb");
-+ 	scws_set_dict(scws, temp.data(), xmem == true ? SCWS_XDICT_MEM : SCWS_XDICT_XDB);
-+ 	/* hightman.20111209: custom dict support */
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict_user.txt");
-+ 	scws_add_dict(scws, temp.data(), SCWS_XDICT_TXT);
 +     }
++     // default dict & rule
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/rules.utf8.ini");
++     scws_set_rule(scws, temp.data());
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict.utf8.xdb");
++     scws_set_dict(scws, temp.data(), xmem == true ? SCWS_XDICT_MEM : SCWS_XDICT_XDB);
++     /* hightman.20111209: custom dict support */
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict_user.txt");
++     scws_add_dict(scws, temp.data(), SCWS_XDICT_TXT);
++     // multi options
 +     if (multi >= 0 && multi < 0x10)
 + 	scws_set_multi(scws, (multi<<12));
 + }
@@ -423,7 +477,7 @@
       if (U_isupper(*it)) {
 ***************
 *** 663,668 ****
---- 779,785 ----
+--- 778,784 ----
   	    }
   	}
       }
@@ -433,7 +487,7 @@
   
 ***************
 *** 714,719 ****
---- 831,862 ----
+--- 830,860 ----
   
       ParserHandler pParser(ParseAlloc());
   
@@ -441,9 +495,8 @@
 +     /// Pre segmentation use scws
 +     scws_res_t res;
 + 
-+     if (!scws) { 
-+ 	load_libscws(NULL, false, 0);
-+     }
++     if (scws == NULL)
++ 	load_scws(NULL, false, 0);
 +     if (rptr != NULL) {
 + 	scws_free_result(rptr);
 + 	rptr = NULL;
@@ -468,7 +521,7 @@
       enum {
 ***************
 *** 1111,1116 ****
---- 1254,1264 ----
+--- 1252,1262 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -482,7 +535,7 @@
   			(it != end && is_stem_preventer(*it))) {
 ***************
 *** 1124,1129 ****
---- 1272,1288 ----
+--- 1270,1286 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -502,11 +555,11 @@
   		continue;
 ***************
 *** 1254,1259 ****
---- 1413,1425 ----
+--- 1411,1423 ----
   	}
       }
   done:
-+  #ifdef HAVE_SCWS
++ #ifdef HAVE_SCWS
 +     /// Free all segmented terms/words
 +     if (rptr != NULL) {
 + 	scws_free_result(rptr);
@@ -518,7 +571,7 @@
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 ***************
 *** 1446,1454 ****
---- 1612,1631 ----
+--- 1610,1629 ----
   
   	    // Use the position of the first term for the synonyms.
   	    Xapian::termpos pos = (*begin)->pos;
@@ -541,7 +594,7 @@
   	    Query q_synonym_terms(Query::OP_SYNONYM, subqs2.begin(), subqs2.end());
 ***************
 *** 1613,1618 ****
---- 1790,1800 ----
+--- 1788,1798 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -555,7 +608,7 @@
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
 *** 1621,1626 ****
---- 1803,1809 ----
+--- 1801,1807 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -564,20 +617,29 @@
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
 *** xapian-core-1.2.12/queryparser/termgenerator.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator.cc	2012-07-02 12:50:16.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator.cc	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 74,79 ****
---- 74,90 ----
+--- 74,99 ----
       internal->db = db;
   }
   
 + #if 1	/* HAVE_SCWS */
-+ /// hightman.20070701: load the specified dict file for scws
 + void
-+ TermGenerator::load_libscws(const char *fpath, bool xmem, int multi)
++ TermGenerator::load_scws(const char *fpath, bool xmem, int multi)
 + {
 + #ifdef HAVE_SCWS
-+     internal->load_libscws(fpath, xmem, multi);
++     internal->load_scws(fpath, xmem, multi);
++ #endif
++ }
++ 
++ void
++ TermGenerator::set_scws(void *scws)
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws != NULL)
++ 	scws_free(internal->scws);
++     internal->scws = (scws_t) scws;
 + #endif
 + }
 + #endif
@@ -586,14 +648,14 @@
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.2.12/queryparser/termgenerator_internal.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.cc	2012-07-02 13:02:30.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.cc	2012-12-20 20:04:48.000000000 +0800
 ***************
 *** 125,130 ****
 --- 125,164 ----
   #define STOPWORDS_IGNORE 1
   #define STOPWORDS_INDEX_UNSTEMMED_ONLY 2
   
-+ /// hightman.20070701: load libscws
++ /// hightman.20070701: load scws
 + #ifdef HAVE_SCWS
 + TermGenerator::Internal::~Internal()
 + {
@@ -604,25 +666,25 @@
 + }
 + 
 + void 
-+ TermGenerator::Internal::load_libscws(const char *fpath, bool xmem, int multi)
++ TermGenerator::Internal::load_scws(const char *fpath, bool xmem, int multi)
 + {
++     string temp;
 +     if (scws == NULL) {
-+ 	string temp;
-+ 
 + 	scws = scws_new();
 + 	scws_set_charset(scws, "utf8");
 + 	scws_set_ignore(scws, SCWS_NA);
 + 	scws_set_duality(scws, SCWS_YEA);
-+ 
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/rules.utf8.ini");
-+ 	scws_set_rule(scws, temp.data());
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict.utf8.xdb");
-+ 	scws_set_dict(scws, temp.data(), xmem == true ? SCWS_XDICT_MEM : SCWS_XDICT_XDB);
-+ 	/* hightman.20111209: custom dict support */
-+ 	temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict_user.txt");
-+ 	scws_add_dict(scws, temp.data(), SCWS_XDICT_TXT);
 +     }
-+     if (multi >= 0 && multi < 0x10) 
++     // default dict & rule
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/rules.utf8.ini");
++     scws_set_rule(scws, temp.data());
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict.utf8.xdb");
++     scws_set_dict(scws, temp.data(), xmem == true ? SCWS_XDICT_MEM : SCWS_XDICT_XDB);
++     /* hightman.20111209: custom dict support */
++     temp = string(fpath ? fpath : SCWS_ETCDIR) + string("/dict_user.txt");
++     scws_add_dict(scws, temp.data(), SCWS_XDICT_TXT);
++     // multi options
++     if (multi >= 0 && multi < 0x10)
 + 	scws_set_multi(scws, (multi<<12));
 + }
 + #endif
@@ -632,7 +694,7 @@
   				    const string & prefix, bool with_positions)
 ***************
 *** 135,140 ****
---- 169,205 ----
+--- 169,206 ----
   
       if (!stopper) stop_mode = STOPWORDS_NONE;
   
@@ -642,7 +704,8 @@
 +     Utf8Iterator iterm;
 +     const char *text = itor.raw();
 + 
-+     if (!scws) load_libscws(NULL, false, 0);
++     if (scws == NULL)
++     	load_scws(NULL, false, 0);
 +     scws_send_text(scws, text, itor.left());
 +     while ((res = cur = scws_get_result(scws)) != NULL) { while (cur != NULL) {
 + 	string term;
@@ -672,7 +735,7 @@
   	unsigned ch;
 ***************
 *** 270,275 ****
---- 335,341 ----
+--- 336,342 ----
   	}
   
   endofterm:
@@ -682,7 +745,7 @@
   	if (stop_mode == STOPWORDS_IGNORE && (*stopper)(term)) continue;
 ***************
 *** 282,287 ****
---- 348,357 ----
+--- 349,358 ----
   		doc.add_term(prefix + term, wdf_inc);
   	    }
   	}
@@ -695,7 +758,7 @@
   	if (strategy == TermGenerator::STEM_NONE ||
 ***************
 *** 310,315 ****
---- 380,388 ----
+--- 381,389 ----
   	    doc.add_term(stem, wdf_inc);
   	}
       }
