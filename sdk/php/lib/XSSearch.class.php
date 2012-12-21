@@ -139,6 +139,16 @@ class XSSearch extends XSServer
 		$query = $query === null ? '' : $this->preQueryString($query);
 		$cmd = new XSCommand(CMD_QUERY_GET_STRING, 0, $this->_defaultOp, $query);
 		$res = $this->execCommand($cmd, CMD_OK_QUERY_STRING);
+		if (strpos($res->buf, 'VALUE_RANGE') !== false)
+		{
+			$regex = '/(VALUE_RANGE) (\d+) (\S+) (\S+)/';
+			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
+		}
+		if (strpos($res->buf, 'VALUE_GE') !== false || strpos($res->buf, 'VALUE_LE') !== false)
+		{
+			$regex = '/(VALUE_[GL]E) (\d+) (\S+)/';
+			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
+		}
 		return XS::convert($res->buf, $this->_charset, 'UTF-8');
 	}
 
@@ -1074,5 +1084,101 @@ class XSSearch extends XSServer
 			$this->_highlight['pattern'] = $pattern;
 			$this->_highlight['replace'] = $replace;
 		}
+	}
+
+	/**
+	 * Format the value range/ge
+	 * @param array $match
+	 * @return string
+	 */
+	private function formatValueRange($match)
+	{
+		// VALUE_[GL]E 0 xxx yyy
+		$field = $this->xs->getField(intval($match[2]), false);
+		if ($field === false)
+			return $match[0];
+		$res = array();
+		if (isset($match[4]))
+		{
+			$res[] = $field->isNumeric() ? $this->xapianUnserialise($match[4]) : $match[4];
+			$res[] = '>=';
+		}
+		$res[] = $field->name;
+		$res[] = $match[0] === 'VALUE_LE' ? '<=' : '>=';
+		$res[] = $field->isNumeric() ? $this->xapianUnserialise($match[3]) : $match[3];
+		return implode(' ', $res);
+	}
+
+	/**
+	 * Convert a string encoded by xapian to a floating point number
+	 * @param string $value
+	 * @return double unserialised number
+	 */
+	private function xapianUnserialise($value)
+	{
+		if ($value === "\x80")
+			return 0.0;
+		if ($value === str_repeat("\xff", 9))
+			return INF;
+		if ($value === '')
+			return -INF;
+		$i = 0;
+		$c = ord($value[0]);
+		$c ^= ($c & 0xc0) >> 1;
+		$negative = !($c & 0x80) ? 1 : 0;
+		$exponent_negative = ($c & 0x40) ? 1 : 0;
+		$explen = !($c & 0x20) ? 1 : 0;
+		$exponent = $c & 0x1f;
+		if (!$explen)
+		{
+			$exponent >>= 2;
+			if ($negative ^ $exponent_negative)
+				$exponent ^= 0x07;
+		}
+		else
+		{
+			$c = ord($value[++$i]);
+			$exponent <<= 6;
+			$exponent |= ($c >> 2);
+			if ($negative ^ $exponent_negative)
+				$exponent &= 0x07ff;
+		}
+
+		$word1 = ($c & 0x03) << 24;
+		$word1 |= ord($value[++$i]) << 16;
+		$word1 |= ord($value[++$i]) << 8;
+		$word1 |= ord($value[++$i]);
+
+		$word2 = 0;
+		if ($i < strlen($value))
+		{
+			$word2 = ord($value[++$i]) << 24;
+			$word2 |= ord($value[++$i]) << 16;
+			$word2 |= ord($value[++$i]) << 8;
+			$word2 |= ord($value[++$i]);
+		}
+
+		if (!$negative)
+			$word1 |= 1 << 26;
+		else
+		{
+			$word1 = 0 - $word1;
+			if ($word2 != 0)
+				++$word1;
+			$word1 &= 0x03ffffff;
+		}
+
+		$mantissa = 0;
+		if ($word2)
+			$mantissa = $word2 / 4294967296.0; // 1<<32
+		$mantissa += $word1;
+		$mantissa /= 1 << ($negative === 1 ? 26 : 27);
+		if ($exponent_negative)
+			$exponent = 0 - $exponent;
+		$exponent += 8;
+		if ($negative)
+			$mantissa = 0 - $mantissa;
+
+		return $mantissa * pow(2, $exponent);
 	}
 }
