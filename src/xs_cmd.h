@@ -580,7 +580,7 @@ struct xs_import_hdr
 #define	CMD_ERR_XAPIAN			515
 
 // err string
-#define	CMD_ERR_600				"Unknown Internal Error"
+#define	CMD_ERR_600				"Unknown internal error"
 #define	CMD_ERR_401				"Project name not specified"
 #define	CMD_ERR_402				"Data/Name too long"
 #define	CMD_ERR_403				"Data/Name contains invalid characters"

@@ -13,12 +13,13 @@ require_once dirname(__FILE__) . '/../lib/XS.php';
 require_once dirname(__FILE__) . '/XSUtil.class.php';
 
 // check arguments
-XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort'));
+XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort', 'add-weight'));
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
 $synonyms = XSUtil::getOpt(null, 'list-synonyms');
 $terms = XSUtil::getOpt(null, 'terms');
+$weights = XSUtil::getOpt(null, 'add-weight');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
@@ -42,17 +43,19 @@ Quest - 搜索查询和测试工具 ($version)
     --project=<name|ini>
     -p <project> 用于指定要搜索的项目名称或项目配置文件的路径，
                  如果指定的是名称，则使用 ../app/<name>.ini 作为配置文件
-    --query=<query>	
-    -q <query>   指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来
-    --fuzzy      将搜索默认设为模糊搜索
-    --synonym    开启自动同义词搜索功能
     --charset=<gbk|utf-8>
     -c <charset> 指定您当前在用的字符集，以便系统进行智能转换（默认：UTF-8）
     --db=<name[,name2 ...]>
     -d <db[,db2 ...]> 指定项目中的数据库名称，默认是名为 db 的库，多个库之间用逗号分隔
+    --query=<query>
+    -q <query>   指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来
     --sort=<field1[,field2[,...]]
     -s <field1[,field2[,...]] 指定排序字段，在字段前加上 ~ 符号表示逆序
-    --hot[=total|last|cur] 
+    --fuzzy      将搜索默认设为模糊搜索
+    --synonym    开启自动同义词搜索功能
+    --add-weight=<[field1:]word1[:weight1][,[field2:]word2[:weight2]]>
+                 添加搜索权重词汇，词与次数之间用半角冒号分隔
+    --hot[=total|last|cur]
                  用于显示指定项目的热门搜索词，此时 <query> 参数无意义，可省略
                  其值含义分别表示总搜索量、上周搜索量、本周搜索量，默认为总搜索量。
     --suggest    根据当前搜索词展开常用搜索词建议，如查询“中”，即显示“中”开头的词
@@ -230,7 +233,8 @@ try
 			foreach ($tmps as $tmp)
 			{
 				$tmp = trim($tmp);
-				if ($tmp === '') continue;
+				if ($tmp === '')
+					continue;
 				if (substr($tmp, 0, 1) === '~')
 					$fields[substr($tmp, 1)] = false;
 				else
@@ -246,9 +250,32 @@ try
 		if ($fbody)
 			$xs->getFieldBody()->cutlen = 100;
 
+		// set query
+		$search->setQuery($query);
+
+		// add weights
+		if ($weights !== null)
+		{
+			foreach (explode(',', $weights) as $tmp)
+			{
+				$tmp = explode(':', trim($tmp));
+				if (count($tmp) === 1)
+					$search->addWeight(null, $tmp[0]);
+				else if (count($tmp) === 2)
+				{
+					if (is_numeric($tmp[1]))
+						$search->addWeight(null, $tmp[0], floatval($tmp[1]));
+					else
+						$search->addWeight($tmp[0], $tmp[1]);
+				}
+				else
+					$search->addWeight($tmp[0], $tmp[1], floatval($tmp[2]));
+			}
+		}
+
 		// preform search
 		$begin = microtime(true);
-		$result = $search->setQuery($query)->setLimit($limit1, $offset)->search();
+		$result = $search->setLimit($limit1, $offset)->search();
 		$cost = microtime(true) - $begin;
 		$matched = $search->getLastCount();
 		$total = $search->getDbTotal();
