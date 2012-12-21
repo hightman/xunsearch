@@ -65,7 +65,7 @@ class XSIndex extends XSServer
 		$fid = $this->xs->getFieldId();
 		$key = $doc->f($fid);
 		if ($key === null || $key === '')
-			throw new XSException('Missing value of primarky key (FIELD:' . $fid . ')');
+			throw new XSException('Missing value of primary key (FIELD:' . $fid . ')');
 
 		// request cmd		
 		$cmd = new XSCommand(CMD_INDEX_REQUEST, CMD_INDEX_REQUEST_ADD);

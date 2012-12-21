@@ -1181,7 +1181,7 @@ static int zcmd_task_add_query(XS_CONN *conn)
 struct string_casecmp
 {
 
-	bool operator() (const string &a, const string & b) const
+	bool operator() (const string &a, const string &b) const
 	{
 		return strcasecmp(a.data(), b.data()) < 0;
 	}

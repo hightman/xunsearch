@@ -49,6 +49,7 @@ Quest - 搜索查询和测试工具 ($version)
     -d <db[,db2 ...]> 指定项目中的数据库名称，默认是名为 db 的库，多个库之间用逗号分隔
     --query=<query>
     -q <query>   指定要搜索的查询语句，如果语句中包含空格请用使用双引号包围起来
+                 在搜索语句中可采用 'field:\$from..\$to' 做区间过滤
     --sort=<field1[,field2[,...]]
     -s <field1[,field2[,...]] 指定排序字段，在字段前加上 ~ 符号表示逆序
     --fuzzy      将搜索默认设为模糊搜索
@@ -250,8 +251,29 @@ try
 		if ($fbody)
 			$xs->getFieldBody()->cutlen = 100;
 
+		// add range
+		$ranges = array();
+		if (strpos($query, '..') !== false)
+		{
+			$regex = '/(\S+?):(\S*?)\.\.(\S*)/';
+			if (preg_match_all($regex, $query, $matches) > 0)
+			{
+				for ($i = 0; $i < count($matches[0]); $i++)
+				{
+					$ranges[] = array($matches[1][$i]
+						, $matches[2][$i] === '' ? null : $matches[2][$i]
+						, $matches[3][$i] === '' ? null : $matches[3][$i]);
+					$query = str_replace($matches[0][$i], '', $query);
+				}
+			}
+		}
+
 		// set query
 		$search->setQuery($query);
+		foreach ($ranges as $range)
+		{
+			$search->addRange($range[0], $range[1], $range[2]);
+		}
 
 		// add weights
 		if ($weights !== null)
