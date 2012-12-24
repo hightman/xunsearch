@@ -141,12 +141,12 @@ class XSSearch extends XSServer
 		$res = $this->execCommand($cmd, CMD_OK_QUERY_STRING);
 		if (strpos($res->buf, 'VALUE_RANGE') !== false)
 		{
-			$regex = '/(VALUE_RANGE) (\d+) (\S+) (\S+)/';
+			$regex = '/(VALUE_RANGE) (\d+) (\S+) (\S+?)(?=\))/';
 			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
 		}
 		if (strpos($res->buf, 'VALUE_GE') !== false || strpos($res->buf, 'VALUE_LE') !== false)
 		{
-			$regex = '/(VALUE_[GL]E) (\d+) (\S+)/';
+			$regex = '/(VALUE_[GL]E) (\d+) (\S+?)(?=\))/';
 			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
 		}
 		return XS::convert($res->buf, $this->_charset, 'UTF-8');
@@ -1097,16 +1097,14 @@ class XSSearch extends XSServer
 		$field = $this->xs->getField(intval($match[2]), false);
 		if ($field === false)
 			return $match[0];
-		$res = array();
+		$val1 = $val2 = '~';
 		if (isset($match[4]))
-		{
-			$res[] = $field->isNumeric() ? $this->xapianUnserialise($match[4]) : $match[4];
-			$res[] = '>=';
-		}
-		$res[] = $field->name;
-		$res[] = $match[0] === 'VALUE_LE' ? '<=' : '>=';
-		$res[] = $field->isNumeric() ? $this->xapianUnserialise($match[3]) : $match[3];
-		return implode(' ', $res);
+			$val2 = $field->isNumeric() ? $this->xapianUnserialise($match[4]) : $match[4];
+		if ($match[1] === 'VALUE_LE')
+			$val2 = $field->isNumeric() ? $this->xapianUnserialise($match[3]) : $match[3];
+		else
+			$val1 = $field->isNumeric() ? $this->xapianUnserialise($match[3]) : $match[3];
+		return $field->name . ':[' . $val1 . ',' . $val2 . ']';
 	}
 
 	/**
@@ -1179,6 +1177,6 @@ class XSSearch extends XSServer
 		if ($negative)
 			$mantissa = 0 - $mantissa;
 
-		return $mantissa * pow(2, $exponent);
+		return round($mantissa * pow(2, $exponent), 2);
 	}
 }
