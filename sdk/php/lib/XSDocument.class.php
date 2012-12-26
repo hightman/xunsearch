@@ -142,7 +142,10 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function setFields($data)
 	{
 		if ($data === null)
+		{
 			$this->_data = array();
+			$this->_meta = $this->_terms = $this->_texts = null;
+		}
 		else
 			$this->_data = array_merge($this->_data, $data);
 	}

@@ -216,7 +216,6 @@ try
 			$dcs = $src->getCharset();
 			if ($dcs === false)
 				$dcs = $charset === null ? 'UTF-8' : $charset;
-			$doc = new XSDocument($dcs);
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
 			XSUtil::flush();
@@ -224,6 +223,7 @@ try
 			$index->openBuffer();
 			while ($data = $src->getData())
 			{
+				$doc = new XSDocument($dcs);
 				if ($source == 'csv')
 				{
 					$data = csv_transform($data);
@@ -254,7 +254,6 @@ try
 					echo $e->getTraceAsString();
 					$total_failed++;
 				}
-				$doc->setFields(null);
 				if (($total % 10000) == 0)
 					echo "报告：累计已处理数据 $total 条 ...\n";
 			}
