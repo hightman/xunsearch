@@ -1,8 +1,8 @@
-*** xapian-core-1.3.0_svn16954/configure.ac	2012-12-20 12:11:44.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/configure.ac	2012-12-20 20:19:52.000000000 +0800
+*** xapian-core-1.3.0_svn16982/configure.ac	2012-12-27 14:11:05.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/configure.ac	2012-12-28 12:42:13.000000000 +0800
 ***************
-*** 1001,1006 ****
---- 1001,1062 ----
+*** 987,992 ****
+--- 987,1048 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -65,11 +65,11 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.3.0_svn16954/include/xapian/queryparser.h	2012-10-13 17:31:04.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/include/xapian/queryparser.h	2012-12-20 20:19:52.000000000 +0800
+*** xapian-core-1.3.0_svn16982/include/xapian/queryparser.h	2012-10-13 17:31:04.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/include/xapian/queryparser.h	2012-12-28 12:44:47.000000000 +0800
 ***************
 *** 574,579 ****
---- 574,600 ----
+--- 574,606 ----
        */
       void set_max_wildcard_expansion(Xapian::termcount limit);
   
@@ -90,6 +90,12 @@
 +      */
 +     void set_scws(void *scws);
 + 
++     /** Get the scws handle (hightman.121228)
++      *
++      *  @return	returns scws handler, cast type to scws_t before using it
++      */
++     void *get_scws();
++ 
 +     /** Clear parsed query data (hightman.121219) */
 +     void clear();
 + #endif
@@ -97,11 +103,11 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.3.0_svn16954/include/xapian/termgenerator.h	2012-07-19 13:51:02.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/include/xapian/termgenerator.h	2012-12-20 20:19:52.000000000 +0800
+*** xapian-core-1.3.0_svn16982/include/xapian/termgenerator.h	2012-07-19 13:51:02.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/include/xapian/termgenerator.h	2012-12-28 12:48:03.000000000 +0800
 ***************
 *** 91,96 ****
---- 91,114 ----
+--- 91,120 ----
       /// Stemming strategies, for use with set_stemming_strategy().
       typedef enum { STEM_NONE, STEM_SOME, STEM_ALL, STEM_ALL_Z } stem_strategy;
   
@@ -121,13 +127,19 @@
 +      *  @param scws     Type of scws_t defined in scws.h
 +      */
 +     void set_scws(void *scws);
++ 
++     /** Get the scws handle (hightman.121228)
++      *
++      *  @return	returns scws handler, cast type to scws_t before using it
++      */
++     void *get_scws();
 + #endif
 + 
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.3.0_svn16954/queryparser/queryparser_internal.h	2012-07-24 11:51:20.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/queryparser_internal.h	2012-12-20 20:19:52.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/queryparser_internal.h	2012-07-24 11:51:20.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/queryparser_internal.h	2012-12-28 12:42:13.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -174,8 +186,8 @@
   
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
   };
-*** xapian-core-1.3.0_svn16954/queryparser/termgenerator_internal.h	2012-07-19 13:51:02.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/termgenerator_internal.h	2012-12-20 20:19:52.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/termgenerator_internal.h	2012-07-19 13:51:02.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/termgenerator_internal.h	2012-12-28 12:42:13.000000000 +0800
 ***************
 *** 26,31 ****
 --- 26,35 ----
@@ -215,11 +227,11 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.3.0_svn16954/queryparser/queryparser.cc	2012-07-24 11:51:20.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/queryparser.cc	2012-12-20 20:32:07.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/queryparser.cc	2012-07-24 11:51:20.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/queryparser.cc	2012-12-28 12:48:51.000000000 +0800
 ***************
 *** 138,143 ****
---- 138,174 ----
+--- 138,186 ----
       internal->max_wildcard_expansion = max;
   }
   
@@ -242,6 +254,18 @@
 + #endif
 + }
 + 
++ void *
++ QueryParser::get_scws()
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws == NULL)
++ 	internal->load_scws(NULL, false, 0);
++     return (void *) internal->scws;
++ #else
++     return NULL;
++ #endif
++ }
++ 
 + void
 + QueryParser::clear()
 + {
@@ -257,8 +281,8 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.3.0_svn16954/queryparser/queryparser_internal.cc	2012-12-20 12:13:59.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/queryparser_internal.cc	2012-12-20 20:34:16.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/queryparser_internal.cc	2012-12-27 14:13:19.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/queryparser_internal.cc	2012-12-28 12:42:13.000000000 +0800
 ***************
 *** 179,184 ****
 --- 179,187 ----
@@ -497,8 +521,8 @@
   main_lex_loop:
       enum {
 ***************
-*** 1207,1212 ****
---- 1351,1361 ----
+*** 1212,1217 ****
+--- 1356,1366 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -511,8 +535,8 @@
   		    if (!should_stem(unstemmed_term) ||
   			(it != end && is_stem_preventer(*it))) {
 ***************
-*** 1220,1225 ****
---- 1369,1385 ----
+*** 1225,1230 ****
+--- 1374,1390 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -531,8 +555,8 @@
   		if (it == end) break;
   		continue;
 ***************
-*** 1350,1355 ****
---- 1510,1522 ----
+*** 1355,1360 ****
+--- 1515,1527 ----
   	}
       }
   done:
@@ -547,8 +571,8 @@
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 ***************
-*** 1707,1712 ****
---- 1874,1884 ----
+*** 1712,1717 ****
+--- 1879,1889 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -561,8 +585,8 @@
       string t;
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
-*** 1715,1720 ****
---- 1887,1893 ----
+*** 1720,1725 ****
+--- 1892,1898 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -570,11 +594,11 @@
   
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
-*** xapian-core-1.3.0_svn16954/queryparser/termgenerator.cc	2012-11-20 05:31:02.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/termgenerator.cc	2012-12-20 20:32:16.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/termgenerator.cc	2012-11-20 05:31:02.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/termgenerator.cc	2012-12-28 12:49:44.000000000 +0800
 ***************
 *** 74,79 ****
---- 74,99 ----
+--- 74,111 ----
       internal->db = db;
   }
   
@@ -596,13 +620,25 @@
 +     internal->scws = (scws_t) scws;
 + #endif
 + }
++ 
++ void *
++ TermGenerator::get_scws()
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws == NULL)
++ 	internal->load_scws(NULL, false, 0);
++     return (void *) internal->scws;
++ #else
++     return NULL;
++ #endif
++ }
 + #endif
 + 
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.3.0_svn16954/queryparser/termgenerator_internal.cc	2012-07-19 13:51:02.000000000 +0800
---- xapian-core-scws-1.3.0_svn16954/queryparser/termgenerator_internal.cc	2012-12-20 20:34:48.000000000 +0800
+*** xapian-core-1.3.0_svn16982/queryparser/termgenerator_internal.cc	2012-07-19 13:51:02.000000000 +0800
+--- xapian-core-scws-1.3.0_svn16982/queryparser/termgenerator_internal.cc	2012-12-28 12:42:13.000000000 +0800
 ***************
 *** 117,122 ****
 --- 117,156 ----

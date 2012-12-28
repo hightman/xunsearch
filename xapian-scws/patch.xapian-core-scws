@@ -1,5 +1,5 @@
 *** xapian-core-1.2.12/configure.ac	2012-06-27 21:07:59.000000000 +0800
---- xapian-core-scws-1.2.12/configure.ac	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/configure.ac	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 1009,1014 ****
 --- 1009,1070 ----
@@ -66,10 +66,10 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.2.12/include/xapian/queryparser.h	2012-06-27 21:07:20.000000000 +0800
---- xapian-core-scws-1.2.12/include/xapian/queryparser.h	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/include/xapian/queryparser.h	2012-12-28 12:25:40.000000000 +0800
 ***************
 *** 500,505 ****
---- 500,526 ----
+--- 500,533 ----
        */
       void set_max_wildcard_expansion(Xapian::termcount limit);
   
@@ -90,6 +90,13 @@
 +      */
 +     void set_scws(void *scws);
 + 
++ 
++     /** Get the scws handle (hightman.121228)
++      *
++      *  @return	returns scws handler, cast type to scws_t before using it
++      */
++     void *get_scws();
++ 
 +     /** Clear parsed query data (hightman.121219) */
 +     void clear();
 + #endif
@@ -98,10 +105,10 @@
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.2.12/include/xapian/termgenerator.h	2012-06-27 21:07:20.000000000 +0800
---- xapian-core-scws-1.2.12/include/xapian/termgenerator.h	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/include/xapian/termgenerator.h	2012-12-28 12:27:27.000000000 +0800
 ***************
 *** 91,96 ****
---- 91,114 ----
+--- 91,120 ----
       /// Stemming strategies, for use with set_stemming_strategy().
       typedef enum { STEM_NONE, STEM_SOME, STEM_ALL, STEM_ALL_Z } stem_strategy;
   
@@ -121,13 +128,19 @@
 +      *  @param scws     Type of scws_t defined in scws.h
 +      */
 +     void set_scws(void *scws);
++ 
++     /** Get the scws handle (hightman.121228)
++      *
++      *  @return	returns scws handler, cast type to scws_t before using it
++      */
++     void *get_scws();
 + #endif
 + 
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
 *** xapian-core-1.2.12/api/omqueryinternal.cc	2012-06-27 21:07:26.000000000 +0800
---- xapian-core-scws-1.2.12/api/omqueryinternal.cc	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/api/omqueryinternal.cc	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 370,375 ****
 --- 370,380 ----
@@ -143,7 +156,7 @@
       }
   }
 *** xapian-core-1.2.12/queryparser/queryparser_internal.h	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser_internal.h	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser_internal.h	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -193,7 +206,7 @@
   
   }
 *** xapian-core-1.2.12/queryparser/termgenerator_internal.h	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.h	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.h	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 26,31 ****
 --- 26,35 ----
@@ -233,7 +246,7 @@
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.2.12/queryparser/queryparser.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser.cc	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser.cc	2012-12-28 12:37:03.000000000 +0800
 ***************
 *** 22,27 ****
 --- 22,28 ----
@@ -246,7 +259,7 @@
   
 ***************
 *** 110,115 ****
---- 111,147 ----
+--- 111,159 ----
       internal->max_wildcard_expansion = max;
   }
   
@@ -269,6 +282,18 @@
 + #endif
 + }
 + 
++ void *
++ QueryParser::get_scws()
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws == NULL)
++ 	internal->load_scws(NULL, false, 0);
++     return (void *) internal->scws;
++ #else
++     return NULL;
++ #endif
++ }
++ 
 + void
 + QueryParser::clear()
 + {
@@ -285,7 +310,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.2.12/queryparser/queryparser_internal.cc	2012-06-27 21:16:08.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/queryparser_internal.cc	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/queryparser_internal.cc	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 164,169 ****
 --- 164,172 ----
@@ -617,10 +642,10 @@
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
 *** xapian-core-1.2.12/queryparser/termgenerator.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator.cc	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator.cc	2012-12-28 12:36:11.000000000 +0800
 ***************
 *** 74,79 ****
---- 74,99 ----
+--- 74,111 ----
       internal->db = db;
   }
   
@@ -642,13 +667,25 @@
 +     internal->scws = (scws_t) scws;
 + #endif
 + }
++ 
++ void *
++ TermGenerator::get_scws()
++ {
++ #ifdef HAVE_SCWS
++     if (internal->scws == NULL)
++ 	internal->load_scws(NULL, false, 0);
++     return (void *) internal->scws;
++ #else
++     return NULL;
++ #endif
++ }
 + #endif
 + 
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.2.12/queryparser/termgenerator_internal.cc	2012-06-27 21:07:05.000000000 +0800
---- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.cc	2012-12-20 20:04:48.000000000 +0800
+--- xapian-core-scws-1.2.12/queryparser/termgenerator_internal.cc	2012-12-28 12:21:13.000000000 +0800
 ***************
 *** 125,130 ****
 --- 125,164 ----
