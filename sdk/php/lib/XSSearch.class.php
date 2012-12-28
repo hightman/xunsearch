@@ -258,6 +258,10 @@ class XSSearch extends XSServer
 	 */
 	public function addRange($field, $from, $to)
 	{
+		if ($from === '' || $from === false)
+			$from = null;
+		if ($to === '' || $to === false)
+			$to = null;
 		if ($from !== null || $to !== null)
 		{
 			if (strlen($from) > 255 || strlen($to) > 255)
