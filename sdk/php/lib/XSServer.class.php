@@ -455,7 +455,7 @@ class XSServer extends XSComponent
 			$port = -1;
 		}
 		if (($sock = @fsockopen($host, $port, $errno, $error, 5)) === false)
-			throw new XSException($error . '(C#' . $errno . ')');
+			throw new XSException($error . '(C#' . $errno . ', ' . $host . ':' . $port . ')');
 
 		// set socket options
 		$timeout = ini_get('max_execution_time');

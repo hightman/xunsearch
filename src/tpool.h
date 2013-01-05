@@ -20,10 +20,12 @@ extern "C" {
 #define	TPOOL_MIN_SPARE_THREADS	3		// minimum number of spare threads (added when threads not enough)
 #define	TPOOL_MAX_SPARE_THREADS	6		// maximum number of spare threads (created at start)
 #define	TPOOL_MAX_LIMIT_THREADS	100		// total threads number limit < 32768 [hard limit]
-
+#define	TPOOL_TASK_ARG(t)		((struct tpool_thread *) t)->task->arg
+	
 /**
  * Thread job prototype
  */
+typedef struct tpool_thread tpool_thr;
 typedef void (*tpool_func_t)(void *);
 
 /**

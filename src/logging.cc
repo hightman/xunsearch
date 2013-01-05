@@ -37,10 +37,8 @@ extern "C" {
 #define	SCAN_MIN_SIZE		256		// bytes
 
 /* global flag settings */
-#define	FLAG_VERBOSE		0x01
-#define	FLAG_DBTERMS		0x02	// load allterms from default db
-#define	FLAG_CLEAN			0x04	// clean exists logging db
-#define	FLAG_QUIET			0x08	// quiet
+#define	FLAG_DBTERMS		0x01	// load allterms from default db
+#define	FLAG_CLEAN			0x02	// clean exists logging db
 
 #define	FLAG_FINISHED		0x10	// terminated normal
 #define	FLAG_PY_LOADED		0x20	// py dict loaded
@@ -74,13 +72,6 @@ static Xapian::Stem stemmer;
 using std::string;
 
 /**
- * Macro to control type of logging message
- */
-#define	log_force		log_printf
-#define	log_normal		if (~flag & FLAG_QUIET) log_printf
-#define	log_verbose		if (flag & FLAG_VERBOSE) log_printf
-
-/**
  * Show version information
  */
 static void show_version()
@@ -100,16 +91,17 @@ static void show_usage()
 	printf("Usage: %s [options] [home_dir]\n", prog_name);
 	printf("  -C               Clean exists logging database\n");
 	printf("  -K               Keep file contents of log for testing\n");
+	printf("  -Q               Completely quiet mode, not output any information\n");
 	printf("  -S               Run as scan mode, scan all child directories of [home]\n");
 	printf("  -T               Force to load allterms from default database\n");
 	printf("  -V               Enable verbose mode, show more messages\n");
-	printf("  -d <db>          Specify the path to the logging database\n");
+	printf("  -d <db>          Specify the path of the logging database\n");
 	printf("                   Default: `" SEARCH_LOG_DB "\' under project home\n");
-	printf("  -f <file>        Specify the path to logging file\n");
+	printf("  -f <file>        Specify the path of logging file\n");
 	printf("                   Default: `" SEARCH_LOG_FILE "\' under project home\n");
 	printf("  -p <py_dict>     Speicfy the path of pinyin dictionary, default is:\n");
 	printf("                   " PREFIX "/etc/py.xdb\n");
-	printf("  -s <size>        Specify the minmum size of log for scanning mode, default is: %d\n", SCAN_MIN_SIZE);
+	printf("  -s <size>        Specify the minmum size of log in scan mode, default is: %d\n", SCAN_MIN_SIZE);
 	printf("  -t <day|week|month|year> Statistics period type, default is: week\n");
 	printf("  -v               Show version information\n");
 	printf("  -h               Display this help page\n\n");
@@ -195,11 +187,10 @@ static bool valid_8bit_term(const string &term)
 	if (xdict == NULL)
 	{
 		char fpath[256];
-
 		sprintf(fpath, "%s/dict.utf8.xdb", SCWS_ETCDIR);
 		if (!(xdict = xdict_open(fpath, SCWS_XDICT_MEM)))
 		{
-			log_force("failed to open xdict (FILE:%s)", fpath);
+			log_error("failed to open xdict (FILE:%s)", fpath);
 			return true;
 		}
 	}
@@ -222,7 +213,9 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 	plen = words.size() * 3; // abbr = 1*, raw = 2*
 	abbr = (char *) malloc(plen);
 	if (abbr == NULL)
-		log_force("failed to allocate memory for pinyin (SIZE:%d)", plen);
+	{
+		log_error("failed to allocate memory for pinyin (SIZE:%d)", plen);
+	}
 	else
 	{
 		int rstart, bstart;
@@ -268,7 +261,7 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 		}
 		py_list_free(pl);
 		*bptr = *rptr = '\0';
-		log_verbose("+pinyin: %.*s[%s] (ABBR:%.*s[%s])",
+		log_info("+add pinyin (PINYIN:%.*s[%s], ABBR:%.*s[%s])",
 			rstart, raw, raw + rstart, bstart, abbr, abbr + bstart);
 
 		// completely pinyin/abbr
@@ -282,7 +275,7 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 			plen = rptr - raw;
 			do
 			{
-				//printf("Add partial pinyin: %.*s\n", plen, raw);
+				//log_info("+add partial pinyin (PY_PARTIAL: %.*s)", plen, raw);
 				doc.add_term(string(raw, plen), wdf);
 			}
 			while (--plen > rstart);
@@ -294,7 +287,7 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 			plen = bptr - abbr;
 			do
 			{
-				//printf("Add partial abbr: %.*s\n", plen, abbr);
+				//log_info("+add partial abbr (ABBR_PARTIAL:%.*s)", plen, abbr);
 				doc.add_term(string(abbr, plen), wdf);
 			}
 			while (--plen > bstart);
@@ -329,17 +322,16 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			if (pi != database.postlist_end(key))
 			{
 				double num;
-
 				if (db_term == true)
 				{
-					log_verbose("~skip exists db term: %s", words.data());
+					log_info("~skip exists db term (TERM:%s)", words.data());
 					return;
 				}
 				oid = *pi;
 				doc = database.get_document(oid);
 				tmp = doc.get_value(VNO_CURRTAG);
 				num = Xapian::sortable_unserialise(doc.get_value(VNO_TOTAL));
-				log_verbose("!update: %s (ID:%u, TAG:%s, LAST:%g, WDF:%g+%d)",
+				log_info("!update term (TERM:%s, ID:%u, TAG:%s, LAST:%g, WDF:%g+%d)",
 					words.data(), oid, tmp.data(),
 					Xapian::sortable_unserialise(doc.get_value(VNO_LASTNUM)), num, wdf);
 
@@ -380,7 +372,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			const char *ptr;
 			int plen;
 
-			log_verbose("+add: %s (TAG:%s, WDF:%d)", words.data(), stat_tag, wdf);
+			log_info("+add term (TERM:%s, TAG:%s, WDF:%d)", words.data(), stat_tag, wdf);
 			tmp = Xapian::sortable_serialise((double) wdf);
 			doc.add_value(VNO_TOTAL, tmp); // total
 			doc.add_value(VNO_LASTNUM, tmp); // last_num
@@ -403,7 +395,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			plen = utf8_char_size(ptr);
 			while (plen < words.size() && plen <= MAX_EXPAND_LEN)
 			{
-				//printf("Add partial term: C%.*s\n", plen, ptr);
+				//log_info("+add partial term (TERM:C%.*s)", plen, ptr);
 				doc.add_term("C" + string(ptr, plen), wdf);
 				plen += utf8_char_size(ptr + plen);
 			}
@@ -422,7 +414,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			Xapian::TermIterator ti = doc.termlist_begin();
 			while (ti != doc.termlist_end())
 			{
-				//printf("update freq for term: %s, wdf: %d\n", (*ti).data(), ti.get_wdf());
+				//log_info("!update term freq (TERM:%s, WDF:%d)", (*ti).data(), ti.get_wdf());
 				if (*ti != "E1" && ti.get_wdf() > 0)
 					doc.add_term(*ti, wdf);
 				ti++;
@@ -435,12 +427,13 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 	}
 	catch (const Xapian::Error &e)
 	{
-		log_normal("Xapian ERROR: %s on adding log (WORDS:%s)", e.get_msg().data(), words.data());
+		log_notice("xapian exception on adding log (ERROR:%s, WORDS:%s)",
+			e.get_msg().data(), words.data());
 		total_fail++;
 	}
 	catch (...)
 	{
-		log_normal("Unknown ERROR on adding log (WORDS:%s)", words.data());
+		log_notice("unknown error on adding log (WORDS:%s)", words.data());
 		total_fail++;
 	}
 }
@@ -461,7 +454,7 @@ static void load_db_terms(const char *home)
 		Xapian::doccount freq, min_freq;
 		string term;
 
-		log_verbose("openning the default database (DB:%s)", dbpath.data());
+		log_info("open default database (DB:%s)", dbpath.data());
 		db = Xapian::Database(dbpath);
 		ti = db.allterms_begin();
 		min_freq = (int) (0.001 * db.get_doccount());
@@ -470,7 +463,7 @@ static void load_db_terms(const char *home)
 			term = *ti;
 			if (term[0] >= 'A' && term[0] <= 'Z')
 			{
-				log_verbose("skip all words beginning with capital letters (TERM:%s)", term.data());
+				log_info("skip all words beginning with capital letters (TERM:%s)", term.data());
 				ti.skip_to("a");
 				continue;
 			}
@@ -482,18 +475,19 @@ static void load_db_terms(const char *home)
 			}
 			else
 			{
-				log_verbose("~skip invalid db term (TERM:%s)", term.data());
+				log_info("~skip invalid db term (TERM:%s)", term.data());
 			}
 			ti++;
 		}
 	}
 	catch (const Xapian::Error &e)
 	{
-		log_normal("Xapian ERROR: %s on loadding all terms", e.get_msg().data());
+		log_notice("xapian exception on loading db terms (ERROR:%s, DB:%s)",
+			e.get_msg().data(), dbpath.data());
 	}
 	catch (...)
 	{
-		log_normal("Unknown ERROR on loadding all terms (DB:%s)", dbpath.data());
+		log_notice("unknown error on loadding all terms (DB:%s)", dbpath.data());
 	}
 }
 
@@ -535,6 +529,9 @@ int main(int argc, char *argv[])
 	stemmer = Xapian::Stem(DEFAULT_STEMMER);
 	dbpath = logfile = home = NULL;
 
+	// open logger
+	log_open("stderr", "logging", -1);
+
 	// parse the arguments
 	if ((prog_name = strrchr(argv[0], '/')) != NULL) prog_name++;
 	else prog_name = argv[0];
@@ -547,13 +544,13 @@ int main(int argc, char *argv[])
 				break;
 			case 'K': flag |= FLAG_KEEP_LOG;
 				break;
-			case 'Q': flag |= FLAG_QUIET;
-				break;
 			case 'S': flag |= FLAG_SCAN_MODE;
 				break;
 			case 'T': flag |= FLAG_DBTERMS;
 				break;
-			case 'V': flag |= FLAG_VERBOSE;
+			case 'Q': log_level(LOG_ERR);
+				break;
+			case 'V': log_level(LOG_INFO);
 				break;
 			case 'd': dbpath = optarg;
 				break;
@@ -561,7 +558,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'p':
 				if (py_dict_load(optarg) < 0)
-					fprintf(stderr, "WARNING: failed to load py dict (FILE:%s)\n", optarg);
+					log_notice("failed to load py dict (FILE:%s)", optarg);
 				else
 					flag |= FLAG_PY_LOADED;
 				break;
@@ -577,7 +574,7 @@ int main(int argc, char *argv[])
 				break;
 			case '?':
 			default:
-				fprintf(stderr, "Use `-h' option to get more help messages\n");
+				log_error("Use `-h' option to get more help messages");
 				goto main_end;
 		}
 	}
@@ -585,7 +582,7 @@ int main(int argc, char *argv[])
 	// load default py dict
 	if (!(flag & FLAG_PY_LOADED) && py_dict_load(PREFIX "/etc/py.xdb") < 0)
 	{
-		fprintf(stderr, "ERROR: failed to load default py dict\n");
+		log_error("failed to load default py dict");
 		goto main_end;
 	}
 
@@ -595,7 +592,6 @@ int main(int argc, char *argv[])
 
 	// init tag & logger
 	load_stat_tag(tag);
-	log_open("stderr", "logging");
 
 	// scan mode (home path required)
 	if (flag & FLAG_SCAN_MODE)
@@ -608,14 +604,14 @@ int main(int argc, char *argv[])
 
 		if (home == NULL)
 		{
-			fprintf(stderr, "ERROR: home directory should be specified in scan mode\n");
+			log_error("home directory should be specified in scan mode");
 			goto main_end;
 		}
-		log_force(">> running in scan mode (HOME:%s, STAT_TAG:%s)", home, stat_tag);
+		log_alert(">> running in scan mode (HOME:%s, STAT_TAG:%s)", home, stat_tag);
 
 		if (!(dirp = opendir(home)))
 		{
-			log_normal(">> failed to open home directory (ERROR:%s)", strerror(errno));
+			log_error(">> failed to open home directory (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
 
@@ -640,30 +636,33 @@ int main(int argc, char *argv[])
 			sprintf(logfile, "%s/%s/" SEARCH_LOG_FILE, _home, de->d_name);
 			if (stat(logfile, &st) < 0 || !S_ISREG(st.st_mode))
 			{
-				log_normal(">> skip child directory without logfile (NAME:%s)", de->d_name);
+				log_notice(">> skip child directory without logfile (NAME:%s)", de->d_name);
 				continue;
 			}
 			if (st.st_size < smin)
 			{
-				log_normal(">> size of logfile too small to skip (NAME:%s, SIZE:%d)", de->d_name, st.st_size);
+				log_notice(">> logfile size too small to skip (NAME:%s, SIZE:%d)", de->d_name, st.st_size);
 				continue;
 			}
 
 			pid = fork();
 			if (pid < 0)
-				log_force(">> failed to fork child process (ERROR:%s, NAME:%s)", strerror(errno), de->d_name);
+			{
+				log_error(">> failed to fork child process (ERROR:%s, NAME:%s)",
+					strerror(errno), de->d_name);
+			}
 			else if (pid > 0)
 			{
 				// parent, wait child process
 				waitpid(pid, &cc, WUNTRACED);
-				log_normal("-------------------------------------------------------------");
-				log_force(">> end child process (STATUS:0x%04x) <<<", cc);
+				log_notice("------------------------------------------");
+				log_notice(">> end process (NAME:%s, STATUS:0x%04x) <<", de->d_name, cc);
 			}
 			else
 			{
 				// child, goto child begin			
-				log_force(">> begin child process (NAME:%s) <<<", de->d_name);
-				log_normal("-------------------------------------------------------------");
+				log_alert(">> begin child process (NAME:%s) <<", de->d_name);
+				log_notice("------------------------------------------");
 				sprintf(home, "%s/%s", _home, de->d_name);
 				sprintf(dbpath, "%s/%s/" SEARCH_LOG_DB, _home, de->d_name);
 				closedir(dirp);
@@ -671,15 +670,14 @@ int main(int argc, char *argv[])
 			}
 		}
 		closedir(dirp);
-		log_force(">> finished, quit scan mode!");
+		log_notice(">> finished, leave scan mode");
 		goto main_end;
 	}
 
 	// normal mode
 	if ((dbpath == NULL || logfile == NULL) && home == NULL)
 	{
-		fprintf(stderr, "ERROR: home directory of project did not specified\n");
-		fprintf(stderr, "Use `-h' option to get more help messages\n");
+		log_error("home directory of project did not specified");
 		goto main_end;
 	}
 	if (dbpath == NULL)
@@ -687,7 +685,7 @@ int main(int argc, char *argv[])
 		dbpath = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_DB) + 1);
 		if (dbpath == NULL)
 		{
-			fprintf(stderr, "ERROR: failed to allocate memory for dbpath\n");
+			log_error("failed to allocate memory for dbpath (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
 		sprintf(dbpath, "%s/" SEARCH_LOG_DB, home);
@@ -698,7 +696,7 @@ int main(int argc, char *argv[])
 		logfile = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_FILE) + 1);
 		if (logfile == NULL)
 		{
-			fprintf(stderr, "ERROR: failed to allocate memory for logfile\n");
+			log_error("failed to allocate memory for logfile (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
 		sprintf(logfile, "%s/" SEARCH_LOG_FILE, home);
@@ -707,34 +705,34 @@ int main(int argc, char *argv[])
 
 child_begin:
 	// open log to stderr
-	log_normal("start to parse search logs (STAT_TAG:%s)", stat_tag);
-	log_normal("search log database (DB:%s)", dbpath);
-	log_normal("search log file (FILE:%s)", logfile);
+	log_notice("start to parse search logs (STAT_TAG:%s)", stat_tag);
+	log_notice("search log database (DB:%s)", dbpath);
+	log_notice("search log file (FILE:%s)", logfile);
 
 	// open the log_db
 	try
 	{
 		int action = (flag & FLAG_CLEAN) ? Xapian::DB_CREATE_OR_OVERWRITE : Xapian::DB_CREATE_OR_OPEN;
 
-		log_verbose("open the writable database (DB:%s)", dbpath);
+		log_info("open the writable database (DB:%s)", dbpath);
 		database = Xapian::WritableDatabase(dbpath, action);
 
-		log_verbose("initlize the indexer/TermGenerator");
+		log_info("initiallize the Indexer/TermGenerator object");
 		indexer.set_stemmer(stemmer);
 		indexer.set_database(database);
 		indexer.set_flags(Xapian::TermGenerator::FLAG_SPELLING);
 
-		log_verbose("load scws dictionary into memory");
+		log_info("load scws dictionary into memory");
 		indexer.load_scws(NULL, true, DEFAULT_SCWS_MULTI);
 	}
 	catch (const Xapian::Error &e)
 	{
-		log_force("Xapian ERROR: %s on initialization", e.get_msg().data());
+		log_error("xapian exception on initialization (ERROR:%s)", e.get_msg().data());
 		goto main_end;
 	}
 	catch (...)
 	{
-		log_force("Unknown ERROR on initialization (DB:%s)", dbpath);
+		log_error("unknown error on initialization (DB:%s)", dbpath);
 		goto main_end;
 	}
 
@@ -742,14 +740,14 @@ child_begin:
 	if ((flag & FLAG_DBTERMS) && home != NULL)
 	{
 		load_db_terms(home);
-		log_force("terms loaded (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
+		log_notice("terms loaded (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
 			total_add, total_update, total_fail, database.get_doccount());
 	}
 
 	// parse search log file [rename & copy]
 	if ((cc = open(logfile, O_RDWR)) < 0)
 	{
-		log_normal("failed to open log (FILE:%s, ERROR:%s)", logfile, strerror(errno));
+		log_error("failed to open log (FILE:%s, ERROR:%s)", logfile, strerror(errno));
 	}
 	else
 	{
@@ -760,22 +758,22 @@ child_begin:
 		size = lseek(cc, 0, SEEK_END);
 		if (size == 0)
 		{
-			log_normal("search log file is empty");
+			log_notice("search log file is empty");
 		}
 		else if ((buf = (char *) malloc(size + 1)) == NULL)
 		{
-			log_force("failed to allocate memory for log data (SIZE:%ld+1)", size);
+			log_error("failed to allocate memory for log data (SIZE:%ld)", size + 1);
 		}
 		else
 		{
 			bytes = pread(cc, buf, size, 0);
-			log_normal("search log read in (EXPECT:%ld, ACTUAL:%ld)", size, bytes);
+			log_notice("search log read in (EXPECT:%ld, ACTUAL:%ld)", size, bytes);
 			if (bytes > 0)
 			{
 				buf[bytes] = '\0';
 				if (!(flag & FLAG_KEEP_LOG))
 				{
-					log_printf("clear old search log (SIZE:%ld->0)", size);
+					log_notice("clear old search log (SIZE:%ld->0)", size);
 					ftruncate(cc, 0);
 				}
 			}
@@ -790,7 +788,7 @@ child_begin:
 			std::map<string, int> lines;
 			std::map<string, int>::iterator it;
 
-			log_verbose("using std::map to parse log data (BYTES:%ld)", bytes);
+			log_info("using std::map to parse log data (BYTES:%ld)", bytes);
 			for (str = buf; *str && (ptr = strchr(str, '\n')) != NULL; str = ptr + 1)
 			{
 				if (ptr == str)
@@ -811,7 +809,7 @@ child_begin:
 				}
 			}
 
-			log_normal("log words loaded (COUNT:%d)", lines.size());
+			log_notice("log words loaded (COUNT:%d)", lines.size());
 			for (it = lines.begin(); it != lines.end(); it++)
 			{
 				add_log_words(it->first, it->second);
@@ -824,7 +822,7 @@ child_begin:
 	// ok to finish
 	database.commit();
 	flag |= FLAG_FINISHED;
-	log_force("all finished (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
+	log_alert("finished (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
 		total_add, total_update, total_fail, database.get_doccount());
 
 	// end, free resources

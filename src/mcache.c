@@ -664,13 +664,11 @@ static void _mc_lru_insert(MC *mc, mc_node *node)
 	if (mc->head == NULL)
 	{
 		mc->head = mc->tail = node;
-		//node->lru.next = node->lru.prev = NULL;	
 	}
 	else
 	{
 		mc->head->lru.prev = node;
 		node->lru.next = mc->head;
-		//node->lru.prev = NULL;
 		mc->head = node;
 	}
 }

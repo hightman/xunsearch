@@ -26,6 +26,9 @@ void pcntl_daemon();
 /* Install base signal handlers */
 void pcntl_base_signal();
 
+/* Register a signal handler */
+void pcntl_register_signal(int sig, void (*func)(int));
+
 /* Export and save the server usage info */
 void pcntl_servo_usage(const char *fpath);
 

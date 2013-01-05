@@ -1,5 +1,5 @@
 /**
- Libmm replacement used by cache design of FTPHP-searchd
+ Libmm replacement used by cache design of xunsearch
  Some source codes cut from eAccelerator/PHP
 
 共享内存管理, 改自 eAccelerator 中的 mm.c, 采用 sem 信号量加锁, 线程安全!

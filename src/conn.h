@@ -23,7 +23,6 @@ extern "C" {
 /* simple macro for connection operator */
 #define	CONN_FD()			conn->ev.ev_fd
 #define	CONN_RECV()			conn_data_recv(conn)
-#define	CONN_SEND(x,n)		conn_data_send(conn, x, n)
 #define	CONN_FLUSH()		conn_data_send(conn, NULL, 0)
 
 /* ftphp cmd list for connection session */
@@ -201,19 +200,24 @@ void conn_server_start(int listen_sock);
 #define	CONN_QUIT(x)			conn_quit(conn, CMD_RES_##x)
 
 /* logging with socket fd */
-#define	log_conn(fmt, ...)		log_printf("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
+#define	log_info_conn(fmt,...)		log_info("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
+#define	log_notice_conn(fmt,...)	log_notice("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
+#define	log_warning_conn(fmt,...)	log_warning("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
+#define	log_error_conn(fmt,...)		log_error("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
 
 #ifdef DEBUG
-#define	log_debug_conn(fmt, ...)	\
-	log_printf("[%s:%d] [sock:%d] " fmt, __FILE__, __LINE__, CONN_FD(), ##__VA_ARGS__)
-#define	debug_free(p,s)		do {	\
-	log_debug_conn("memory free (SIZE:%d, ADDR:%p)", s, p); free(p); } while(0)
-#define	debug_malloc(p,s,t)	do {	\
-	p = (t *) malloc(s);			\
-	log_debug_conn("memory alloc (SIZE:%d, ADDR:%p)", s, p); } while(0)
+#define	log_debug_conn(fmt,...)		log_debug("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
+#define	debug_free(p)				do { \
+	log_debug("memory free (ADDR:%p)", p); \
+	free(p); \
+} while(0)
+#define	debug_malloc(p,s,t)			do { \
+	p = (t *) malloc(s); \
+	log_debug("memory alloc (ADDR:%p, SIZE:%d)", p, s); \
+} while(0)
 #else
-#define	log_debug_conn(fmt, ...)	(void)0
-#define	debug_free(p,s)				free(p)
+#define	log_debug_conn				log_debug
+#define	debug_free(p)				free(p)
 #define	debug_malloc(p,s,t)			p = (t *) malloc(s)
 #endif
 

@@ -10,8 +10,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
-//Illegal
 
 /* pinyin list struct */
 typedef struct py_list

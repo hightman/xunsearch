@@ -9,8 +9,13 @@ server=both
 # usage
 show_usage()
 {
-  echo "Usage: $0 [-b <local|unix|inet>] [-s <index|search>] COMMAND"
-  echo "COMMAND is one of: {start|stop|restart|faststop|fastrestart|reload}"
+  echo "Usage: $0 [OPTION] COMMAND"
+  echo "OPTION:"
+  echo "  -b <local|unix|inet>      bind address or path"
+  echo "  -L <log_level>            log level, 1-7"
+  echo "  -s <index|search|both>    server type"
+  echo "COMMAND:"
+  echo "  {start|stop|restart|faststop|fastrestart|reload}"
 }
 
 # options

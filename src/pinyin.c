@@ -141,7 +141,7 @@ static inline py_list *py_list_item(const char *py, int len)
 }
 
 /**
- * pure pinyin segment 
+ * Pure pinyin segment 
  */
 py_list *py_segment(const char *str, int len)
 {
@@ -204,7 +204,7 @@ py_list *py_segment(const char *str, int len)
 }
 
 /**
- * unload pinyin dict
+ * Unload pinyin dict
  */
 void py_dict_unload()
 {
@@ -216,7 +216,7 @@ void py_dict_unload()
 }
 
 /**
- * load pinyin dict
+ * Load pinyin dict
  * @return zero on success, -1 on failure
  */
 int py_dict_load(const char *fpath)
@@ -233,7 +233,7 @@ int py_dict_load(const char *fpath)
 }
 
 /**
- * query pinyin from py_dict
+ * Query pinyin from py_dict
  */
 const char *py_dict_find(const char *key, int len, int *vlen)
 {
@@ -241,7 +241,7 @@ const char *py_dict_find(const char *key, int len, int *vlen)
 }
 
 /**
- * pinyin convert 
+ * Pinyin convert 
  */
 py_list *py_convert(const char *str, int len)
 {

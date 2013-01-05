@@ -71,7 +71,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 			
 		}
 		$this->assertInstanceOf('XSException', $e);
-		$this->assertEquals('Missing value of primarky key (FIELD:pid)', $e->getMessage());
+		$this->assertEquals('Missing value of primary key (FIELD:pid)', $e->getMessage());
 
 		// Adding use default charset		
 		$doc = new XSDocument(self::$data_gbk);

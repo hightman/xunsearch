@@ -32,11 +32,9 @@ static inline void xs_user_free(XS_USER *user)
 	while ((db = user->db) != NULL)
 	{
 		user->db = db->next;
-		log_debug("G_FREE(%d), addr:%p", sizeof(XS_DB), db);
-		G_FREE(db);
+		DEBUG_G_FREE(db);
 	}
-	log_debug("G_FREE(%d), addr:%p", sizeof(XS_USER), user);
-	G_FREE(user);
+	DEBUG_G_FREE(user);
 }
 
 /**
@@ -114,11 +112,11 @@ XS_USER *xs_user_put(XS_USER *user)
 	G_LOCK_USER();
 	if ((new_user = xs_user_nget(user->name, strlen(user->name))) == NULL)
 	{
-		new_user = (XS_USER *) G_MALLOC(sizeof(XS_USER));
-		log_debug("G_MALLOC(%d), addr:%p", sizeof(XS_USER), new_user);
-
+		DEBUG_G_MALLOC(new_user, sizeof(XS_USER), XS_USER);
 		if (new_user == NULL)
-			log_printf("G_MALLOC(%d) failed when create new user", sizeof(XS_USER));
+		{
+			log_error("G_MALLOC failed when create new user (SIZE:%d)", sizeof(XS_USER));
+		}
 		else
 		{
 			memcpy(new_user, user, sizeof(XS_USER));
@@ -144,7 +142,7 @@ void xs_user_del(const char *name)
 	if (!strcasecmp(user->name, name))
 	{
 		G_VAR(user_base) = user->next;
-		G_FREE(user);
+		DEBUG_G_FREE(user);
 	}
 	else
 	{
@@ -185,8 +183,7 @@ XS_DB *xs_user_get_db(XS_USER *user, const char *name, int len)
 	}
 	if (db == NULL && len <= XS_MAX_NAME_LEN)
 	{
-		db = (XS_DB *) G_MALLOC(sizeof(XS_DB));
-		log_debug("G_MALLOC(%d), addr:%p", sizeof(XS_DB), db);
+		DEBUG_G_MALLOC(db, sizeof(XS_DB), XS_DB);
 		if (db != NULL)
 		{
 			// NOTE: Please ensure that len is less than XS_MAX_NAME_LEN+1

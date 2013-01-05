@@ -122,7 +122,7 @@ void pcntl_kill(const char *bind, char *op, char *name)
 			printf("WARNING: no server[%s] is running (BIND:%s)\n", name, bind);
 		else if (kill(pid, (flag & PCNTL_FLAG_FAST) ? SIGTERM : SIGINT) != 0)
 		{
-			printf("ERROR: unable to send termination signal to the running server[%s] (PID:%d, ERROR:%s)\n",
+			printf("ERROR: failed to send termination signal to the running server[%s] (PID:%d, ERROR:%s)\n",
 				name, pid, strerror(errno));
 			flag |= PCNTL_FLAG_ERROR;
 		}
@@ -209,6 +209,7 @@ extern int signal_term(int sig); // return exit_status, but 0x80 => not quit now
 extern void signal_int();
 extern void signal_child(pid_t pid, int status);
 extern void signal_reload(int sig);
+static struct sigaction act;
 
 #define	_sig_int	signal_int
 #define	_sig_reload	signal_reload
@@ -232,7 +233,7 @@ static void _sig_term(int sig)
 }
 
 #ifndef WIFCONTINUED
-#define	WIFCONTINUED(x)		0
+#    define	WIFCONTINUED(x)		0
 #endif
 
 static void _sig_child()
@@ -257,12 +258,10 @@ static void _sig_child()
  */
 void pcntl_base_signal()
 {
-	struct sigaction act;
-
 	sigfillset(&act.sa_mask);
 	sigprocmask(SIG_BLOCK, &act.sa_mask, NULL);
-	act.sa_flags = 0;
 
+	act.sa_flags = 0;
 	act.sa_handler = _sig_child;
 	sigemptyset(&act.sa_mask);
 	sigaction(SIGCHLD, &act, NULL);
@@ -307,6 +306,19 @@ void pcntl_base_signal()
 	sigaddset(&act.sa_mask, SIGTSTP);
 	sigaddset(&act.sa_mask, SIGALRM);
 	sigaddset(&act.sa_mask, SIGINT);
+	sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
+}
+
+/**
+ * Register signal handler
+ * @param fpath
+ */
+void pcntl_register_signal(int sig, void (*func)(int))
+{
+	act.sa_flags = 0;
+	act.sa_handler = func;
+	sigemptyset(&act.sa_mask);
+	sigaction(sig, &act, NULL);
 	sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
 }
 

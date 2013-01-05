@@ -28,10 +28,9 @@
 #ifdef DEBUG
 #    undef	log_debug
 #    undef	log_debug_conn
-#    define	log_debug(fmt, ...)			log_printf("[%s:%d] [thr:%p] " fmt, \
+#    define	log_debug(fmt,...)		_log_printf(LOG_DEBUG, "[%s:%d] [thr:%p] " fmt, \
 		__FILE__, __LINE__, pthread_self(), ##__VA_ARGS__)
-#    define	log_debug_conn(fmt, ...)	log_printf("[%s:%d] [sock:%d] [thr:%p] " fmt, \
-		__FILE__, __LINE__, CONN_FD(), pthread_self(), ##__VA_ARGS__)
+#    define	log_debug_conn(fmt,...)	log_debug("[sock:%d] " fmt, CONN_FD(), ##__VA_ARGS__)
 #endif	/* DEBUG */
 
 /**
@@ -97,9 +96,8 @@ struct result_doc
 	float weight;
 };
 
-
 #define	DELETE_PTR(p)		do { if (p != NULL) { delete p; p = NULL; } } while(0)
-#define	DELETE_PTT(p, t)	do { if (p != NULL) { delete (t)p; p = NULL; } } while(0)
+#define	DELETE_PTT(p,t)		do { if (p != NULL) { delete (t) p; p = NULL; } } while(0)
 #define	GET_SCALE(b)		(double)(b[0]<<8|b[1])/100
 #define	GET_QUERY_OP(a)		(Xapian::Query::op)query_ops[a % QUERY_OP_NUM]
 
@@ -132,7 +130,6 @@ struct cache_count
 
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
 #    define	C_UNLOCK_CACHE()	G_UNLOCK_CACHE(); conn->flag ^= CONN_FLAG_CACHE_LOCKED
-
 #endif	/* HAVE_MEMORY_CACHE */
 
 /**
@@ -192,7 +189,8 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 			}
 
 			ptr = s.data() + i;
-			if (i == 0) tt = string("");
+			if (i == 0)
+				tt = string("");
 			else
 			{
 				tt = string("...");
@@ -218,14 +216,15 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 /**
  * Get query object from CMD
  */
-#define	FETCH_CMD_QUERY(q)		do {															\
-	if (XS_CMD_BLEN(cmd) == 0) q = Xapian::Query(*zarg->qq);									\
-	else {																						\
-		string qstr = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));								\
+#define	FETCH_CMD_QUERY(q)		do { \
+	if (XS_CMD_BLEN(cmd) == 0) q = Xapian::Query(*zarg->qq); \
+	else { \
+		string qstr = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd)); \
 		int flag = zarg->parse_flag > 0 ? zarg->parse_flag : Xapian::QueryParser::FLAG_DEFAULT;	\
-		zarg->qp->set_default_op(GET_QUERY_OP(cmd->arg2));										\
-		q = zarg->qp->parse_query(qstr, flag);													\
-	}																							\
+		zarg->qp->set_default_op(GET_QUERY_OP(cmd->arg2)); \
+		q = zarg->qp->parse_query(qstr, flag); \
+		log_info_conn("search/count query (QUERY:%s, FLAG:0x%04x, DEF_OP:%d)", qstr.data(), flag, cmd->arg2); \
+	} \
 } while(0)
 
 /**
@@ -238,13 +237,13 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd)
 	int rc;
 
 	// send the doc header
-	log_debug_conn("send search result document (ID:%u, PERCENT:%d%%)", rd->docid, rd->percent);
+	log_debug_conn("search result doc (ID:%u, PERCENT:%d%%)", rd->docid, rd->percent);
 	rc = conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) rd, sizeof(struct result_doc));
 	if (rc == CMD_RES_CONT)
 	{
 		// send the data (body, check to cut)
-		string data;
 		int vno;
+		string data;
 		struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
 		try
 		{
@@ -271,7 +270,7 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd)
 		catch (const Xapian::Error &e)
 		{
 			// ignore the error simply
-			log_printf("xapian ERROR: %s", e.get_msg().data());
+			log_error_conn("xapian exception on sending doc (ERROR:%s)", e.get_msg().data());
 			rc = CMD_RES_CONT;
 		}
 	}
@@ -279,23 +278,24 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd)
 }
 
 #ifdef XS_HACK_UUID
+
 /**
  * Check is the query cotain hack uuid
  * @param q
  * @return 
  */
-static int is_hack_query(Xapian::Query &q)
+static inline bool is_hack_query(Xapian::Query &q)
 {
 	Xapian::TermIterator tb = q.get_terms_begin();
 	Xapian::TermIterator te = q.get_terms_end();
-	
+
 	while (tb != te)
 	{
 		if (*tb == XS_HACK_UUID)
-			return 1;
+			return true;
 		tb++;
 	}
-	return 0;
+	return false;
 }
 #endif
 
@@ -308,7 +308,7 @@ static void zarg_add_object(struct search_zarg *zarg, enum object_type type, con
 	struct object_chain *oc;
 
 	// TODO: check return value of malloc()
-	oc = (struct object_chain *) malloc(sizeof(struct object_chain));
+	debug_malloc(oc, sizeof(struct object_chain), struct object_chain);
 	oc->type = type;
 	oc->key = key == NULL ? NULL : strdup(key);
 	oc->val = val;
@@ -342,26 +342,29 @@ static void *zarg_get_object(struct search_zarg *zarg, enum object_type type, co
 static inline void zarg_cleanup(struct search_zarg *zarg)
 {
 	struct object_chain *oc;
+
+	log_debug("cleanup search zarg");
 	while ((oc = zarg->objs) != NULL)
 	{
 		zarg->objs = oc->next;
 		if (oc->type == OTYPE_DB)
 		{
-			log_debug("delete (Xapian::Database *)%s: %p", oc->key, oc->val);
+			log_debug("delete (Xapian::Database *) %p (KEY:%s)", oc->val,
+				oc->key == NULL ? "-" : oc->key);
 			DELETE_PTT(oc->val, Xapian::Database *);
 		}
 		else if (oc->type == OTYPE_RANGER)
 		{
-			log_debug("delete (Xapian::ValueRangeProcessor *): %p", oc->val);
+			log_debug("delete (Xapian::ValueRangeProcessor *) %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::ValueRangeProcessor *);
 		}
 		else if (oc->type == OTYPE_KEYMAKER)
 		{
-			log_debug("delete (Xapian::Xapian::MultiValueKeyMaker *): %p", oc->val);
+			log_debug("delete (Xapian::MultiValueKeyMaker *) %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::MultiValueKeyMaker *);
 		}
 		if (oc->key != NULL) free(oc->key);
-		free(oc);
+		debug_free(oc);
 	}
 	DELETE_PTR(zarg->eq);
 	DELETE_PTR(zarg->qp);
@@ -386,6 +389,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			rc = CONN_RES_ERR(WRONGPLACE);
 			break;
 		case CMD_SEARCH_FINISH:
+			// put conn backto main loop
 			if ((rc = CONN_RES_OK(FINISHED)) == CMD_RES_CONT)
 				rc = CMD_RES_PAUSE;
 			break;
@@ -398,15 +402,19 @@ static int zcmd_task_default(XS_CONN *conn)
 			break;
 		case CMD_SEARCH_ADD_LOG:
 			if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
+			{
+				log_warning_conn("search log too long to add (LOG:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
 				rc = CONN_RES_ERR(TOOLONG);
+			}
 			else
 			{
 				char fpath[256];
 				FILE *fp;
-
 				sprintf(fpath, "%s/" SEARCH_LOG_FILE, conn->user->home);
 				if ((fp = fopen(fpath, "a")) == NULL)
-					log_conn("failed to open search log (PATH:%s, ERROR:%s)", fpath, strerror(errno));
+				{
+					log_error_conn("failed to open search log (PATH:%s, ERROR:%s)", fpath, strerror(errno));
+				}
 				else
 				{
 					if (XS_CMD_BLEN1(cmd) != 4)
@@ -427,7 +435,7 @@ static int zcmd_task_default(XS_CONN *conn)
 				rc = CONN_RES_OK3(DB_INFO, desc.data(), desc.size());
 			}
 			break;
-			// Silent commands
+			// ===== silent commands ===== //
 			// NOTE: the following commands without any respond
 		case CMD_SEARCH_SET_SORT:
 			if (zarg->eq != NULL)
@@ -456,6 +464,7 @@ static int zcmd_task_default(XS_CONN *conn)
 						sorter->add_value(buf[i], buf[i + 1] == 0 ? true : false);
 					}
 					zarg_add_object(zarg, OTYPE_KEYMAKER, NULL, sorter);
+					log_debug_conn("new (Xapian::MultiValueKeyMaker *) %p", sorter);
 					zarg->eq->set_sort_by_key_then_relevance(sorter, false);
 				}
 			}
@@ -519,8 +528,8 @@ static int zcmd_task_default(XS_CONN *conn)
 		case CMD_QUERY_PREFIX:
 			if (cmd->arg2 != XS_DATA_VNO)
 			{
-				string field = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
 				char prefix[3];
+				string field = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
 
 				vno_to_prefix(cmd->arg2, prefix);
 				if (cmd->arg1 == CMD_PREFIX_BOOLEAN)
@@ -544,7 +553,7 @@ static int zcmd_task_default(XS_CONN *conn)
 				vrp = new Xapian::StringValueRangeProcessor(cmd->arg2);
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
-			log_debug("new (Xapian::ValueRangeProcessor *): %p", vrp);
+			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
 		}
 			break;
 		case CMD_SEARCH_SCWS_SET:
@@ -571,7 +580,7 @@ static inline Xapian::Database *fetch_conn_database(XS_CONN *conn, const char *n
 		db = new Xapian::Database(string(conn->user->home) + "/" + string(name));
 		db->keep_alive();
 		zarg_add_object(zarg, OTYPE_DB, name, db);
-		log_debug("new (Xapian::Database *)%s: %p", name, db);
+		log_debug_conn("new (Xapian::Database *) %p (KEY:%s)", db, name);
 	}
 	return db;
 }
@@ -583,13 +592,15 @@ static inline Xapian::Database *fetch_conn_database(XS_CONN *conn, const char *n
  */
 static int zcmd_task_set_db(XS_CONN *conn)
 {
+	int rc;
 	XS_CMD *cmd = conn->zcmd;
 	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
 	string name = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
-	int rc;
 
-	if (name.size() == 0) name = DEFAULT_DB_NAME;
+	if (name.size() == 0)
+		name = DEFAULT_DB_NAME;
 	rc = xs_user_check_name(name.data(), name.size());
+
 	if (rc == CMD_ERR_TOOLONG)
 		rc = CONN_RES_ERR(TOOLONG);
 	else if (rc == CMD_ERR_INVALIDCHAR)
@@ -646,8 +657,11 @@ static int zcmd_task_get_total(XS_CONN *conn)
 	if (zarg->db == NULL)
 		return CONN_RES_ERR(NODB);
 	if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
+	{
+		log_warning_conn("count query too long (QUERY:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
 		return CONN_RES_ERR(TOOLONG);
-	
+	}
+
 	// load the query
 	FETCH_CMD_QUERY(qq);
 	log_debug_conn("search count (USER:%s, QUERY:%s)", conn->user->name, qq.get_description().data() + 13);
@@ -659,7 +673,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 		return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof(count));
 	}
 #endif
-	
+
 	// get total & count
 	total = zarg->db->get_doccount();
 	if (qq.empty())
@@ -668,12 +682,12 @@ static int zcmd_task_get_total(XS_CONN *conn)
 	{
 		int cache_flag = CACHE_NONE;
 #ifdef HAVE_MEMORY_CACHE
-		char md5[33]; // KEY: MD5("Matchec for " +  user + ": " + query");
+		char md5[33]; // KEY: MD5("Count for " +  user + ": " + query");
 
 		if (!(conn->flag & CONN_FLAG_CH_DB))
 		{
 			struct cache_count *cc;
-			string key = "Total for " + string(conn->user->name) + ": " + qq.get_description();
+			string key = "Count for " + string(conn->user->name) + ": " + qq.get_description();
 
 			md5_r(key.data(), md5);
 			cache_flag |= CACHE_USE;
@@ -695,7 +709,8 @@ static int zcmd_task_get_total(XS_CONN *conn)
 				{
 					cache_flag |= CACHE_VALID;
 					count = cc->count;
-					log_debug_conn("search count cache hit (COUNT:%d)", count, total);
+					log_debug_conn("search count cache hit (COUNT:%d, TOTAL:%u)",
+						count, total);
 				}
 			}
 			else
@@ -759,7 +774,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	char md5[33];
 #endif
 	Xapian::Query qq;
-	unsigned char facets[64];
+	unsigned char facets[MAX_SEARCH_FACETS + 2];
 
 	// load & clear specified facets
 	memset(facets, 0, sizeof(facets));
@@ -767,13 +782,16 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	memcpy(facets + 1, zarg->facets, sizeof(zarg->facets));
 	conn->flag &= ~CONN_FLAG_EXACT_FACETS;
 	memset(zarg->facets, 0, sizeof(zarg->facets));
-	log_debug_conn("facets: %s(%d)", facets, strlen((const char *) facets));
+	log_debug_conn("search facets: %s(%d)", facets, strlen((const char *) facets));
 
 	// check db & data length
 	if (zarg->db == NULL)
 		return CONN_RES_ERR(NODB);
 	if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
+	{
+		log_warning_conn("search query too long (QUERY:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
 		return CONN_RES_ERR(TOOLONG);
+	}
 
 	// fetch query
 	FETCH_CMD_QUERY(qq);
@@ -792,8 +810,9 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof(int)));
 		if (limit > MAX_SEARCH_RESULT) limit = MAX_SEARCH_RESULT;
 	}
-	log_debug_conn("search result (USER:%s, OFF:%d, LIMIT:%d, QUERY:%s, FACETS:%c)",
-		conn->user->name, off, limit, qq.get_description().data() + 13, facets[0]);
+	log_debug_conn("search result (USER:%s, OFF:%d, LIMIT:%d, QUERY:%s, FACETS:%c%d)",
+		conn->user->name, off, limit, qq.get_description().data() + 13,
+		facets[0], strlen((const char *) facets) - 1);
 
 #if 0
 	// check to skip empty query
@@ -806,7 +825,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	if (qq.empty())
 		qq = Xapian::Query::MatchAll;
 #endif
-	
+
 #ifdef XS_HACK_UUID
 	if (is_hack_query(qq))
 	{
@@ -814,12 +833,12 @@ static int zcmd_task_get_result(XS_CONN *conn)
 			XS_HACK_UUID, "Hello xunsearch", "About xunsearch", "Love xunsearch",
 			"Powered by xunsearch, http://www.xunsearch.com",
 		};
-		struct result_doc rd;		
-		count = 5201314;
+		struct result_doc rd;
 
+		count = 5201314;
 		memset(&rd, 0, sizeof(rd));
 		rd.docid = rd.rank = 1;
-		rd.percent = 100;	
+		rd.percent = 100;
 		CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count));
 		conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) &rd, sizeof(struct result_doc));
 		for (rc = 0; rc < 5; rc++)
@@ -859,7 +878,8 @@ static int zcmd_task_get_result(XS_CONN *conn)
 			else
 			{
 				cache_flag |= CACHE_VALID;
-				log_debug_conn("search result cache hit (COUNT:%d)", cr->count);
+				log_debug_conn("search result cache hit (COUNT:%d, TOTAL:%d)",
+					cr->count, total);
 			}
 		}
 		else
@@ -888,7 +908,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		memset(spy, 0, sizeof(spy));
 		for (i = 1; facets[i] != '\0'; i++)
 		{
-			log_debug_conn("adding match spy (VNO:%d)", facets[i] - 1);
+			log_debug_conn("add match spy (VNO:%d)", facets[i] - 1);
 			spy[i - 1] = new Xapian::ValueCountMatchSpy(facets[i] - 1);
 			zarg->eq->add_matchspy(spy[i - 1]);
 		}
@@ -912,7 +932,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 		// create cache result buffer 
 		// FIXME: this may cause memory leak on Xapian::Exception
-		cr = (struct cache_result *) malloc(sizeof(struct cache_result) +facets_len);
+		debug_malloc(cr, sizeof(struct cache_result) +facets_len, struct cache_result);
 		cr->facets_len = facets_len;
 		ptr = (unsigned char *) cr + sizeof(struct cache_result);
 
@@ -950,7 +970,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 #endif
 		// first to send the total header
 		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count))) != CMD_RES_CONT)
-			return rc;
+			goto res_err1;
 
 		// send facets data
 		if (cr->facets_len > 0)
@@ -977,9 +997,10 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 			// send the doc
 			if ((rc = send_result_doc(conn, &rd)) != CMD_RES_CONT)
-				return rc;
+				break;
 		}
 
+res_err1:
 #ifdef HAVE_MEMORY_CACHE
 		// check to save or delete cache
 		if (cache_flag & CACHE_NEED)
@@ -1000,14 +1021,14 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		}
 #endif
 		// free cache result
-		free(cr);
+		debug_free(cr);
 	}
 #ifdef HAVE_MEMORY_CACHE
 	else
 	{
 		// send the total header (break to switch)
 		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &cr->count, sizeof(cr->count))) != CMD_RES_CONT)
-			return rc;
+			goto res_err2;
 
 		// send facets data
 		if (cr->facets_len > 0)
@@ -1018,13 +1039,14 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		do
 		{
 			if ((rc = send_result_doc(conn, &cr->doc[off])) != CMD_RES_CONT)
-				return rc;
+				break;
 		}
 		while (++off < limit);
 	}
 #endif
+res_err2:
 	// send end declare
-	return CONN_RES_OK(RESULT_END);
+	return rc == CMD_RES_CONT ? CONN_RES_OK(RESULT_END) : rc;
 }
 
 /**
@@ -1101,7 +1123,10 @@ static int zcmd_task_add_query(XS_CONN *conn)
 
 	// check data length
 	if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
+	{
+		log_warning_conn("add query too long (QUERY:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
 		return CONN_RES_ERR(TOOLONG);
+	}
 
 	// generate new query
 	string qstr = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
@@ -1147,7 +1172,7 @@ static int zcmd_task_add_query(XS_CONN *conn)
 		int flag = zarg->parse_flag > 0 ? zarg->parse_flag : Xapian::QueryParser::FLAG_DEFAULT;
 		zarg->qp->set_default_op(GET_QUERY_OP(cmd->arg2));
 		q2 = zarg->qp->parse_query(qstr, flag);
-		log_debug_conn("add parse query (QUERY:%s, FLAG:0x%04x, ADD_OP:%d, DEF_OP:%d)",
+		log_info_conn("add parse query (QUERY:%s, FLAG:0x%04x, ADD_OP:%d, DEF_OP:%d)",
 			qstr.data(), flag, cmd->arg1, cmd->arg2);
 	}
 
@@ -1181,7 +1206,7 @@ static int zcmd_task_add_query(XS_CONN *conn)
 struct string_casecmp
 {
 
-	bool operator() (const string &a, const string &b) const
+	bool operator() (const string &a, const string & b) const
 	{
 		return strcasecmp(a.data(), b.data()) < 0;
 	}
@@ -1301,10 +1326,9 @@ static struct fixed_query *get_fixed_query(char *str, int len)
 {
 	struct fixed_query *fq;
 	char *raw, *nsp, *end = str + len - 1;
-	;
 
 	// sizeof(struct) + <raw> \0 <non-space> \0 <py_buffer> \0
-	fq = (struct fixed_query *) malloc(sizeof(struct fixed_query) + (len << 2) + 2);
+	debug_malloc(fq, sizeof(struct fixed_query) + (len << 2) + 2, struct fixed_query);
 	if (fq == NULL)
 		return NULL;
 	raw = fq->raw = (char *) fq + sizeof(struct fixed_query);
@@ -1521,7 +1545,7 @@ static int zcmd_task_get_corrected(XS_CONN *conn)
 		}
 
 		// read pinyin result
-		log_debug_conn("checking full partial py (TERM:B%s)", tt.data());
+		log_debug_conn("check partial py (TERM:B%s)", tt.data());
 		bool multi = (str == fq->raw && *ptr == '\0');
 		eq.set_query(Xapian::Query("B" + tt));
 		ms = eq.get_mset(0, multi ? 3 : 1);
@@ -1542,7 +1566,7 @@ end_fixed:
 	// free memory
 	if (!memcmp(result.data(), fq->raw, result.size()))
 		result.resize(0);
-	free(fq);
+	debug_free(fq);
 	return CONN_RES_OK3(QUERY_CORRECTED, result.data(), result.size());
 }
 
@@ -1570,7 +1594,11 @@ static int zcmd_task_get_expanded(XS_CONN *conn)
 	// first to send the total header
 	limit = cmd->arg1 > 0 ? cmd->arg1 : 10;
 	if ((rc = CONN_RES_OK3(RESULT_BEGIN, fq->raw, fq->len)) != CMD_RES_CONT)
+	{
+		debug_free(fq);
 		return rc;
+	}
+
 	// check size
 	if (fq->len > MAX_EXPAND_LEN)
 	{
@@ -1681,7 +1709,7 @@ static int zcmd_task_get_expanded(XS_CONN *conn)
 		}
 	}
 	// free memory
-	free(fq);
+	debug_free(fq);
 
 	// process search
 	if (!qq.empty())
@@ -1913,15 +1941,14 @@ static int zcmd_exec_task(XS_CONN * conn)
 		XS_CMD *cmd = conn->zcmd;
 		string msg = e.get_msg();
 
-		log_conn("xapian ERROR: %s", msg.data());
+		log_error_conn("xapian exception (ERROR:%s)", msg.data());
 		return XS_CMD_DONT_ANS(cmd) ? CMD_RES_CONT : CONN_RES_ERR3(XAPIAN, msg.data(), msg.size());
 	}
 	catch (...)
 	{
 		XS_CMD *cmd = conn->zcmd;
 
-		log_conn("unknown ERROR during executing task (CMD:%d)", cmd->cmd);
-
+		log_error_conn("unknown exception during task (CMD:%d)", cmd->cmd);
 		return XS_CMD_DONT_ANS(cmd) ? CMD_RES_CONT : CONN_RES_ERR(UNKNOWN);
 	}
 }
@@ -1964,7 +1991,6 @@ static int task_exec_other(XS_CONN * conn)
 		{
 			log_debug_conn("broken poll(...) = %d", rc);
 			rc = (rc < 0 && errno != EINTR) ? CMD_RES_IOERR : CMD_RES_TIMEOUT;
-
 			break;
 		}
 	}
@@ -1986,7 +2012,7 @@ static void task_do_scws(XS_CONN *conn)
 	conn->zarg = (void *) scws_fork(_scws);
 	if (conn->zarg == NULL)
 	{
-		log_conn("scws_fork ERROR: out of memory?");
+		log_error_conn("scws_fork faillure (ERROR: out of memory?)");
 		CONN_RES_ERR(NOMEM);
 		rc = CMD_RES_ERROR;
 		goto scws_end;
@@ -1994,7 +2020,7 @@ static void task_do_scws(XS_CONN *conn)
 
 	// begin the task, parse & execute cmds list
 	// TODO: is need to check conn->zhead, conn->ztail should not be NULL
-	log_debug_conn("scws begin (HEAD:%d, TAIL:%d)", conn->zhead->cmd->cmd, conn->ztail->cmd->cmd);
+	log_info_conn("scws begin (HEAD:%d, TAIL:%d)", conn->zhead->cmd->cmd, conn->ztail->cmd->cmd);
 	while ((cmds = conn->zhead) != NULL)
 	{
 		// run as zcmd
@@ -2003,8 +2029,7 @@ static void task_do_scws(XS_CONN *conn)
 		conn->flag |= CONN_FLAG_ZMALLOC; // force the zcmd to be free after execution
 
 		// free the cmds, cmds->cmd/zcmd will be free in conn_zcmd_exec()
-		log_debug_conn("free(%d), addr: %p", sizeof(XS_CMDS), cmds);
-		free(cmds);
+		debug_free(cmds);
 
 		// execute the zcmd (CMD_RES_CONT accepted only)
 		if ((rc = conn_zcmd_exec(conn, zcmd_exec_task)) != CMD_RES_CONT)
@@ -2023,7 +2048,7 @@ static void task_do_scws(XS_CONN *conn)
 
 	// end the task normal
 scws_end:
-	log_conn("end the scws (RC:%d, CONN:%p)", rc, conn);
+	log_info_conn("scws end (RC:%d, CONN:%p)", rc, conn);
 
 	// free scws
 	if (conn->zarg != NULL)
@@ -2050,14 +2075,19 @@ void task_cancel(void *arg)
 {
 	XS_CONN *conn = (XS_CONN *) arg;
 
-	log_conn("task canceld, run the cleanup (ZARG:%p)", conn->zarg);
+	log_notice_conn("task canceld, run cleanup (ZARG:%p)", conn->zarg);
 	// free zargs!!
 	if (conn->zarg != NULL)
 	{
 		if (conn->flag & CONN_FLAG_ON_SCWS)
+		{
+			conn->flag ^= CONN_FLAG_ON_SCWS;
 			scws_free((scws_t) conn->zarg);
+		}
 		else
+		{
 			zarg_cleanup((struct search_zarg *) conn->zarg);
+		}
 		conn->zarg = NULL;
 	}
 	// free cache locking
@@ -2076,19 +2106,16 @@ void task_cancel(void *arg)
 void task_exec(void *arg)
 {
 	int rc;
-	struct search_zarg zarg;
 	XS_CMDS *cmds;
+	struct search_zarg zarg;
 	XS_CONN *conn = (XS_CONN *) arg;
 
 	// task scws
 	if (conn->flag & CONN_FLAG_ON_SCWS)
-	{
-		task_do_scws(conn);
-		return;
-	}
+		return task_do_scws(conn);
 
 	// init the zarg
-	log_debug_conn("init the zarg of search");
+	log_debug_conn("init search zarg");
 	memset(&zarg, 0, sizeof(zarg));
 	conn->zarg = &zarg;
 	try
@@ -2103,7 +2130,7 @@ void task_exec(void *arg)
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
 
 		// load default database, try to init queryparser, enquire
-		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT);
+		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT | CONN_FLAG_CH_COLLAPSE);
 		try
 		{
 			db = fetch_conn_database(conn, DEFAULT_DB_NAME);
@@ -2116,7 +2143,6 @@ void task_exec(void *arg)
 			}
 			catch (...)
 			{
-
 			}
 			zarg.qp->set_database(*zarg.db);
 			zarg.eq = new Xapian::Enquire(*zarg.db);
@@ -2124,13 +2150,13 @@ void task_exec(void *arg)
 		}
 		catch (const Xapian::Error &e)
 		{
-			log_conn("failed to open default db (ERROR:%s)", e.get_msg().data());
+			log_error_conn("failed to open default db (ERROR:%s)", e.get_msg().data());
 		}
 	}
 	catch (const Xapian::Error &e)
 	{
 		string msg = e.get_msg();
-		log_conn("xapian ERROR: %s", msg.data());
+		log_error_conn("xapian exception (ERROR:%s)", msg.data());
 		CONN_RES_ERR3(XAPIAN, msg.data(), msg.size());
 		rc = CMD_RES_ERROR;
 		goto task_end;
@@ -2144,7 +2170,7 @@ void task_exec(void *arg)
 
 	// begin the task, parse & execute cmds list
 	// TODO: is need to check conn->zhead, conn->ztail should not be NULL
-	log_debug_conn("task begin (HEAD:%d, TAIL:%d)", conn->zhead->cmd->cmd, conn->ztail->cmd->cmd);
+	log_info_conn("task begin (HEAD:%d, TAIL:%d)", conn->zhead->cmd->cmd, conn->ztail->cmd->cmd);
 	while ((cmds = conn->zhead) != NULL)
 	{
 		// run as zcmd
@@ -2153,8 +2179,7 @@ void task_exec(void *arg)
 		conn->flag |= CONN_FLAG_ZMALLOC; // force the zcmd to be free after execution
 
 		// free the cmds, cmds->cmd/zcmd will be free in conn_zcmd_exec()
-		log_debug_conn("free(%d), addr: %p", sizeof(XS_CMDS), cmds);
-		free(cmds);
+		debug_free(cmds);
 
 		// execute the zcmd (CMD_RES_CONT accepted only)
 		if ((rc = conn_zcmd_exec(conn, zcmd_exec_task)) != CMD_RES_CONT)
@@ -2173,7 +2198,7 @@ void task_exec(void *arg)
 
 	// end the task normal
 task_end:
-	log_conn("end the task (RC:%d, CONN:%p)", rc, conn);
+	log_info_conn("task end (RC:%d, CONN:%p)", rc, conn);
 	// BUG: if thread cancled HERE, may cause some unspecified problems
 	// free objects of zarg
 	zarg_cleanup(&zarg);

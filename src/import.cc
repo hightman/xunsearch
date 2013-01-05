@@ -29,17 +29,15 @@
 
 /* global flag settings */
 #define	FLAG_CORRECTION		0x01
-#define	FLAG_QUIET			0x02
-#define	FLAG_VERBOSE		0x04
-#define	FLAG_TRANSACTION	0x08
-#define	FLAG_FORCE			0x10
-#define	FLAG_COMMITTING		0x100	// committing...
-#define	FLAG_TERMINATED		0x200	// terminated after comitting
-#define	FLAG_STDIN			0x400	// read data from stdin <need not lock>
-#define	FLAG_HEADER			0x800	// file has import header
-#define	FLAG_HEADER_ONLY	0x1000	// only show the header
-#define	FLAG_ARCHIVE		0x2000	// there is archive database
-#define	FLAG_DEFAULT_DB		0x4000	// is the dbname equal to db
+#define	FLAG_TRANSACTION	0x02
+#define	FLAG_FORCE			0x04
+#define	FLAG_COMMITTING		0x08	// committing...
+#define	FLAG_TERMINATED		0x10	// terminated after comitting
+#define	FLAG_STDIN			0x20	// read data from stdin <need not lock>
+#define	FLAG_HEADER			0x40	// file has import header
+#define	FLAG_HEADER_ONLY	0x80	// only show the header
+#define	FLAG_ARCHIVE		0x100	// there is archive database
+#define	FLAG_DEFAULT_DB		0x200	// is the dbname equal to db
 
 /* fetch result type */
 #define	FETCH_ABORT			-1		// error break
@@ -58,23 +56,16 @@ static int flag, fd, num_skip, bytes_read;
 static int total, total_update, total_delete, total_add, archive_delete;
 static int total_synonyms;
 
-static Xapian::WritableDatabase database, archive;
+static Xapian::WritableDatabase database, archive, *syn_db;
 static Xapian::TermGenerator indexer;
 static Xapian::Stem stemmer;
 static Xapian::SimpleStopper stopper;
 using std::string;
 
-/**
- * Macro to control type of logging message
- */
-#define	log_force		log_printf
-#define	log_normal		if (~flag & FLAG_QUIET) log_printf
-#define	log_verbose		if (flag & FLAG_VERBOSE) log_printf
-
 /* xapian try block */
 #define	__TRY_FETCH_BEGIN__	try {
 #define	__TRY_FETCH_END__	} catch (const Xapian::Error &e) { \
-	log_printf("xapian ERROR: %s", e.get_msg().data()); \
+	log_error("xapian exception (ERROR:%s)", e.get_msg().data()); \
 	rc = FETCH_DIRTY; \
 }
 
@@ -95,26 +86,26 @@ static void show_usage()
 	printf("%s (%s/%s) - Index Data Importer\n", prog_name, PACKAGE_NAME, PACKAGE_VERSION);
 	printf("Copyright (C)2007-2011 hightman, HangZhou YunSheng Network Co., Ltd.\n\n");
 
-	printf("Usage: %s [options] [DB_dir] [Input_File]\n", prog_name);
+	printf("Usage: %s [options] [DB_dir] [Input_file]\n", prog_name);
 	printf("  -H               Display header of input file only\n");
 	printf("  -N               Do not use transaction\n");
 	printf("  -Q               Completely quiet mode, not output any information\n");
 	printf("  -S               Enable saving information for spelling correction\n");
 	printf("  -V               Verbose mode, show insert/update message for each document\n");
-	printf("  -d <DB>          Specify the path to the writable database\n");
-	printf("  -f <file>        Specify the path to input exchangeable file(binary)\n");
+	printf("  -d <DB>          Specify the path of the writable database\n");
+	printf("  -f <file>        Specify the path of the import file (binary)\n");
 	printf("  -k <num>         Set the number of documents to be skipped\n");
 	printf("                   Default: read from file header (CMD_IMPORT_HEADER)\n");
-	printf("  -l <num>         Set the maximum documents to be imported(Not include skipped)\n");
-	printf("  -m <multi level> Set the multi level to SCWS, range is from 1 to 15, (default: %d)\n",
+	printf("  -l <num>         Set the maximum documents to be imported (Not include skipped)\n");
+	printf("  -m <multi level> Set the multi level of SCWS, value range: 1-15, (default: %d)\n",
 		DEFAULT_SCWS_MULTI);
-	printf("                   1|2|4|8 = short|duality|zmain|zall, see scws documents pl.\n");
+	printf("                   1|2|4|8 = short|duality|zmain|zall, refer to scws documents.\n");
 	printf("  -n <num>         Set the batch number of each transaction or progress report\n");
 	printf("                   Default: %d\n", DEFAULT_COMMIT_NUMBER);
-	printf("  -s <stopfile>    Specify the path to stop words list\n");
+	printf("  -s <stopfile>    Specify the path of stop words file\n");
 	printf("                   Default: none, refer to etc/stopwords.txt under install directory\n");
 	printf("  -t <stemmer>     Specify the stemmer language, (default: " DEFAULT_STEMMER ")\n");
-	printf("  -z <size>MB      Set the size of read data for each transaction, (default: %dMB)\n",
+	printf("  -z <size>MB      Set the limit size of read data for each transaction, (default: %dMB)\n",
 		DEFAULT_COMMIT_SIZE);
 	printf("  -v               Show version information\n");
 	printf("  -h               Display this help page\n\n");
@@ -158,7 +149,7 @@ static inline void batch_committed(int reopen)
 	}
 	catch (const Xapian::Error &e)
 	{
-		log_force("xapian ERROR: %s", e.get_msg().data());
+		log_error("xapian exception (ERROR:%s)", e.get_msg().data());
 	}
 	catch (...)
 	{
@@ -178,19 +169,20 @@ extern "C" {
  */
 int signal_term(int sig)
 {
-	log_force("signal[%d] received, try to save uncommitted data", sig);
-
+	log_alert("caught %ssignal[%d], try to save uncommitted data",
+		(sig == SIGTERM ? "" : "exceptional "), sig);
 	if (flag & FLAG_COMMITTING)
 	{
+		log_info("signal received during committing, waiting for the end");
 		flag |= FLAG_TERMINATED;
-		log_normal("signal received during transaction committing or flushing, wait for the end");
 		return SIGNAL_TERM_LATER;
 	}
 	else
 	{
 		batch_committed(0);
-		log_force("interrupted (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
+		log_alert("interrupted (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
+			total_add, total_update, total_delete, archive_delete, total_synonyms,
+			total, database.get_doccount());
 
 		if (!(flag & FLAG_STDIN))
 		{
@@ -206,8 +198,7 @@ int signal_term(int sig)
  */
 void signal_child(pid_t pid, int status)
 {
-	log_normal("child process[%d] exit with status[%d], but where the child process came out?",
-		pid, status);
+	log_info("child process exit (PID:%d, STATUS:%d)", pid, status);
 }
 
 /**
@@ -215,7 +206,7 @@ void signal_child(pid_t pid, int status)
  */
 void signal_int()
 {
-	log_force("sigint received, set the flag to shutdown gracefully");
+	log_alert("caught SIGINT, shutdown gracefully");
 	flag |= FLAG_TERMINATED;
 }
 
@@ -224,18 +215,9 @@ void signal_int()
  */
 void signal_reload(int sig)
 {
-	if (sig == SIGTSTP)
-	{
-		// The signal came from keyboard(^Z)
-		// Although printf is not signal safe, but we do not use in other place
-		printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)\n",
-			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
-	}
-	else
-	{
-		log_force("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_delete, archive_delete, total_synonyms, total, database.get_doccount());
-	}
+	log_printf("importing progress (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d)",
+		total_add, total_update, total_delete, archive_delete, total_synonyms,
+		total, database.get_doccount());
 }
 
 #ifdef __cplusplus
@@ -278,10 +260,11 @@ static int data_read(void *buf, int len)
 	do
 	{
 		n = read(fd, buf, len);
-		if (n >= len) break;
+		if (n >= len)
+			break;
 		if (n == 0)
 		{
-			log_normal("reached the end of file (EXPECTED:%d, ACTUAL:0)", len);
+			log_notice("reach the end of file (EXPECTED:%d, ACTUAL:0)", len);
 			return -1;
 		}
 		else if (n > 0)
@@ -290,7 +273,7 @@ static int data_read(void *buf, int len)
 			len -= n;
 			continue;
 		}
-		else if (errno != EINTR && errno != EAGAIN)
+		else if ((errno != EINTR && errno != EAGAIN) || (flag & FLAG_TERMINATED))
 		{
 			retry = 0;
 			break;
@@ -301,7 +284,7 @@ static int data_read(void *buf, int len)
 
 	if (retry == 0)
 	{
-		log_normal("error occurred while reading data (ERRNO:%d, ERROR:%s)", errno, strerror(errno));
+		log_error("failed to read data (ERROR:%s)", strerror(errno));
 		return -1;
 	}
 
@@ -332,7 +315,7 @@ static int header_read(struct xs_import_hdr *hdr)
 		buf = (char *) malloc(size);
 		if (buf == NULL)
 		{
-			log_normal("unable to allocate memory for header buffer, (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
+			log_error("failed to allocate memory for header (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
 			return -1;
 		}
 		if (data_read(buf, size) < 0)
@@ -344,8 +327,9 @@ static int header_read(struct xs_import_hdr *hdr)
 		free(buf);
 
 		flag |= FLAG_HEADER;
-		log_normal("got import header (PROC_NUM:%d, EFF_SIZE:%lld)", hdr->proc_num, hdr->eff_size);
+		log_notice("get import header (PROC_NUM:%d, EFF_SIZE:%lld)", hdr->proc_num, hdr->eff_size);
 	}
+
 	return 0;
 }
 
@@ -377,7 +361,7 @@ static int doc_fetch()
 		buf = (char *) malloc(size);
 		if (buf == NULL)
 		{
-			log_normal("unable to allocate memory for header buffer, (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
+			log_error("failed to allocate memory for header (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
 			return FETCH_ABORT;
 		}
 		if (data_read(buf, size) < 0)
@@ -387,7 +371,7 @@ static int doc_fetch()
 		}
 
 		hdr = (struct xs_import_hdr *) buf;
-		log_normal("got unused import header (PROC_NUM:%d, EFF_SIZE:%lld)", hdr->proc_num, hdr->eff_size);
+		log_notice("dirty import header (PROC_NUM:%d, EFF_SIZE:%lld)", hdr->proc_num, hdr->eff_size);
 		free(buf);
 
 		return FETCH_DIRTY;
@@ -396,7 +380,7 @@ static int doc_fetch()
 	// NOTE: check valid CMD
 	if (cmd.cmd != CMD_INDEX_REQUEST && cmd.cmd != CMD_INDEX_REMOVE && cmd.cmd != CMD_INDEX_SYNONYMS)
 	{
-		log_normal("got invalid command, abort (CMD:%d, BUFSIZE:%d)", cmd.cmd, XS_CMD_BUFSIZE(&cmd));
+		log_notice("invalid command, abort (CMD:%d, BUFSIZE:%d)", cmd.cmd, XS_CMD_BUFSIZE(&cmd));
 		return FETCH_ABORT;
 	}
 
@@ -407,7 +391,7 @@ static int doc_fetch()
 		term = (char *) malloc(size + sizeof(prefix));
 		if (term == NULL)
 		{
-			log_normal("unable to allocate memory for request command (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
+			log_error("failed to allocate memory for command (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
 			return FETCH_ABORT;
 		}
 		vno_to_prefix(cmd.arg2, term);
@@ -428,17 +412,16 @@ static int doc_fetch()
 	// add try block for debugging
 	__TRY_FETCH_BEGIN__
 
-	// TODO: check synonyms cmd
+		// TODO: check synonyms cmd
 	if (cmd.cmd == CMD_INDEX_SYNONYMS && term != NULL)
 	{
 		if (rc == FETCH_SKIP)
 		{
-			log_verbose("~skip to add/del synonyms (TERM:%.*s, SKIP_LEFT:%d)",
+			log_info("~skip to add/del synonyms (TERM:%.*s, SKIP_LEFT:%d)",
 				cmd.blen, term + 1, num_skip - total - 1);
 		}
 		else
 		{
-			Xapian::WritableDatabase *syn_db;
 			string org_term = Xapian::Unicode::tolower(string(term + 1, cmd.blen));
 			string syn_term = Xapian::Unicode::tolower(string(term + cmd.blen + 1, cmd.blen1));
 #ifdef HAVE_SYNONYMS_STEM
@@ -450,18 +433,17 @@ static int doc_fetch()
 			}
 #endif
 			rc = FETCH_SYNONYMS;
-			syn_db = (flag & FLAG_ARCHIVE) ? &archive : &database;
 			if (cmd.arg1 == CMD_INDEX_SYNONYMS_ADD)
 			{
 				// add
 				syn_db->add_synonym(org_term, syn_term);
-				log_verbose("+add synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
+				log_info("+add synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
 #ifdef HAVE_SYNONYMS_STEM
-				// stemmed
+				// stem
 				if (org_stem.size() > 0)
 				{
 					syn_db->add_synonym(org_stem, syn_stem);
-					log_verbose("+add stemmed synonym term (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
+					log_info("+add stemmed synonym (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
 				}
 #endif
 			}
@@ -472,13 +454,13 @@ static int doc_fetch()
 				{
 					// del synonym word
 					syn_db->remove_synonym(org_term, syn_term);
-					log_verbose("+remove synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
+					log_info("+remove synonym term (TERM:%s, SYNONYM:%s)", org_term.data(), syn_term.data());
 #ifdef HAVE_SYNONYMS_STEM
 					// stemmed
 					if (org_stem.size() > 0)
 					{
 						syn_db->remove_synonym(org_stem, syn_stem);
-						log_verbose("+remove stemmed synonym term (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
+						log_info("+remove stemmed synonym (TERM:%s, SYNONYM:%s)", org_stem.data(), syn_stem.data());
 					}
 #endif
 				}
@@ -486,13 +468,13 @@ static int doc_fetch()
 				{
 					// clear all synonyms
 					syn_db->clear_synonyms(org_term);
-					log_verbose("--clear synonym terms (TERM:%s)", org_term.data());
+					log_info("#clear synonym terms (TERM:%s)", org_term.data());
 #ifdef HAVE_SYNONYMS_STEM
 					// stemmed
 					if (org_stem.size() > 0)
 					{
 						syn_db->clear_synonyms(org_stem);
-						log_verbose("--clear stemmed synonym term (TERM:%s)", org_stem.data());
+						log_info("#clear stemmed synonyms (TERM:%s)", org_stem.data());
 					}
 #endif
 				}
@@ -507,7 +489,7 @@ static int doc_fetch()
 	{
 		if (rc == FETCH_SKIP)
 		{
-			log_verbose("~skip to remove the document (ID:%s, SKIP_LEFT:%d)", term, num_skip - total - 1);
+			log_info("~skip to remove document (ID:%s, SKIP_LEFT:%d)", term, num_skip - total - 1);
 		}
 		else
 		{
@@ -516,13 +498,13 @@ static int doc_fetch()
 			{
 				archive_delete++;
 				archive.delete_document(term);
-				log_verbose("--remove the documnt from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
+				log_info("--remove the document from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
 			}
 			else
 			{
 				total_delete++;
 				database.delete_document(term);
-				log_verbose("-remove the document (ID:%s, TOTAL_DELETE:%d)", term, total_delete);
+				log_info("-remove the document (ID:%s, TOTAL_DELETE:%d)", term, total_delete);
 			}
 		}
 		goto doc_end;
@@ -556,7 +538,7 @@ static int doc_fetch()
 				if (buf == NULL)
 				{
 					rc = FETCH_ABORT;
-					log_normal("unable to allocate memory for doc command (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
+					log_error("failed to allocate memory for doc command (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
 					goto doc_end;
 				}
 				lsize = size;
@@ -659,7 +641,7 @@ static int doc_fetch()
 	{
 		total_add++;
 		database.add_document(doc);
-		log_verbose("+add the document (ID:%s, TOTAL_ADD:%d)", term == NULL ? "NULL" : term, total_add);
+		log_info("+add the document (ID:%s, TOTAL_ADD:%d)", term == NULL ? "NULL" : term, total_add);
 	}
 	else if (rc == FETCH_UPDATE)
 	{
@@ -667,20 +649,20 @@ static int doc_fetch()
 		{
 			archive_delete++;
 			archive.delete_document(term);
-			log_verbose("--remove the documnt from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
+			log_info("--remove the document from archive (ID:%s, ARCHIVE_DELETE:%d)", term, archive_delete);
 		}
 		total_update++;
 		database.replace_document(term, doc);
-		log_verbose("!update the document (ID:%s, TOTAL_UPDATE:%d)", term == NULL ? "NULL" : term, total_update);
+		log_info("!update the document (ID:%s, TOTAL_UPDATE:%d)", term == NULL ? "NULL" : term, total_update);
 	}
 	else
 	{
-		log_verbose("~skip to update/add the document (ID:%s, SKIP_LEFT:%d)",
+		log_info("~skip to update/add the document (ID:%s, SKIP_LEFT:%d)",
 			term == NULL ? "NULL" : term, num_skip - total - 1);
 	}
 	__TRY_FETCH_END__
 
-doc_end:
+	doc_end :
 	if (buf != NULL) free(buf);
 	if (term != NULL) free(term);
 
@@ -709,6 +691,9 @@ int main(int argc, char *argv[])
 	multi = DEFAULT_SCWS_MULTI;
 	stemmer = Xapian::Stem(DEFAULT_STEMMER);
 
+	// open logger
+	log_open("stderr", "import", -1);
+
 	// parse the arguments
 	if ((prog_name = strrchr(argv[0], '/')) != NULL) prog_name++;
 	else prog_name = argv[0];
@@ -721,11 +706,11 @@ int main(int argc, char *argv[])
 				break;
 			case 'N': flag &= ~FLAG_TRANSACTION;
 				break;
-			case 'Q': flag |= FLAG_QUIET;
-				break;
 			case 'S': flag |= FLAG_CORRECTION;
 				break;
-			case 'V': flag |= FLAG_VERBOSE;
+			case 'Q': log_level(LOG_ERR);
+				break;
+			case 'V': log_level(LOG_INFO);
 				break;
 			case 'd': db_path = optarg;
 				break;
@@ -743,28 +728,26 @@ int main(int argc, char *argv[])
 					num_commit = DEFAULT_COMMIT_NUMBER;
 				break;
 			case 't':
-				if (strcasecmp(optarg, DEFAULT_STEMMER))
+				try
 				{
-					try
-					{
-						stemmer = Xapian::Stem(optarg);
-					}
-					catch (...)
-					{
-						fprintf(stderr, "ERROR: stemmer language isn't recognised (LANG:%s)\n", optarg);
-						goto main_end;
-					}
+					stemmer = Xapian::Stem(optarg);
+				}
+				catch (...)
+				{
+					log_error("invalid stemmer language (LANG:%s)", optarg);
+					goto main_end;
 				}
 				break;
 			case 's':
 			{
-				FILE *fp;
-				char buf[64], *ptr;
-
-				if ((fp = fopen(optarg, "r")) == NULL)
-					fprintf(stderr, "WARNING: stopwords file not found (FILE:%s)\n", optarg);
+				FILE *fp = fopen(optarg, "r");
+				if (fp == NULL)
+				{
+					log_notice("stopwords file not found (FILE:%s)", optarg);
+				}
 				else
 				{
+					char buf[64], *ptr;
 					buf[sizeof(buf) - 1] = '\0';
 					while (fgets(buf, sizeof(buf) - 1, fp) != NULL)
 					{
@@ -777,6 +760,7 @@ int main(int argc, char *argv[])
 						if (*ptr == '\0') continue;
 						while (*ptr == ' ' || *ptr == '\t') ptr++;
 						stopper.add(ptr);
+						log_info("stopword added (WORD:%s)", ptr);
 					}
 					fclose(fp);
 				}
@@ -796,13 +780,12 @@ int main(int argc, char *argv[])
 				break;
 			case '?':
 			default:
-				fprintf(stderr, "Use `-h' option to get more help messages\n");
+				log_error("Use `-h' option to get more help messages");
 				goto main_end;
 		}
 	}
 
 	// other arguments [db] [file]
-	if (flag & FLAG_QUIET) flag &= ~FLAG_VERBOSE;
 	argc -= optind;
 	if (argc > 0 && db_path == NULL)
 	{
@@ -815,27 +798,22 @@ int main(int argc, char *argv[])
 		argc--;
 	}
 
-	// open log to stderr
-	log_open("stderr", "import");
-
 	// check and open the database
 	if (db_path == NULL && !(flag & FLAG_HEADER_ONLY))
 	{
-		fprintf(stderr, "ERROR: you should specify the database using `-d' option\n");
+		log_error("you should specify the database using `-d' option");
 		goto main_end;
 	}
 	// check the input file(failed? redirect to <STDIN>
 	if (fpath == NULL)
 	{
-		fprintf(stderr, "WARNING: read from STDIN, you may specify the input file using `-f' option\n");
+		log_notice("read from STDIN, you may specify the input file using `-f' option");
 		fd = STDIN_FILENO;
 		flag |= FLAG_STDIN;
 	}
 	else if ((fd = open(fpath, O_RDWR)) < 0 || !FLOCK_WR_NB(fd))
 	{
-		log_force("failed to open/lock the input file (FILE:%s, ERROR:%s)",
-			fpath, strerror(errno));
-
+		log_error("failed to open/lock the input file (FILE:%s, ERROR:%s)", fpath, strerror(errno));
 		flag |= FLAG_TERMINATED;
 		goto main_end;
 	}
@@ -854,15 +832,15 @@ int main(int argc, char *argv[])
 	// read header
 	if (header_read(&hdr) < 0)
 	{
+		log_error("faiiled to read import file header");
 		flag |= FLAG_TERMINATED;
-		log_force("unable to read import file header");
 		goto main_end;
 	}
 
 	// just show file header
 	if (flag & FLAG_HEADER_ONLY)
 	{
-		printf("Import header of `%s': ", fpath == NULL ? "<STDIN>" : fpath);
+		printf("Import file header of `%s': ", fpath == NULL ? "<STDIN>" : fpath);
 		if (flag & FLAG_STDIN)
 			printf("** Not supported **\n");
 		else if (flag & FLAG_HEADER)
@@ -881,7 +859,7 @@ int main(int argc, char *argv[])
 		if (!fstat(fd, &st) && st.st_size > hdr.eff_size)
 		{
 			ftruncate(fd, hdr.eff_size);
-			log_normal("reset file size (ST_SIZE:%lld,EFF_SIZE:%lld)", st.st_size, hdr.eff_size);
+			log_notice("reset file size (ST_SIZE:%lld, EFF_SIZE:%lld)", st.st_size, hdr.eff_size);
 		}
 	}
 
@@ -909,54 +887,60 @@ int main(int argc, char *argv[])
 	}
 	catch (const Xapian::Error &e)
 	{
-		log_force("Xapian ERROR: %s", e.get_msg().data());
+		log_error("xapian exception (ERROR:%s)", e.get_msg().data());
 		flag |= FLAG_TERMINATED;
 		goto main_end;
 	}
 	catch (...)
 	{
-		log_force("ERROR: failed to initalize the database and indexer object (DB:%s)", db_path);
+		log_error("failed to initialize the database and indexer (DB:%s)", db_path);
 		flag |= FLAG_TERMINATED;
 		goto main_end;
 	}
 
 	// try to open the archive database
+	syn_db = &database;
 	archive_delete = 0;
 	try
 	{
 		char *ptr = strrchr(db_path, '/');
-		if (ptr == NULL && !strcasecmp(db_path, DEFAULT_DB_NAME))
-		{
-			flag |= FLAG_DEFAULT_DB;
-			archive = Xapian::WritableDatabase(DEFAULT_DB_NAME "_a", Xapian::DB_OPEN);
-			flag |= FLAG_ARCHIVE;
-		}
-		else if (ptr != NULL && !strcasecmp(ptr + 1, DEFAULT_DB_NAME))
+		if (ptr == NULL)
+			ptr = db_path;
+		else
+			ptr++;
+		if (!strcasecmp(ptr, DEFAULT_DB_NAME))
 		{
 			char dba_path[256];
 
 			flag |= FLAG_DEFAULT_DB;
-			snprintf(dba_path, sizeof(dba_path), "%.*s/" DEFAULT_DB_NAME "_a", (int) (ptr - db_path), db_path);
+			snprintf(dba_path, sizeof(dba_path), "%.*s" DEFAULT_DB_NAME "_a", (int) (ptr - db_path), db_path);
+
+			log_info("try to open archive database (DB_A:%s)", dba_path);
 			archive = Xapian::WritableDatabase(dba_path, Xapian::DB_OPEN);
+			syn_db = &archive;
 			flag |= FLAG_ARCHIVE;
+			log_info("open archive database sucessfully");
 		}
 	}
 	catch (...)
 	{
+		log_info("failed to open archive database");
 	}
 
 	// read the file & count them
 	t_begin = time(NULL);
-	log_normal("begin importing (NUM_BATCH:%d, SIZE_LIMIT:%dMB, DB_TOTAL:%d, NUM_SKIP:%d)",
-		num_commit, size_limit >> 20, database.get_doccount(), num_skip);
+	log_notice("begin to import (NUM_BATCH:%d, NUM_LIMIT:%d, SIZE_LIMIT:%dMB, TOTAL:%d, SKIP:%d)",
+		num_commit, num_limit, size_limit >> 20, database.get_doccount(), num_skip);
 
-	if (flag & FLAG_TRANSACTION) database.begin_transaction();
+	if (flag & FLAG_TRANSACTION)
+		database.begin_transaction();
 	while (!(flag & FLAG_TERMINATED) && ((argc = doc_fetch()) != FETCH_ABORT))
 	{
-		if (argc != FETCH_DIRTY) total++;
+		if (argc != FETCH_DIRTY)
+			total++;
 		if (num_limit > 0 && (total - num_skip) == num_limit)
 		{
-			log_normal("number of imported documents has reached the limitation (LIMIT:%d)", num_limit);
+			log_notice("number of import documents reach the upper limit (LIMIT:%d)", num_limit);
 			break;
 		}
 		else if (total > 0 && ((total % num_commit) == 0 || bytes_read > size_limit))
@@ -965,10 +949,9 @@ int main(int argc, char *argv[])
 				batch_committed(1);
 
 			argc = time(NULL) - t_begin;
-			log_normal("%s progress (PROC_TOTAL:%d, NUM_BATCH:%d, SIZE_READ:%.2fMB, TIME:%d'%02d\")",
+			log_notice("%s progress (PROC_TOTAL:%d, NUM_BATCH:%d, SIZE_READ:%.2fMB, TIME:%d'%02d\")",
 				total > num_skip ? "committed" : "skipped", total, num_commit,
 				(double) bytes_read / 1048576, argc / 60, argc % 60);
-
 			bytes_read = 0;
 		}
 	}
@@ -978,8 +961,8 @@ int main(int argc, char *argv[])
 
 	// finished report
 	argc = time(NULL) - t_begin;
-	log_force("%s (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
-		(flag & FLAG_TERMINATED ? "terminated" : "finished"),
+	log_alert("%s (ADD:%d, UPDATE:%d, DELETE:%d[%d], SYNONYMS:%d, PROC_TOTAL:%d, DB_TOTAL:%d, TIME:%d'%02d\")",
+		(flag & FLAG_TERMINATED ? "aborted" : "finished"),
 		total_add, total_update, total_delete, archive_delete, total_synonyms, total,
 		database.get_doccount(), argc / 60, argc % 60);
 
@@ -988,7 +971,7 @@ int main(int argc, char *argv[])
 	{
 		char *ptr = strrchr(db_path, '/');
 
-		log_force("compacting current database into archive (DB:%s, TOTAL:%d)", db_path, database.get_doccount());
+		log_alert("compact the database into archive (DB:%s, TOTAL:%d)", db_path, database.get_doccount());
 		if (ptr != NULL)
 		{
 			ptr[1] = '\0';
@@ -1001,25 +984,34 @@ int main(int argc, char *argv[])
 			archive.close();
 
 			// 1. merge: db + db_a -> db_c
+			log_info("rm -rf db_c");
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_c");
+			log_info("xapian-compact db + db_a = db_c");
 			system(XAPIAN_DIR "/bin/xapian-compact " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME "_c");
 			// 2. remove: db_o db
+			log_info("rm -rf db_o db");
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_o " DEFAULT_DB_NAME);
 			// 3. rename: db_a -> db_o, db_c -> db_a
+			log_info("mv -f db_a db_o");
 			system("/bin/mv -f " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME "_o");
+			log_info("mv -f db_c db_a");
 			system("/bin/mv -f " DEFAULT_DB_NAME "_c " DEFAULT_DB_NAME "_a");
 		}
 		else
 		{
 			// 1. remove: db_a (clean)
+			log_info("rm -rf db_a");
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_a");
 			// 2. rename: db -> db_a
+			log_info("mv -f db db_a");
 			system("/bin/mv -f " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_a");
 		}
 
 		// re-create empty db
+		log_info("re-create the empty default db");
 		database = Xapian::WritableDatabase(DEFAULT_DB_NAME, Xapian::DB_CREATE_OR_OPEN);
 	}
+	database.close();
 
 main_end:
 	if (fd >= 0)

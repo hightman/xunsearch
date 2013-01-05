@@ -18,15 +18,15 @@
 #    define	TP_DEBUG
 #endif
 #ifdef TP_DEBUG
-#    define debug_printf(fmt, ...)	printf("[%s:%d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#    define debug_printf(fmt, ...)	printf("[%s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #    define	debug_printf(...)		(void)0
 #endif
 
 #ifdef DEBUG
-#	undef	debug_printf
-#	include "log.h"
-#	define	debug_printf	log_debug
+#    undef	debug_printf
+#    include "log.h"
+#    define	debug_printf	log_debug
 #endif	/* DEBUG */
 
 /**
@@ -56,9 +56,10 @@ static struct tpool_task *tpool_get_task(tpool_t *tp)
 static void tpool_thread_cleanup(void *arg)
 {
 	struct tpool_thread *me = (struct tpool_thread *) arg;
+	tpool_t *tp = me->tp;
 
-	debug_printf("Thread[%d] is forced to cancel, running the cleanup function (TID:%p, TOTAL:%d)\n",
-		me->index, me->tid, me->tp->cur_total - 1);
+	debug_printf("thread[%d] is canceled, run cleanup function (TID:%p, TOTAL:%d)",
+		me->index, me->tid, tp->cur_total - 1);
 
 	// call cancel handler of task
 	if (me->task->cancel_func != NULL)
@@ -66,12 +67,13 @@ static void tpool_thread_cleanup(void *arg)
 
 	// free task
 	free(me->task);
-
-	// BUG: need to add TP_LOCK/TP_UNLOCK?
 	me->status = TPOOL_THREAD_NONE;
-	me->tp->cur_total--;
+
+	TP_LOCK();
+	tp->cur_total--;
 	if (me->tp->cur_total == 0)
-		pthread_cond_signal(&me->tp->cond);
+		pthread_cond_signal(&tp->cond);
+	TP_UNLOCK();
 }
 
 /**
@@ -117,7 +119,7 @@ static void *tpool_thread_start(void *arg)
 	{
 		// waiting for task
 		TP_LOCK();
-		if (me->calls != 0) tp->cur_spare++;
+		tp->cur_spare++;
 		me->status ^= TPOOL_THREAD_BUSY;
 		while ((me->task = tpool_get_task(tp)) == NULL && !TP_CANCELED())
 			TP_WAIT();
@@ -133,14 +135,14 @@ static void *tpool_thread_start(void *arg)
 			tp->cur_total--;
 			TP_UNLOCK();
 
-			debug_printf("Thread[%d] got an empty task(NULL), forced to cancel (TID:%p, CALLS:%d, TOTAL:%d)\n",
+			debug_printf("thread[%d] get empty task(NULL), forced to cancel (TID:%p, CALLS:%d, TOTAL:%d)",
 				me->index, me->tid, me->calls, tp->cur_total);
 
 			break;
 		}
 
 		// task accepted
-		debug_printf("Thread[%d] receives a new task (TID:%p, FUNC:%p, ARG:%p)\n",
+		debug_printf("thread[%d] accept new task (TID:%p, FUNC:%p, ARG:%p)",
 			me->index, me->tid, me->task->task_func, me->task->arg);
 
 		time(&me->task->begin);
@@ -155,10 +157,8 @@ static void *tpool_thread_start(void *arg)
 		pthread_cleanup_pop(0);
 
 		me->status ^= TPOOL_THREAD_TASK;
-		me->task->begin = 0;
 		free(me->task);
-		debug_printf("Thread[%d] finished the task (TID:%p, CALLS:%d)\n",
-			me->index, me->tid, me->calls);
+		debug_printf("thread[%d] finished the task (TID:%p, CALLS:%d)", me->index, me->tid, me->calls);
 
 		// check the number of spare threads
 		if (tp->cur_spare >= tp->max_spare)
@@ -168,9 +168,8 @@ static void *tpool_thread_start(void *arg)
 			tp->cur_total--;
 			TP_UNLOCK();
 
-			debug_printf("Thread[%d] suicided due to too many spare threads (TID:%p, SPARE:%d, TOTAL:%d)\n",
+			debug_printf("thread[%d] suicided due to too many spare threads (TID:%p, SPARE:%d, TOTAL:%d)",
 				me->index, me->tid, tp->cur_spare, tp->cur_total);
-
 			break;
 		}
 	}
@@ -211,16 +210,15 @@ static int tpool_add_thread(tpool_t *tp, int num)
 
 			j++;
 			num--;
-			debug_printf("Thread[%d] was created (TID:%p)\n", i, tp->threads[i].tid);
+			debug_printf("thread[%d] is created (TID:%p)", i, tp->threads[i].tid);
 		}
 
 		// save new number
 		TP_LOCK();
 		tp->cur_total += j;
-		tp->cur_spare += j;
 		TP_UNLOCK();
 
-		debug_printf("Thread pool number status (TOTAL:%d, SPARE:%d)\n", tp->cur_total, tp->cur_spare);
+		debug_printf("thread pool status (TOTAL:%d, SPARE:%d)", tp->cur_total, tp->cur_spare);
 		return j;
 	}
 
@@ -279,7 +277,7 @@ tpool_t *tpool_init(tpool_t *tp, int max_total, int min_spare, int max_spare)
 	// create the first spare threads
 	tpool_add_thread(tp, tp->max_spare);
 
-	debug_printf("Thread pool initlized (TOTAL:%d, SPARE:%d, MAX:%d)\n",
+	debug_printf("thread pool initialized (TOTAL:%d, SPARE:%d, MAX:%d)",
 		tp->cur_total, tp->cur_spare, tp->max_total);
 	return tp;
 }
@@ -292,18 +290,18 @@ void tpool_do_cancel(tpool_t *tp, int wait)
 	if (!tp || !(tp->status & TPOOL_STATUS_INITED))
 		return;
 
-	debug_printf("Send cancel signal to all threads\n");
+	debug_printf("send cancel signal to all threads");
 	tp->status |= TPOOL_STATUS_CANCELED;
 	pthread_cond_broadcast(&tp->cond);
 
 	if (wait == 1)
 	{
-		debug_printf("Waiting for all threads to end...\n");
+		debug_printf("waiting for the end of all threads ...");
 		TP_LOCK();
 		while (tp->cur_total > 0)
 			TP_WAIT();
 		TP_UNLOCK();
-		debug_printf("OK, all work threads exited\n");
+		debug_printf("ok, all threads exited");
 	}
 }
 
@@ -319,25 +317,27 @@ void tpool_destroy(tpool_t *tp)
 	// forced to cancel all actived threads
 	if (tp->cur_total > 0)
 	{
-		int i;
+		int i = 0;
+		struct tpool_thread *t;
 
 		// force to cancel threads that is executing task function
-		for (i = 0; i < tp->max_total; i++)
+		while (i < tp->max_total)
 		{
-			if (tp->threads[i].status & TPOOL_THREAD_TASK)
+			t = &tp->threads[i++];
+			if (t->status & TPOOL_THREAD_TASK)
 			{
 				// NOTE: If it is me, I should wait other threads, so can not die first.
 				// But forced to call cleanup is required.
-				if (pthread_equal(tp->threads[i].tid, pthread_self()))
+				if (pthread_equal(t->tid, pthread_self()))
 				{
-					tpool_thread_cleanup((void *) &tp->threads[i]);
-					debug_printf("Force to run cleanup function for thread[%d], because it is me (TID:%p)\n",
-						i, tp->threads[i].tid);
-					continue;
+					tpool_thread_cleanup((void *) t);
+					debug_printf("run cleanup for thread[%d] that is myself (TID:%p)", t->index, t->tid);
 				}
-				pthread_cancel(tp->threads[i].tid);
-				debug_printf("Force to cancel thread[%d], because it is executing task (TID:%p)\n",
-					i, tp->threads[i].tid);
+				else
+				{
+					pthread_cancel(t->tid);
+					debug_printf("cancel thread[%d] that is executing task (TID:%p)", t->index, t->tid);
+				}
 			}
 		}
 
@@ -362,7 +362,10 @@ void tpool_exec(tpool_t *tp, tpool_func_t func, tpool_func_t cancel, void *arg)
 
 	task = (struct tpool_task *) malloc(sizeof(struct tpool_task));
 	if (task == NULL)
+	{
+		debug_printf("failed to allocate memory for new task (SIZE:%d)", (int) sizeof(struct tpool_task));
 		return;
+	}
 
 	memset(task, 0, sizeof(struct tpool_task));
 	task->task_func = func;
@@ -382,12 +385,12 @@ void tpool_exec(tpool_t *tp, tpool_func_t func, tpool_func_t cancel, void *arg)
 		tail->next = task;
 	}
 	TP_UNLOCK();
-	debug_printf("Add new task into thread pool (SPARE:%d, TOTAL:%d)\n", tp->cur_spare, tp->cur_total);
+	debug_printf("add new task to thread pool (SPARE:%d, TOTAL:%d)", tp->cur_spare, tp->cur_total);
 
 	// check spare threads
 	if (tp->cur_spare == 0)
 	{
-		debug_printf("Try to add new threads (NUM:%d)\n", tp->min_spare);
+		debug_printf("try to add some new threads (NUM:%d)", tp->min_spare);
 		tpool_add_thread(tp, tp->min_spare);
 	}
 
@@ -404,7 +407,6 @@ int tpool_cancel_timeout(tpool_t *tp, int sec)
 	int i, cost, num = 0;
 	time_t now;
 
-	// BUG: need to add lock?
 	time(&now);
 	for (i = 0; i < tp->max_total; i++)
 	{
@@ -412,9 +414,10 @@ int tpool_cancel_timeout(tpool_t *tp, int sec)
 			continue;
 
 		cost = now - tp->threads[i].task->begin;
-		debug_printf("Thread[%d] current task has been running for %d seconds\n", i, cost);
+		debug_printf("thread[%d] current task has been running for [%d] seconds", i, cost);
 		if (cost > sec)
 		{
+			debug_printf("cancel thread[%d] because it timed out", i);
 			pthread_cancel(tp->threads[i].tid);
 			num++;
 		}
@@ -443,17 +446,17 @@ char *tpool_draw(tpool_t *tp)
 		return NULL;
 
 	// print struct
-	len = sprintf(buf, "Thread Pool[%p] { status:'%c%c%c', total:%d, spare:%d, max:%d }\n", tp,
+	len = sprintf(buf, "TPOOL[%p] { status:'%c%c%c', total:%d, spare:%d, max:%d }\n", tp,
 		tp->status & TPOOL_STATUS_ONHEAP ? 'H' : '-',
 		tp->status & TPOOL_STATUS_INITED ? 'I' : '-',
 		tp->status & TPOOL_STATUS_CANCELED ? 'C' : '-',
 		tp->cur_total, tp->cur_spare, tp->max_total);
 
 	// print task list
-	len += sprintf(buf + len, " = TODO Task queue: %s\n", tp->task_list == NULL ? "NULL" : "");
+	len += sprintf(buf + len, " = TODO task queue: %s\n", tp->task_list == NULL ? "NULL" : "");
 	for (i = 0, tsk = tp->task_list; tsk != NULL; tsk = tsk->next, i++)
 	{
-		len += sprintf(buf + len, " = Task[%d] {func:%p, cancel:%p, arg:%p}\n",
+		len += sprintf(buf + len, " = task[%d] {func:%p, cancel:%p, arg:%p}\n",
 			i, tsk->task_func, tsk->cancel_func, tsk->arg);
 	}
 
@@ -462,14 +465,14 @@ char *tpool_draw(tpool_t *tp)
 	for (i = 0; i < tp->max_total; i++)
 	{
 		t = &tp->threads[i];
-		len += sprintf(buf + len, " - Thread[%d] {status:'%c%c%c', calls:%d, tid:%p, task:{", i,
+		len += sprintf(buf + len, " - thread[%d] {status:'%c%c%c', calls:%d, tid:%p, task:{", i,
 			t->status & TPOOL_THREAD_ACTIVED ? 'A' : '-',
 			t->status & TPOOL_THREAD_BUSY ? 'B' : '-',
 			t->status & TPOOL_THREAD_TASK ? 'T' : '-', t->calls,
-			t->status & TPOOL_THREAD_ACTIVED ? (void *)t->tid : NULL);
+			t->status & TPOOL_THREAD_ACTIVED ? (void *) t->tid : NULL);
 		if (t->status & TPOOL_THREAD_TASK)
 		{
-			len += sprintf(buf + len, "func:%p, cancel:%p, arg:%p, time_cost:%d",
+			len += sprintf(buf + len, "func:%p, cancel:%p, arg:%p, timed:%d",
 				t->task->task_func, t->task->cancel_func, t->task->arg, (int) (now - t->task->begin));
 		}
 		len += sprintf(buf + len, "}}\n");
@@ -517,6 +520,10 @@ int main()
 	tpool_t *t;
 	char buf[256], *ptr;
 	int len, i = 0;
+
+#    ifdef DEBUG
+	log_open("stderr", "tp_test", -1);
+#    endif
 
 	t = tpool_init(NULL, 3, 2, 2);
 
