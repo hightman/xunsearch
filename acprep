@@ -7,6 +7,14 @@
 # or you may end up with old versions of that.
 #
 
+# libtoolize
+LIBTOOLIZE=libtoolize
+SYSNAME=`uname`
+if [ "x$SYSNAME" = "xDarwin" ] ; then
+	LIBTOOLIZE=glibtoolize
+fi
+
+# clean
 if test "x-$1" = "x---clean" ; then
 	echo "Cleaning ..."
 	if test -f Makefile ; then
@@ -21,6 +29,7 @@ if test "x-$1" = "x---clean" ; then
 	exit
 fi
 
+# init
 ln -sf README.md README
 for cmd in aclocal autoheader \
 		"automake --add-missing --copy --force" autoconf ; do
