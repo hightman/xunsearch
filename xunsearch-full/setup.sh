@@ -103,7 +103,10 @@ setup_abort()
 # check & install scws
 old_version=
 echo -n "Checking scws ... "
-if test -f $prefix/include/scws/scws_version.h ; then
+if test -f $prefix/include/scws/version.h ; then
+  old_version=`cat $prefix/include/scws/version.h | grep VERSION | cut -d\" -f2`
+  echo $old_version
+elif test -f $prefix/include/scws/scws_version.h ; then
   old_version=`cat $prefix/include/scws/scws_version.h | grep VERSION | cut -d\" -f2`
   echo $old_version
 else
