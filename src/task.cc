@@ -34,6 +34,12 @@
 #endif	/* DEBUG */
 
 /**
+ * common scws
+ */
+#include <scws/scws.h>
+static scws_t _scws;
+
+/**
  * Extern global variables
  */
 extern Xapian::Stem stemmer;
@@ -118,6 +124,7 @@ struct cache_result
 {
 	unsigned int total; // document total on caching
 	unsigned int count; // matched count
+	unsigned int lastid; // last docid
 	unsigned int facets_len; // data length of facets result
 	struct result_doc doc[MAX_SEARCH_RESULT];
 };
@@ -126,6 +133,7 @@ struct cache_count
 {
 	unsigned int total; // document total on caching
 	unsigned int count; // matched count
+	unsigned int lastid; // last docid
 };
 
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
@@ -700,7 +708,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 			if (cc != NULL)
 			{
 				cache_flag |= CACHE_FOUND;
-				if (cc->total != total)
+				if (cc->total != total || cc->lastid != zarg->db->get_lastdocid())
 				{
 					log_debug_conn("search count cache expired (COUNT:%d, TOTAL:%u<>%u)",
 						count, cc->total, total);
@@ -740,6 +748,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 
 					cs.total = total;
 					cs.count = count;
+					cs.lastid = zarg->db->get_lastdocid();
 					C_LOCK_CACHE();
 					mc_put(mc, md5, &cs, sizeof(cs));
 					C_UNLOCK_CACHE();
@@ -870,7 +879,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		if (cr != NULL)
 		{
 			cache_flag |= CACHE_FOUND;
-			if (cr->total != total)
+			if (cr->total != total || cr->lastid != zarg->db->get_lastdocid())
 			{
 				log_debug_conn("search result cache expired (COUNT:%d, TOTAL:%u<>%u)",
 					cr->count, cr->total, total);
@@ -1007,6 +1016,7 @@ res_err1:
 		{
 			cr->total = total;
 			cr->count = count;
+			cr->lastid = zarg->db->get_lastdocid();
 			C_LOCK_CACHE();
 			mc_put(mc, md5, cr, sizeof(struct cache_result) +cr->facets_len);
 			C_UNLOCK_CACHE();
@@ -1765,9 +1775,6 @@ struct scws_response
 /**
  * Load common scws
  */
-#include <scws/scws.h>
-static scws_t _scws;
-
 static inline char *fetch_scws_xattr(XS_CMD *cmd)
 {
 	char *xattr = NULL;
@@ -1789,7 +1796,7 @@ void task_load_scws()
 	scws_set_rule(_scws, SCWS_ETCDIR "/rules.utf8.ini");
 	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
 	scws_add_dict(_scws, SCWS_ETCDIR "/dict_user.txt", SCWS_XDICT_TXT);
-	scws_set_multi(_scws, 3 << 12);
+	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
 }
 
 /**
