@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <poll.h>
 #include <xapian.h>
+#include <pthread.h>
 
 #include "log.h"
 #include "conn.h"
@@ -59,6 +60,19 @@ static int query_ops[] = {
 	Xapian::Query::OP_FILTER,
 	0
 };
+
+/**
+ * Local cached query parser object
+ */
+struct cache_qp
+{
+	bool in_use;
+	Xapian::QueryParser *qp;
+	struct cache_qp *next;
+};
+
+static struct cache_qp *qp_base = NULL;
+static pthread_mutex_t qp_mutex;
 
 /**
  * Data structure for zcmd_exec
@@ -139,6 +153,59 @@ struct cache_count
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
 #    define	C_UNLOCK_CACHE()	G_UNLOCK_CACHE(); conn->flag ^= CONN_FLAG_CACHE_LOCKED
 #endif	/* HAVE_MEMORY_CACHE */
+
+/**
+ * Get a queryparser object from cached chain
+ */
+static Xapian::QueryParser *get_queryparser()
+{
+	static struct cache_qp *head = qp_base;
+
+	pthread_mutex_lock(&qp_mutex);
+	while (head != NULL)
+	{
+		if (head->in_use == false)
+			break;
+		head = head->next;
+	}
+	if (head == NULL) /* alloc new one */
+	{
+		head = (struct cache_qp *) malloc(sizeof(struct cache_qp));
+		if (head == NULL)
+			throw new Xapian::InternalError("not enough memory to create cache_qp");
+		head->qp = new Xapian::QueryParser();
+		head->next = qp_base;
+		qp_base = head;
+	}
+	head->in_use = true;
+	pthread_mutex_unlock(&qp_mutex);
+
+	head->qp->clear();
+	return head->qp;
+}
+
+/**
+ * Free q queryparser object to chain
+ */
+static void free_queryparser(Xapian::QueryParser *qp)
+{
+	static struct cache_qp *head = qp_base;
+
+	pthread_mutex_lock(&qp_mutex);
+	while (head != NULL)
+	{
+		if (head->qp == qp)
+			break;
+		head = head->next;
+	}
+	if (head != NULL)
+		head->in_use = false;
+	else
+	{
+		DELETE_PTR(qp);
+	}
+	pthread_mutex_unlock(&qp_mutex);
+}
 
 /**
  * Cut longer string or convert serialise string into numeric
@@ -377,7 +444,7 @@ static inline void zarg_cleanup(struct search_zarg *zarg)
 		debug_free(oc);
 	}
 	DELETE_PTR(zarg->eq);
-	DELETE_PTR(zarg->qp);
+	free_queryparser(zarg->qp);
 	DELETE_PTR(zarg->qq);
 	DELETE_PTR(zarg->db);
 }
@@ -524,12 +591,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			}
 			if (cmd->arg1 == 1)
 			{
-				delete zarg->qp;
-				zarg->qp = new Xapian::QueryParser();
-				zarg->qp->load_scws(NULL, false, DEFAULT_SCWS_MULTI);
-				zarg->qp->set_stemmer(stemmer);
-				zarg->qp->set_stopper(&stopper);
-				zarg->qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+				zarg->qp->clear();
 				zarg->qp->set_database(*zarg->db);
 				zarg->parse_flag = 0;
 				memset(&zarg->cuts, 0, sizeof(zarg->cuts));
@@ -1799,6 +1861,8 @@ void task_load_scws()
 	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
 	scws_add_dict(_scws, SCWS_ETCDIR "/dict_user.txt", SCWS_XDICT_TXT);
 	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
+	// init qp_mutex
+	pthread_mutex_init(&qp_mutex, NULL);
 }
 
 /**
@@ -2129,14 +2193,19 @@ void task_exec(void *arg)
 	conn->zarg = &zarg;
 	try
 	{
+		scws_t s;
 		Xapian::Database *db;
 
 		zarg.qq = new Xapian::Query();
-		zarg.qp = new Xapian::QueryParser();
-		zarg.qp->load_scws(NULL, false, DEFAULT_SCWS_MULTI);
+		zarg.qp = get_queryparser();
 		zarg.qp->set_stemmer(stemmer);
 		zarg.qp->set_stopper(&stopper);
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
+		// scws object
+		s = scws_fork(_scws);
+		scws_set_ignore(s, SCWS_NA);
+		scws_set_duality(s, SCWS_YEA);
+		zarg.qp->set_scws(s);
 
 		// load default database, try to init queryparser, enquire
 		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT | CONN_FLAG_CH_COLLAPSE);
