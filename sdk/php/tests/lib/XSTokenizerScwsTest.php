@@ -89,7 +89,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 	public function testGetVersion()
 	{
 		$version = $this->object->getVersion();
-		$this->assertRegExp('/^1\.[0-9]+\.[0-9]+$/', $version);
+		$this->assertRegExp('/^1\.[0-9]+\.[0-9]+(?:\-dev)?$/', $version);
 	}
 
 	public function testGetResult()
