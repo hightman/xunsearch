@@ -170,10 +170,11 @@ static Xapian::QueryParser *get_queryparser()
 	}
 	if (head == NULL) /* alloc new one */
 	{
-		head = (struct cache_qp *) malloc(sizeof(struct cache_qp));
+		debug_malloc(head, sizeof(struct cache_qp), struct cache_qp);
 		if (head == NULL)
 			throw new Xapian::InternalError("not enough memory to create cache_qp");
 		head->qp = new Xapian::QueryParser();
+		log_debug("new (Xapian::QueryParser *) %p", head->qp);
 		head->next = qp_base;
 		qp_base = head;
 	}
@@ -1851,20 +1852,6 @@ static inline char *fetch_scws_xattr(XS_CMD *cmd)
 	return xattr;
 }
 
-void task_load_scws()
-{
-	_scws = scws_new();
-	scws_set_charset(_scws, "utf8");
-	scws_set_ignore(_scws, SCWS_NA);
-	scws_set_duality(_scws, SCWS_YEA);
-	scws_set_rule(_scws, SCWS_ETCDIR "/rules.utf8.ini");
-	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
-	scws_add_dict(_scws, SCWS_ETCDIR "/" CUSTOM_DICT_FILE, SCWS_XDICT_TXT);
-	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
-	// init qp_mutex
-	pthread_mutex_init(&qp_mutex, NULL);
-}
-
 /**
  * scws set options
  */
@@ -2292,3 +2279,44 @@ task_end:
 		conn_server_push_back(conn);
 	}
 }
+
+/**
+ * Init the task env
+ */
+void task_init()
+{
+	// load scws base
+	_scws = scws_new();
+	scws_set_charset(_scws, "utf8");
+	scws_set_ignore(_scws, SCWS_NA);
+	scws_set_duality(_scws, SCWS_YEA);
+	scws_set_rule(_scws, SCWS_ETCDIR "/rules.utf8.ini");
+	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
+	scws_add_dict(_scws, SCWS_ETCDIR "/" CUSTOM_DICT_FILE, SCWS_XDICT_TXT);
+	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
+	// init qp_mutex
+	pthread_mutex_init(&qp_mutex, NULL);
+}
+
+/**
+ * Deinit the task env
+ */
+void task_deinit()
+{
+	// free cached qp
+	static struct cache_qp *head;
+	pthread_mutex_lock(&qp_mutex);
+	while ((head = qp_base) != NULL)
+	{
+		qp_base = head->next;
+		log_debug("delete (Xapian::QueryParser *) %p", head->qp);
+		DELETE_PTR(head->qp);
+		debug_free(head);
+	}
+	pthread_mutex_unlock(&qp_mutex);
+
+	// unload scws base
+	scws_free(_scws);
+	_scws = NULL;
+}
+

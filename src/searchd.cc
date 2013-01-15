@@ -305,6 +305,10 @@ static inline void main_cleanup()
 		worker_cleanup();
 	}
 
+	// deinit task env
+	log_debug("deinit task env");
+	task_deinit();
+
 	// others
 	log_debug("unload the pinyin dict");
 	py_dict_unload();
@@ -645,8 +649,8 @@ int main(int argc, char *argv[])
 	py_dict_load("etc/py.xdb");
 
 	// init the default scws
-	log_debug("load task scws");
-	task_load_scws();
+	log_debug("init task env");
+	task_init();
 
 	// init the memory cache
 #ifdef HAVE_MEMORY_CACHE

@@ -26,7 +26,8 @@
 
 void task_cancel(void *arg); // called on canceling task
 void task_exec(void *arg); // called on executing task
-void task_load_scws();	// load lib scws
+void task_init();	// init task env (worker only)
+void task_deinit();	// deinit task env (worker only)
 
 #endif	/* __XS_TASK_20110703_H__ */
 
