@@ -409,6 +409,35 @@ void signal_reload(int sig)
 #endif
 
 /**
+ * Become worker
+ */
+static void become_worker(int idx, sigset_t *sigmask)
+{
+	// child worker
+	char ident[32];
+
+	usleep(5000);
+	sprintf(ident, "worker%d", idx);
+	log_ident(ident);
+	setproctitle("worker[%d]", idx);
+
+	// worker, restore signal mask
+	sigprocmask(SIG_SETMASK, sigmask, NULL);
+	main_flag ^= FLAG_MASTER;
+
+	// TODO: release more unused resources
+	free(worker_pids);
+
+	// start the worker
+	log_alert("worker server start");
+	worker_start();
+
+	// end the worker
+	main_cleanup();
+	exit(0);
+}
+
+/**
  * Spawning worker process
  * @param idx
  * @param sigmask
@@ -424,27 +453,7 @@ static void spawn_worker(int idx, sigset_t *sigmask)
 	else if (pid == 0)
 	{
 		// child worker
-		char ident[32];
-
-		usleep(5000);
-		sprintf(ident, "worker%d", idx);
-		log_ident(ident);
-		setproctitle("worker[%d]", idx);
-
-		// worker, restore signal mask
-		sigprocmask(SIG_SETMASK, sigmask, NULL);
-		main_flag ^= FLAG_MASTER;
-
-		// TODO: release more unused resources
-		free(worker_pids);
-
-		// start the worker
-		log_alert("worker server start");
-		worker_start();
-
-		// end the worker
-		main_cleanup();
-		exit(0);
+		become_worker(idx, sigmask);
 	}
 	else
 	{
@@ -664,6 +673,13 @@ int main(int argc, char *argv[])
 	// spawn workers (first to block all signal)
 	sigfillset(&tmpmask);
 	sigprocmask(SIG_BLOCK, &tmpmask, &oldmask);
+
+	// special foreground mode
+	if (main_flag & FLAG_FOREGROUND)
+	{
+		log_alert("works as foregound worker mode");
+		become_worker(1, &oldmask);
+	}
 
 	// spawn the childs
 	for (cc = 1; cc <= worker_num; cc++)
