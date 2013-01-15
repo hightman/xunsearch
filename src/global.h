@@ -12,6 +12,7 @@
 #define	DEFAULT_TEMP_DIR	"tmp/"
 #define	DEFAULT_DATA_DIR	"data/"
 #define	SEARCH_LOG_FILE		"search.log"
+#define	CUSTOM_DICT_FILE	"dict_user.txt"
 #define	SEARCH_LOG_DB		"log_db"
 #define	DEFAULT_BACKLOG		63			// default backlog for listen()
 #define	MAX_EXPAND_LEN		15

@@ -102,6 +102,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	protected function setUp()
 	{
 		self::$xs->search->setCharset('UTF8')->setSort(null);
+		self::$xs->search->setTimeout(30);
 	}
 
 	/**
@@ -545,5 +546,25 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertNull($e1);
 		$this->assertInstanceOf('XSException', $e2);
 		$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
+	}
+	
+	public function testCustomDict()
+	{
+		$index = self::$xs->index;
+		$search = self::$xs->search;
+		
+		// without custom dict
+		$index->setCustomDict('');
+		$query = $search->reopen(true)->getQuery('去测测看');
+		$this->assertEquals('Xapian::Query((去:(pos=1) AND 测测:(pos=2) AND 看:(pos=3)))', $query);
+
+		// with custom dict
+		$dict = <<<EOF
+搜一下	1.0		1.1		vn
+测测看	2.0		2.1		vn
+EOF;
+		$index->setCustomDict($dict);
+		$query = $search->reopen(true)->getQuery('去测测看');
+		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
 	}
 }

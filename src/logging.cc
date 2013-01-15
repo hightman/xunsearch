@@ -22,10 +22,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <xapian.h>
-
-extern "C" {
-#include <scws/xdict.h>
-}
+#include <scws/scws.h>
 
 #include "flock.h"
 #include "log.h"
@@ -70,6 +67,33 @@ static Xapian::TermGenerator indexer;
 static Xapian::Stem stemmer;
 
 using std::string;
+
+/**
+ * Load user-defined scws object
+ */
+static scws_t load_user_scws(int multi, char *dbpath)
+{
+	scws_t s;
+	char *ptr, fpath[256];
+
+	if ((ptr = strrchr(dbpath, '/')) == NULL)
+		ptr = (char *) CUSTOM_DICT_FILE;
+	else
+	{
+		sprintf(fpath, "%.*s/" CUSTOM_DICT_FILE, (int) (ptr - dbpath), dbpath);
+		ptr = fpath;
+	}
+	s = scws_new();
+	scws_set_charset(s, "utf8");
+	scws_set_ignore(s, SCWS_NA);
+	scws_set_duality(s, SCWS_YEA);
+	scws_set_rule(s, SCWS_ETCDIR "/rules.utf8.ini");
+	scws_set_dict(s, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
+	scws_add_dict(s, SCWS_ETCDIR "/" CUSTOM_DICT_FILE, SCWS_XDICT_TXT);
+	scws_add_dict(s, ptr, SCWS_XDICT_TXT);
+	scws_set_multi(s, multi << 12);
+	return s;
+}
 
 /**
  * Show version information
@@ -723,7 +747,7 @@ child_begin:
 		indexer.set_flags(Xapian::TermGenerator::FLAG_SPELLING);
 
 		log_info("load scws dictionary into memory");
-		indexer.load_scws(NULL, true, DEFAULT_SCWS_MULTI);
+		indexer.set_scws(load_user_scws(DEFAULT_SCWS_MULTI, dbpath));
 	}
 	catch (const Xapian::Error &e)
 	{

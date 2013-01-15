@@ -773,7 +773,10 @@ static int remove_conn_wdb(XS_CONN *conn)
 		sprintf(dbpath, "%s/%s", conn->user->home, db->name);
 		if (stat(dbpath, &st))
 		{
-			log_notice_conn("failed to stat database (PATH:%s, ERROR:%s)", dbpath, strerror(errno));
+			if (errno != ENOENT)
+			{
+				log_notice_conn("failed to stat database (PATH:%s, ERROR:%s)", dbpath, strerror(errno));
+			}
 			return errno == ENOENT ? CONN_RES_OK(DB_CLEAN) : CONN_RES_ERR(STAT);
 		}
 		if (!S_ISDIR(st.st_mode))
@@ -1013,6 +1016,64 @@ static int index_zcmd_exec(XS_CONN *conn)
 				conn->wdb = NULL;
 				rc = CONN_RES_OK(PROJECT_DEL);
 			}
+			break;
+			// get/set user dict
+		case CMD_INDEX_USER_DICT:
+		{
+			int fd, size = 0;
+			char fpath[256];
+
+			snprintf(fpath, sizeof(fpath) - 1, "%s/" CUSTOM_DICT_FILE, conn->user->home);
+			if (cmd->arg1 == 0) // get dict
+			{
+				char *buf = NULL;
+				if ((fd = open(fpath, O_RDONLY)) >= 0)
+				{
+					struct stat st;
+					if (fstat(fd, &st) != 0)
+					{
+						log_error_conn("failed to get user dict size (ERROR:%s)", strerror(errno));
+					}
+					else
+					{
+						if ((buf = (char *) malloc(st.st_size)) == NULL)
+						{
+							log_error_conn("failed to alloc memory to save dict file");
+						}
+						else
+						{
+							if ((size = read(fd, buf, st.st_size)) <= 0)
+							{
+								if (size < 0)
+								{
+									log_error_conn("failed to read dict file (ERROR:%s)", strerror(errno));
+								}
+								free(buf);
+								buf = NULL;
+							}
+						}
+					}
+					close(fd);
+				}
+				rc = CONN_RES_OK3(INFO, buf, size);
+				if (buf != NULL)
+					free(buf);
+			}
+			else // set dict
+			{
+				if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+				{
+					log_error_conn("failed to open dict file (ERROR:%s)", strerror(errno));
+					rc = CONN_RES_ERR(OPEN_FILE);
+				}
+				else
+				{
+					write(fd, XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
+					close(fd);
+					rc = CONN_RES_OK(DICT_SAVED);
+				}
+			}
+		}
 			break;
 			// force to flush logging
 		case CMD_FLUSH_LOGGING:

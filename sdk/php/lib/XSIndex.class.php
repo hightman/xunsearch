@@ -429,6 +429,28 @@ class XSIndex extends XSServer
 	}
 
 	/**
+	 * 获取自定义词典内容
+	 * @return string 自定义词库内容
+	 * @throw XSException 出错时抛出异常
+	 */
+	public function getCustomDict()
+	{
+		$res = $this->execCommand(CMD_INDEX_USER_DICT, CMD_OK_INFO);
+		return $res->buf;
+	}
+
+	/**
+	 * 设置自定义词典内容
+	 * @param string $content 新的词典内容
+	 * @throw XSException 出错时抛出异常
+	 */
+	public function setCustomDict($content)
+	{
+		$cmd = array('cmd' => CMD_INDEX_USER_DICT, 'arg1' => 1, 'buf' => $content);
+		$this->execCommand($cmd, CMD_OK_DICT_SAVED);
+	}
+
+	/**
 	 * 关闭索引服务端连接
 	 */
 	public function close($ioerr = false)

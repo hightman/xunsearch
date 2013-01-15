@@ -11,7 +11,7 @@ noinst_HEADERS += mm.h pinyin.h pcntl.h task.h tpool.h user.h xs_cmd.h
 noinst_HEADERS += import.h indexd.h searchd.h
 
 xs_import_SOURCES = flock.c import.cc log.c pcntl.c
-xs_import_LDADD = -lxapian
+xs_import_LDADD = -lxapian -lscws
 
 xs_indexd_SOURCES = conn.c flock.c log.c pcntl.c user.c
 xs_indexd_SOURCES += indexd.c

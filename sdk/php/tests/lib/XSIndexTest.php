@@ -47,6 +47,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	protected function tearDown()
 	{
 		$this->object->clean();
+		$this->object->xs = null;
 		$this->object = null;
 	}
 
@@ -81,7 +82,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$doc = new XSDocument(self::$data, 'utf-8');
 		$this->object->add($doc);
 		$this->object->flushIndex();
-		sleep(2);
+		sleep(3);
 
 		// test result
 		$search->setCharset('utf-8');
@@ -146,7 +147,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->object->add($doc);
 		$this->object->add($doc);
 		$this->object->flushIndex();
-		sleep(2);
+		sleep(3);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
 
 		$this->object->beginRebuild();
@@ -187,7 +188,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		if ($buffer)
 			$index->closeBuffer();
 		$index->flushIndex();
-		sleep(2);
+		sleep(4);
 
 		$synonyms = $search->reopen(true)->getAllSynonyms(0, 0, true);
 		$this->assertArrayNotHasKey('FOO', $synonyms);
@@ -223,5 +224,18 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	public function testSynonyms2()
 	{
 		$this->testSynonyms(true);
+	}
+
+	public function testCustomDict()
+	{
+		$index = $this->object;
+		$index->setCustomDict('');
+		$this->assertEmpty($index->getCustomDict());
+		$dict = <<<EOF
+搜一下	1.0		1.1		vn
+测测看	2.0		2.1		vn
+EOF;
+		$index->setCustomDict($dict);
+		$this->assertEquals($dict, $index->getCustomDict());
 	}
 }

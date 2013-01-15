@@ -1855,11 +1855,11 @@ void task_load_scws()
 {
 	_scws = scws_new();
 	scws_set_charset(_scws, "utf8");
-	scws_set_ignore(_scws, SCWS_YEA);
+	scws_set_ignore(_scws, SCWS_NA);
 	scws_set_duality(_scws, SCWS_YEA);
 	scws_set_rule(_scws, SCWS_ETCDIR "/rules.utf8.ini");
 	scws_set_dict(_scws, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
-	scws_add_dict(_scws, SCWS_ETCDIR "/dict_user.txt", SCWS_XDICT_TXT);
+	scws_add_dict(_scws, SCWS_ETCDIR "/" CUSTOM_DICT_FILE, SCWS_XDICT_TXT);
 	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
 	// init qp_mutex
 	pthread_mutex_init(&qp_mutex, NULL);
@@ -2203,14 +2203,16 @@ void task_exec(void *arg)
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
 		// scws object
 		s = scws_fork(_scws);
-		scws_set_ignore(s, SCWS_NA);
-		scws_set_duality(s, SCWS_YEA);
+		// custom dict
 		zarg.qp->set_scws(s);
 
 		// load default database, try to init queryparser, enquire
 		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT | CONN_FLAG_CH_COLLAPSE);
 		try
 		{
+			char fpath[256];
+			sprintf(fpath, "%s/" CUSTOM_DICT_FILE, conn->user->home);
+			scws_add_dict(s, fpath, SCWS_XDICT_TXT);
 			db = fetch_conn_database(conn, DEFAULT_DB_NAME);
 			zarg.db = new Xapian::Database();
 			zarg.db->add_database(*db);

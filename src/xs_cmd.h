@@ -168,6 +168,13 @@ struct xs_import_hdr
 #define	CMD_INDEX_SYNONYMS	42
 
 /**
+ * Get/Set custom dict for a project
+ * arg1:flag(get/set)
+ * blen:dict_txt_len, buf:dict_txt_content
+ */
+#define	CMD_INDEX_USER_DICT	43
+
+/**
  * ----------------------------------------
  * Commands of search server: 64~95
  * All commands can get respond from server
@@ -634,6 +641,7 @@ struct xs_import_hdr
 #define	CMD_OK_DB_COMMITED		256
 #define	CMD_OK_DB_REBUILD		257
 #define	CMD_OK_LOG_FLUSHED		258
+#define	CMD_OK_DICT_SAVED		259
 
 // for searchd
 // Each record per line, split by '\t'

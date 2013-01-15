@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/01/05 16:51 */
+/* Automatically generated at 2013/01/14 17:50 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -19,6 +19,7 @@ define('CMD_INDEX_COMMIT',	39);
 define('CMD_INDEX_REBUILD',	40);
 define('CMD_FLUSH_LOGGING',	41);
 define('CMD_INDEX_SYNONYMS',	42);
+define('CMD_INDEX_USER_DICT',	43);
 define('CMD_SEARCH_DB_TOTAL',	64);
 define('CMD_SEARCH_GET_TOTAL',	65);
 define('CMD_SEARCH_GET_RESULT',	66);
@@ -152,6 +153,7 @@ define('CMD_OK_PROJECT_DEL',	255);
 define('CMD_OK_DB_COMMITED',	256);
 define('CMD_OK_DB_REBUILD',	257);
 define('CMD_OK_LOG_FLUSHED',	258);
+define('CMD_OK_DICT_SAVED',	259);
 define('CMD_OK_RESULT_SYNONYMS',	280);
 define('CMD_OK_SCWS_RESULT',	290);
 define('CMD_OK_SCWS_TOPS',	291);
