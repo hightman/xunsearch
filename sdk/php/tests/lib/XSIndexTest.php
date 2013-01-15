@@ -237,5 +237,18 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$this->assertEquals($dict, $index->getCustomDict());
+
+		// add document
+		$doc = new XSDocument(self::$data, 'utf-8');
+		$doc->subject = '去测测看';
+		$this->object->add($doc);
+		$this->object->flushIndex();
+		sleep(3);
+		$search = $this->object->xs->search;
+		$search->reopen(true);
+		$search->setCharset('utf-8');
+		$this->assertEquals(1, $search->count('subject:测测看'));
+		$this->assertEquals(1, $search->count('subject:测看'));
+		$this->assertEquals(0, $search->count('subject:看'));
 	}
 }
