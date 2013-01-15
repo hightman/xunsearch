@@ -218,6 +218,7 @@ static void _sig_term(int sig)
 {
 	int rc = signal_term(sig);
 
+#if 0	// hightman.130115: due to block here
 	// NOTE: special error signal
 	if ((sig == SIGFPE || sig == SIGILL || sig == SIGSEGV || sig == SIGBUS)
 		&& signal(sig, SIG_DFL) != SIG_ERR)
@@ -226,6 +227,7 @@ static void _sig_term(int sig)
 		raise(sig);
 		return;
 	}
+#endif
 
 	// exit or not
 	if (rc != SIGNAL_TERM_LATER)
