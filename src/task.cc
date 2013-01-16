@@ -159,20 +159,23 @@ struct cache_count
  */
 static Xapian::QueryParser *get_queryparser()
 {
-	static struct cache_qp *head = qp_base;
+	static struct cache_qp *head;
 
 	pthread_mutex_lock(&qp_mutex);
-	while (head != NULL)
+	for (head = qp_base; head != NULL; head = head->next)
 	{
 		if (head->in_use == false)
+		{
+			log_debug("reuse qp (ADDR:%p)", head);
 			break;
-		head = head->next;
+		}
 	}
 	if (head == NULL) /* alloc new one */
 	{
 		debug_malloc(head, sizeof(struct cache_qp), struct cache_qp);
 		if (head == NULL)
 			throw new Xapian::InternalError("not enough memory to create cache_qp");
+		log_debug("create qp (ADDR:%p)", head);
 		head->qp = new Xapian::QueryParser();
 		log_debug("new (Xapian::QueryParser *) %p", head->qp);
 		head->next = qp_base;
@@ -190,17 +193,19 @@ static Xapian::QueryParser *get_queryparser()
  */
 static void free_queryparser(Xapian::QueryParser *qp)
 {
-	static struct cache_qp *head = qp_base;
+	static struct cache_qp *head;
 
 	pthread_mutex_lock(&qp_mutex);
-	while (head != NULL)
+	for (head = qp_base; head != NULL; head = head->next)
 	{
 		if (head->qp == qp)
 			break;
-		head = head->next;
 	}
 	if (head != NULL)
+	{
+		log_debug("free qp (ADDR:%p)", head);
 		head->in_use = false;
+	}
 	else
 	{
 		DELETE_PTR(qp);
@@ -2049,8 +2054,15 @@ static int task_exec_other(XS_CONN * conn)
 		}
 		else
 		{
-			log_debug_conn("broken poll(...) = %d", rc);
-			rc = (rc < 0 && errno != EINTR) ? CMD_RES_IOERR : CMD_RES_TIMEOUT;
+			if (rc == 0)
+				rc = CMD_RES_TIMEOUT;
+			else
+			{
+				log_notice_conn("broken poll (RET:%d, ERROR:%s)", rc, strerror(errno));
+				if (errno == EINTR)
+					continue;
+				rc = CMD_RES_IOERR;
+			}
 			break;
 		}
 	}
@@ -2217,7 +2229,7 @@ void task_exec(void *arg)
 		}
 		catch (const Xapian::Error &e)
 		{
-			log_error_conn("failed to open default db (ERROR:%s)", e.get_msg().data());
+			log_notice_conn("failed to open default db (ERROR:%s)", e.get_msg().data());
 		}
 	}
 	catch (const Xapian::Error &e)
@@ -2296,6 +2308,7 @@ void task_init()
 	scws_set_multi(_scws, DEFAULT_SCWS_MULTI << 12);
 	// init qp_mutex
 	pthread_mutex_init(&qp_mutex, NULL);
+	qp_base = NULL;
 }
 
 /**
@@ -2316,7 +2329,9 @@ void task_deinit()
 	pthread_mutex_unlock(&qp_mutex);
 
 	// unload scws base
-	scws_free(_scws);
-	_scws = NULL;
+	if (_scws != NULL)
+	{
+		scws_free(_scws);
+		_scws = NULL;
+	}
 }
-

@@ -286,13 +286,11 @@ int conn_data_recv(XS_CONN *conn)
 recv_try:
 	if ((n = recv(CONN_FD(), buf, len, 0)) < 0)
 	{
-		log_debug_conn("failed to recv data (SIZE:%d, ERRNO:%d)", len, errno);
-		/* In theory, there should not be EAGAIN */
-		if (errno == EINTR || errno == EAGAIN)
-		{
-			if (errno == EAGAIN)
-				usleep(5000);
+		if (errno == EINTR)
 			goto recv_try;
+		if (errno != EAGAIN)
+		{
+			log_debug_conn("failed to recv data (SIZE:%d, ERROR:%s)", len, strerror(errno));
 		}
 	}
 	else if (n > 0)
@@ -671,9 +669,18 @@ static void client_ev_cb(int fd, short event, void *arg)
 	// read event
 	if (event & EV_READ)
 	{
-		int rc = CONN_RECV();
+		int rc;
+ev_try:
+		rc = CONN_RECV();
 		if (rc < 0)
+		{
+			if (errno == EAGAIN)
+			{
+				CONN_EVENT_ADD();
+				return;
+			}
 			rc = CMD_RES_IOERR;
+		}
 		else if (rc == 0)
 			rc = CMD_RES_CLOSED;
 		else
@@ -689,8 +696,7 @@ static void client_ev_cb(int fd, short event, void *arg)
 				(*conn_server.pause_handler)(conn);
 				break;
 			case CMD_RES_CONT:
-				CONN_EVENT_ADD();
-				break;
+				goto ev_try;
 			default:
 				// CMD_RES_QUIT,CMD_RES_CLOSED, CMD_RES_IOERR
 				// CMD_RES_NOMEM, CMD_RES_ERROR, CMD_RES_OTHER
