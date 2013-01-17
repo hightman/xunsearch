@@ -1061,7 +1061,12 @@ static int index_zcmd_exec(XS_CONN *conn)
 			}
 			else // set dict
 			{
-				if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+				if (XS_CMD_BLEN(cmd) == 0)
+				{
+					unlink(fpath);
+					rc = CONN_RES_OK(DICT_SAVED);
+				}
+				else if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
 				{
 					log_error_conn("failed to open dict file (ERROR:%s)", strerror(errno));
 					rc = CONN_RES_ERR(OPEN_FILE);
