@@ -27,6 +27,7 @@ $params = array('source', 'file', 'sql', 'rebuild', 'clean', 'flush', 'flush-log
 $params[] = 'add-synonym';
 $params[] = 'del-synonym';
 $params[] = 'stop-rebuild';
+$params[] = 'custom-dict';
 foreach ($params as $_)
 {
 	$k = strtr($_, '-', '_');
@@ -39,7 +40,8 @@ $db = XSUtil::getOpt('d', 'db');
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$stop_rebuild && !$flush && !$flush_log && !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
+	|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log 
+		&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
@@ -80,6 +82,7 @@ Indexer - 索引批量管理、导入工具 ($version)
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
     --stop-rebuild 强制中止没未完成的索引重建状态 (慎用)
     --clean      清空库内当前的索引数据
+    --custom-dict 读取/设置项目自定义词库，默认为读取，配合 --file 指定文件去设置词库
     --flush      强制提交刷新索引服务端的缓冲索引，与 --source 分开用
     --flush-log	 强制提交刷新搜索日志，与 --source 分开用
     --info       查看当前索引库在服务端的信息（含数据缓冲、运行进程等）
@@ -182,6 +185,34 @@ try
 			echo "失败\n";
 		else
 			echo "成功，注意：后台更新需要一些时间，并不是真正立即完成。\n";
+	}
+	else if ($custom_dict !== null)
+	{
+		if ($file === null)
+		{
+			$content = $index->getCustomDict();
+			if ($content === '')
+				echo "注意：该项目无自定义词库或内容为空！";
+			else
+			{
+				if (substr($content, 0, 1) !== '#')
+					echo "# WORD\tTF\tIDF\tATTR\n";
+				echo $content;
+			}
+			echo "\n";
+		}
+		else
+		{
+			if ($file === true || !file_exists($file))
+				echo "错误：请正确指定要替换的自定义词库文件路径 (" . strval($file) . ")\n";
+			else
+			{
+				$content = file_get_contents($file);
+				echo "正在提交自定义词库 (" . number_format(strlen($content)) . " bytes) ... ";
+				$index->setCustomDict($content);
+				echo "OK\n";
+			}
+		}
 	}
 	else
 	{
