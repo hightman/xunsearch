@@ -61,4 +61,4 @@ SDK 开发文档
 
 
 [1]: http://xapian.org/
-[2]: http://www.ftphp.com/scws/
+[2]: http://www.xunsearch.com/scws/

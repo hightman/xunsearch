@@ -205,7 +205,7 @@ if test "$with_scws" != "no" ; then
 		]
 	) 	
 else
-	AC_MSG_ERROR([scws is required, get it from: http://www.ftphp.com/scws/])
+	AC_MSG_ERROR([scws is required, get it from: http://www.xunsearch.com/scws/])
 fi
 
 # Xapian-core package check
