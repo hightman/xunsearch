@@ -3,17 +3,16 @@ Big Plans of Xunsearch
 
 标识符含义：* 暂定未做；+ 已完成；= 正在做；- 取消
 
-* 优化 task.cc 分为(db+db_a)时如果实时 update 某一条数据可能导致 docid 修改而 cache 扔起作用会出现空白内容
+= 优化 task.cc 分为(db+db_a)时如果实时 update 某一条数据可能导致 docid 修改而 cache 扔起作用会出现空白内容
 
-* 优化 task.cc 让 queryparser 可以复用与共享
++ 优化 task.cc 让 queryparser 可以复用与共享
 
-* 优化日志，减少输出，记录错误为主；增加状态监控模块，各个进程的详细情况。
++ 优化日志，减少输出，记录错误为主；增加状态监控模块，各个进程的详细情况。
   当前连接数，已处理请求数，最大并发数等……
 
-* 支持为每个项目分配自定义词库，只要项目目录下的 etc/ 目录存在？
-  通过 load_libscws 传入路径。
++ 支持为每个项目分配自定义词库，只要项目目录下的 etc/ 目录存在？
 
-* 优化 xapian 的 queryparser 让它具备清除 prefix 等初始化功能
++ 优化 xapian 的 queryparser 让它具备清除 prefix 等初始化功能
   避免新建对象
 
 + 增加同义词搜索、管理功能

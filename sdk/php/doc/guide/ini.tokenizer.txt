@@ -77,6 +77,6 @@ tokenizer = xyz(_)
 ~~~
 
 
-[1]: http://www.ftphp.com/scws/
+[1]: http://www.xunsearch.com/scws/
 
 <div class="revision">$Id$</div>

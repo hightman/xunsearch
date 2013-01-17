@@ -55,6 +55,6 @@ API ，在此基础上快速构建自己的全文检索应用。
 [RequiredCheck 运行条件检测](util.check) 。
 
 [1]: http://xapian.org                "Xapian 官网"
-[2]: http://www.ftphp.com/scws/       "免费开源的中文分词系统"
+[2]: http://www.xunsearch.com/scws/       "免费开源的中文分词系统"
 
 <div class="revision">$Id$</div>

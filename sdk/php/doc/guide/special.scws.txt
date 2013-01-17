@@ -76,6 +76,6 @@ else {
   tokenizer 选项中，因为这样做只会让性能更低。
 
 
-[1]: http://www.ftphp.com/scws/
+[1]: http://www.xunsearch.com/scws/
 
 <div class="revision">$Id$</div>
