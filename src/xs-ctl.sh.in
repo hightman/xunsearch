@@ -4,7 +4,11 @@
 
 prefix=@prefix@
 bind=local
+port=8383
 server=both
+opt_pub=
+opt_index="-l tmp/indexd.log"
+opt_search="-l tmp/searchd.log"
 
 # usage
 show_usage()
@@ -14,18 +18,30 @@ show_usage()
   echo "  -b <local|unix|inet>      bind address or path"
   echo "  -L <log_level>            log level, 1-7"
   echo "  -s <index|search|both>    server type"
+  echo "  -n <num>                  number of search worker process"
+  echo "  -p <port>                 port number of index server"
+  echo "                            port number of search is <port+1>"
   echo "COMMAND:"
   echo "  {start|stop|restart|faststop|fastrestart|reload}"
 }
 
 # options
-while getopts "hb:s:" opt; do
+while getopts "hb:L:s:n:p:" opt; do
   case $opt in
     b)
       bind=$OPTARG
       ;;
+    L)
+      opt_pub="$opt_pub -L $OPTARG"
+      ;;
     s)
       server=$OPTARG
+      ;;
+    n)
+      opt_search="$opt_search -n $OPTARG"
+      ;;
+    p)
+      port=$OPTARG
       ;;
     h)
       show_usage
@@ -34,7 +50,7 @@ while getopts "hb:s:" opt; do
     *)
       show_usage
       exit 1
-      ;;
+    ;;
   esac
 done
 
@@ -48,24 +64,22 @@ shift `expr $OPTIND - 1`
 cmd=$1
 
 # reset bind
-bindex=
-bsearch=
 case $bind in
   local)
-    bindex=127.0.0.1:8383
-    bsearch=127.0.0.1:8384
+    opt_index="$opt_index -b 127.0.0.1:$port"
+    opt_search="$opt_search -b 127.0.0.1:"`expr $port + 1`
     ;;
   unix)
-    bindex=tmp/indexd.sock
-    bsearch=tmp/searchd.sock
+    opt_index="$opt_index -b tmp/indexd.sock"
+    opt_search="$opt_search -b tmp/searchd.sock"
     ;;
   inet)
-    bindex=8383
-    bsearch=8384
+    opt_index="$opt_index -b $port"
+    opt_search="$optsearch -b "`expr $port + 1`
     ;;
   *)
-    bindex=$bind:8383
-    bsearch=$bind:8384
+    opt_index="$opt_index -b ${bind}:$port"
+    opt_search="$opt_search -b ${bind}:"`expr $port + 1`
     ;;
 esac
 
@@ -77,11 +91,11 @@ case "$cmd" in
   start|stop|faststop|fastrestart|restart|reload)
   # index
   if test "$server" != "search"; then
-    bin/xs-indexd -l tmp/indexd.log -b $bindex -k $cmd
+    bin/xs-indexd $opt_index $opt_pub -k $cmd
   fi
   # search
   if test "$server" != "index"; then
-    bin/xs-searchd -l tmp/searchd.log -b $bsearch -k $cmd
+    bin/xs-searchd $opt_search $opt_pub -k $cmd
   fi 
   ;;  
 *)
@@ -89,3 +103,4 @@ case "$cmd" in
   show_usage
   ;;  
 esac
+
