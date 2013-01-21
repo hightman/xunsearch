@@ -20,6 +20,7 @@ $hot = XSUtil::getOpt(null, 'hot');
 $synonyms = XSUtil::getOpt(null, 'list-synonyms');
 $terms = XSUtil::getOpt(null, 'terms');
 $weights = XSUtil::getOpt(null, 'add-weight');
+$threads = XSUtil::getopt(null, 'threads');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
@@ -30,7 +31,7 @@ $query = XSUtil::convertIn($query);
 $sort = XSUtil::getOpt('s', 'sort');
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$hot && !$synonyms && !is_string($query)))
+	|| (!$threads && !$hot && !$synonyms && !is_string($query)))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
@@ -69,6 +70,7 @@ Quest - 搜索查询和测试工具 ($version)
                  对于普通搜索和列出同义词时，还支持用 --limit=offset,num 的格式
     --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
     --terms      列出搜索词被切分后的词（不含排除及权重词）
+    --threads    显示当前连接服务端的线程情况（仅绘制当前 worker 进程）
     -h|--help    显示帮助信息
 
     若未指定 -p 或 -q 则会依次把附加的参数当作 <project> 和 <query> 处理，例：
@@ -129,6 +131,18 @@ try
 				$i++;
 			}
 		}
+	}
+	else if ($threads !== null)
+	{
+		// get worker id
+		$res = $search->execCommand(CMD_DEBUG);
+		$pos1 = strpos($res->buf, 'id:') + 3;
+		$pos2 = strpos($res->buf, ',', $pos1);
+		$id = substr($res->buf, $pos1, $pos2 - $pos1);
+
+		// get thread pools
+		$res = $search->execCommand(CMD_SEARCH_DRAW_TPOOL);
+		echo strtoupper($id) . ' ' . $res->buf;
 	}
 	else if ($synonyms !== null)
 	{

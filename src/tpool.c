@@ -465,6 +465,8 @@ char *tpool_draw(tpool_t *tp)
 	for (i = 0; i < tp->max_total; i++)
 	{
 		t = &tp->threads[i];
+		if (!(t->status & TPOOL_THREAD_ACTIVED))
+			continue;
 		len += sprintf(buf + len, " - thread[%d] {status:'%c%c%c', calls:%d, tid:%p, task:{", i,
 			t->status & TPOOL_THREAD_ACTIVED ? 'A' : '-',
 			t->status & TPOOL_THREAD_BUSY ? 'B' : '-',

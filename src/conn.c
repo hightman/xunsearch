@@ -133,7 +133,7 @@ send_try:
 		{
 			if (errno == EAGAIN)
 			{
-				log_notice_conn("got EAGAIN on sending data (SIZE:%d)", size);
+				log_info_conn("got EAGAIN on sending data (SIZE:%d)", size);
 				usleep(5000);
 			}
 			goto send_try;
