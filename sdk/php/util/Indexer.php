@@ -85,7 +85,7 @@ Indexer - 索引批量管理、导入工具 ($version)
     --custom-dict 读取/设置项目自定义词库，默认为读取，配合 --file 指定文件去设置词库
     --flush      强制提交刷新索引服务端的缓冲索引，与 --source 分开用
     --flush-log	 强制提交刷新搜索日志，与 --source 分开用
-    --info       查看当前索引库在服务端的信息（含数据缓冲、运行进程等）
+    --info       查看当前索引库在服务端的信息（含服务端信息、数据缓冲、运行进程等）
     -h|--help    显示帮助信息
 
 EOF;
@@ -164,6 +164,10 @@ try
 	// special actions
 	if ($info !== null)
 	{
+		echo "---------- SERVER INFO BEGIN ----------\n";
+		$res = $index->execCommand(CMD_DEBUG);
+		echo $res->buf;
+		echo "\n---------- SERVER INFO END ----------\n";
 		$res = $index->execCommand(CMD_INDEX_GET_DB);
 		$res = json_decode($res->buf);
 		echo "数据库名：" . $res->name . "\n";

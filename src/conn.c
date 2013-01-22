@@ -39,6 +39,7 @@ struct xs_server
 	int max_accept; // max accept number for the server
 	int num_accept; // current accepted socket number
 	int num_burst; // number of burst connection now
+	int max_burst; // max burst number
 
 	zcmd_exec_t zcmd_handler; // called to execute zcmd
 	void (*pause_handler)(XS_CONN *); // called to run external task
@@ -258,6 +259,8 @@ XS_CONN *conn_new(int sock)
 		log_debug_conn("add connection to event base (CONN:%p, SOCK:%d)", conn, sock);
 
 		conn_server.num_burst++;
+		if (conn_server.num_burst > conn_server.max_burst)
+			conn_server.max_burst = conn_server.num_burst;
 		return conn;
 	}
 }
@@ -437,9 +440,9 @@ static int conn_zcmd_first(XS_CONN *conn)
 		int len = 0;
 
 		// basic info
-		len += sprintf(&buf[len], "id:%s, sock:[%d], name:%s, home:%s, rcv_size:%d, flag:0x%04x\n",
-			log_ident(NULL), CONN_FD(), conn->user->name,
-			conn->user->home, conn->rcv_size, conn->flag);
+		len += sprintf(&buf[len], "{\n  id:%s, num_accept:%d, num_burst:%d, max_burst:%d,\n  sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d, flag:0x%04x\n}\n",
+			log_ident(NULL), conn_server.num_accept, conn_server.num_burst, conn_server.max_burst,
+			CONN_FD(), conn->user->name, conn->user->home, conn->rcv_size, conn->flag);
 		// db list
 		len += sprintf(&buf[len], "DBS:");
 		for (db = conn->user->db; db != NULL; db = db->next)
