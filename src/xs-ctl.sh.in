@@ -75,7 +75,7 @@ case $bind in
     ;;
   inet)
     opt_index="$opt_index -b $port"
-    opt_search="$optsearch -b "`expr $port + 1`
+    opt_search="$opt_search -b "`expr $port + 1`
     ;;
   *)
     opt_index="$opt_index -b ${bind}:$port"
