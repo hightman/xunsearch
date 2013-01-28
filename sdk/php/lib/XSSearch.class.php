@@ -766,6 +766,8 @@ class XSSearch extends XSServer
 	 */
 	private function logQuery($query = null)
 	{
+		if ($this->isRobotAgent())
+			return;
 		if ($query !== '' && $query !== null)
 			$terms = $this->terms($query, false);
 		else
@@ -1182,5 +1184,23 @@ class XSSearch extends XSServer
 			$mantissa = 0 - $mantissa;
 
 		return round($mantissa * pow(2, $exponent), 2);
+	}
+
+	/**
+	 * @return boolean whether the user agent is a robot or search engine
+	 */
+	private function isRobotAgent()
+	{
+		if (isset($_SERVER['HTTP_USER_AGENT']))
+		{
+			$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+			$keys = array('bot', 'slurp', 'spider', 'crawl', 'curl');
+			foreach ($keys as $key)
+			{
+				if (strpos($agent, $key) !== false)
+					return true;
+			}
+		}
+		return false;
 	}
 }
