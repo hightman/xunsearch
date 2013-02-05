@@ -134,15 +134,6 @@ struct result_doc
 
 extern MC *mc;
 
-struct cache_result
-{
-	unsigned int total; // document total on caching
-	unsigned int count; // matched count
-	unsigned int lastid; // last docid
-	unsigned int facets_len; // data length of facets result
-	struct result_doc doc[MAX_SEARCH_RESULT];
-};
-
 struct cache_count
 {
 	unsigned int total; // document total on caching
@@ -153,6 +144,18 @@ struct cache_count
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
 #    define	C_UNLOCK_CACHE()	G_UNLOCK_CACHE(); conn->flag ^= CONN_FLAG_CACHE_LOCKED
 #endif	/* HAVE_MEMORY_CACHE */
+
+struct search_result
+{
+#ifdef HAVE_MEMORY_CACHE
+	unsigned int total; // document total on caching
+	unsigned int count; // matched count
+	unsigned int lastid; // last docid
+	struct result_doc doc[MAX_SEARCH_RESULT];
+#endif
+	unsigned int facets_len; // data length of facets result
+};
+
 
 /**
  * Get a queryparser object from cached chain
@@ -313,7 +316,7 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
  * @param conn (XS_CONN *)
  * @param rd (struct result_doc *)
  */
-static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct cache_result *cr)
+static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct search_result *cr)
 {
 	int rc = CMD_RES_CONT;
 
@@ -354,7 +357,11 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct cache_re
 		// ignore the error simply
 		log_error_conn("xapian exception on sending doc (ERROR:%s)", e.get_msg().data());
 		if (cr != NULL)
+		{
+#ifdef HAVE_MEMORY_CACHE
 			cr->count = cr->lastid = 0;
+#endif
+		}
 		rc = CMD_RES_CONT;
 	}
 	return rc;
@@ -848,8 +855,8 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
 	unsigned int off, limit, count, total;
 	int rc = CMD_RES_CONT, cache_flag = CACHE_NONE;
+	struct search_result *cr = NULL;
 #ifdef HAVE_MEMORY_CACHE
-	struct cache_result *cr = NULL;
 	char md5[33];
 #endif
 	Xapian::Query qq;
@@ -943,7 +950,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		md5_r(key.data(), md5);
 
 		C_LOCK_CACHE();
-		cr = (cache_result *) mc_get(mc, md5);
+		cr = (search_result *) mc_get(mc, md5);
 		C_UNLOCK_CACHE();
 
 		if (cr != NULL)
@@ -1011,9 +1018,9 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 		// create cache result buffer 
 		// FIXME: this may cause memory leak on Xapian::Exception
-		debug_malloc(cr, sizeof(struct cache_result) +facets_len, struct cache_result);
+		debug_malloc(cr, sizeof(struct search_result) +facets_len, struct search_result);
 		cr->facets_len = facets_len;
-		ptr = (unsigned char *) cr + sizeof(struct cache_result);
+		ptr = (unsigned char *) cr + sizeof(struct search_result);
 
 		// filled with facets data
 		for (i = 0; spy[i] != NULL; i++)
@@ -1053,7 +1060,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 		// send facets data
 		if (cr->facets_len > 0)
-			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct cache_result), cr->facets_len);
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct search_result), cr->facets_len);
 
 		// send every document
 		limit2 = 0;
@@ -1088,7 +1095,7 @@ res_err1:
 			cr->count = count;
 			cr->lastid = zarg->db->get_lastdocid();
 			C_LOCK_CACHE();
-			mc_put(mc, md5, cr, sizeof(struct cache_result) +cr->facets_len);
+			mc_put(mc, md5, cr, sizeof(struct search_result) +cr->facets_len);
 			C_UNLOCK_CACHE();
 			log_debug_conn("search result cache created (KEY:%s, COUNT:%d)", md5, count);
 		}
@@ -1112,7 +1119,7 @@ res_err1:
 
 		// send facets data
 		if (cr->facets_len > 0)
-			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct cache_result), cr->facets_len);
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct search_result), cr->facets_len);
 
 		// send documents
 		limit += off;
