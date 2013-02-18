@@ -362,8 +362,8 @@ void signal_child(pid_t pid, int status)
 			}
 		}
 		main_flag |= FLAG_SIG_CHILD;
-		log_alert("child process worker[%c] exit (PID:%d, STATUS:%d)",
-			i > worker_num ? 'X' : (i + '0'), pid, status);
+		log_alert("child process worker[%d] exit (PID:%d, STATUS:%d)",
+			i > worker_num ? -1 : i, pid, status);
 	}
 }
 
