@@ -121,6 +121,9 @@ int conn_server_listen(const char *bind_path);
 /* init the global conn server (called once) */
 void conn_server_init();
 
+/* shutdown listen server */
+void conn_server_shutdown();
+
 /* set default zcmd handler */
 void conn_server_set_zcmd_handler(zcmd_exec_t func);
 

@@ -839,6 +839,18 @@ void conn_server_init()
 }
 
 /**
+ * shutdown the listen server
+ */
+void conn_server_shutdown()
+{
+	log_info("shutdown the listen server");
+	event_del(&conn_server.listen_ev);
+	event_del(&conn_server.pipe_ev);
+	conn_server.flag |= CONN_SERVER_STOPPED;
+	close(conn_server.listen_ev.ev_fd);
+}
+
+/**
  * set default zcmd handler
  */
 void conn_server_set_zcmd_handler(zcmd_exec_t func)

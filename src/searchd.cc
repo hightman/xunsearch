@@ -50,6 +50,7 @@
 #define	FLAG_HAS_CHILD			0x0008
 #define	FLAG_MASTER				0x0010
 #define	FLAG_KEEPALIVE			0x0020
+#define	FLAG_ON_EXIT			0x0040
 
 #define	FLAG_SIG_MASK			0xff00
 #define	FLAG_SIG_EXIT			0x0700
@@ -276,8 +277,17 @@ static void show_usage()
  */
 static inline void main_cleanup()
 {
+	// add exit flag for other signal handler (child)
+	if (main_flag & FLAG_ON_EXIT)
+		return;
+	main_flag |= FLAG_ON_EXIT;
+	conn_server_shutdown();
+
 	if (listen_sock >= 0)
+	{
 		close(listen_sock);
+		listen_sock = -1;
+	}
 
 	if (IS_MASTER())
 	{

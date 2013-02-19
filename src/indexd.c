@@ -420,6 +420,8 @@ static int safe_write(int fd, void *buf, int size)
 static inline void main_cleanup()
 {
 	// add exit flag for other signal handler (child)
+	if (main_flag & FLAG_ON_EXIT)
+		return;
 	main_flag |= FLAG_ON_EXIT;
 
 	if (main_flag & FLAG_G_INITED)
