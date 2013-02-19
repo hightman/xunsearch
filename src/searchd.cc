@@ -442,6 +442,9 @@ static void become_worker(int idx, sigset_t *sigmask)
 	// TODO: release more unused resources
 	free(worker_pids);
 
+	// increase scheduling priority
+	nice(3);
+
 	// start the worker
 	log_alert("worker server start");
 	worker_start();

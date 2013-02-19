@@ -728,6 +728,9 @@ int main(int argc, char *argv[])
 	}
 
 child_begin:
+	// reduce scheduling priority
+	nice(-3);
+
 	// open log to stderr
 	log_notice("start to parse search logs (STAT_TAG:%s)", stat_tag);
 	log_notice("search log database (DB:%s)", dbpath);
