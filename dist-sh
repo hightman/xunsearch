@@ -41,7 +41,7 @@ else
   scp VERSION xunsearch:./web/protected/data/$filetype
   # also update dev
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full-dev.tar.bz2
-  scp xunsearch-sdk-$fileinfo.zip xunsearch:./web/download/xunsearch-sdk-dev.zip
+  scp xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip xunsearch:./web/download/xunsearch-sdk-dev.zip
   scp VERSION xunsearch:./web/protected/data
 fi
 
