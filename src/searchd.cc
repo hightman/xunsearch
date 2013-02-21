@@ -751,6 +751,7 @@ int main(int argc, char *argv[])
 		else if (CHECK_FLAG_SIG(ALARM))
 		{
 			// kill some workers
+#if defined(MAX_WORKER_LIFE) && MAX_WORKER_LIFE > 0
 			for (cc = 1; cc <= worker_num; cc++)
 			{
 				if (worker_pids[cc].pid == 0)
@@ -773,6 +774,7 @@ int main(int argc, char *argv[])
 			}
 			// set next timer
 			alarm(300);
+#endif
 		}
 		else if (CHECK_FLAG_SIG(EXIT))
 		{

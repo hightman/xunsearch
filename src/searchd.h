@@ -17,7 +17,7 @@
 
 // worker process protection
 #define	MAX_WORKER_ACCEPT		10000		// 每个工作进程在处理多少个请求后自杀，０不自杀
-#define	MAX_WORKER_LIFE			3600		// 每个工作进程的最大存活时间
+#define	MAX_WORKER_LIFE			7200		// 每个工作进程的最大存活时间
 
 // NOTE: cache 的锁定设计可能会导致 bug
 // 当 cache 命中并且操作的时候有可能被其它线程/进程删除, 这种情况下的行为无法确定
