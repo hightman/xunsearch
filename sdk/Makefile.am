@@ -16,6 +16,7 @@ phplib_FILES += php/lib/xs_cmd.inc.php php/lib/*.class.php
 endif HAVE_SDK_PHP_DEV
 
 EXTRA_DIST = gen-phpinc.sh php/README.md php/doc php/app/demo.ini php/lib/XS.php php/util
+EXTRA_DIST += php/wrapper
 
 php/lib/xs_cmd.inc.php: ../config.h ../src/xs_cmd.h
 	sh gen-phpinc.sh > $@
