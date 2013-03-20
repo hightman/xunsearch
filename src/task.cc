@@ -2171,7 +2171,9 @@ void task_cancel(void *arg)
 	}
 	// free cache locking
 	if (conn->flag & CONN_FLAG_CACHE_LOCKED)
-		G_UNLOCK_CACHE();
+	{
+		C_UNLOCK_CACHE();
+	}
 
 	// close the connection
 	CONN_RES_ERR(TASK_CANCELED);

@@ -744,11 +744,7 @@ static void server_ev_cb(int fd, short event, void *arg)
 		{
 			if (errno != EINTR && errno != EWOULDBLOCK)
 			{
-				event_del(&conn_server.listen_ev);
-				event_del(&conn_server.pipe_ev);
-
-				conn_server.flag |= CONN_SERVER_STOPPED;
-				close(fd);
+				conn_server_shutdown();
 				log_error("accept() failed, shutdown gracefully (ERROR:%s)", strerror(errno));
 			}
 		}
@@ -777,7 +773,9 @@ static void server_ev_cb(int fd, short event, void *arg)
 	// timeout event
 	if (event & EV_TIMEOUT)
 	{
-		event_add(&conn_server.listen_ev, &conn_server.tv);
+		// add the listen event
+		if (!(conn_server.flag & CONN_SERVER_STOPPED))
+			event_add(&conn_server.listen_ev, &conn_server.tv);
 
 		log_debug("server loop timeout (CALLBACK:%p)", conn_server.timeout_handler);
 		if (conn_server.timeout_handler != NULL)
@@ -805,14 +803,7 @@ static void pipe_ev_cb(int fd, short event, void *arg)
 					continue;
 
 				log_info("get NULL from pipe, shutdown gracefully");
-				event_del(&conn_server.listen_ev);
-				event_del(&conn_server.pipe_ev);
-
-				conn_server.flag |= CONN_SERVER_STOPPED;
-				close(conn_server.listen_ev.ev_fd);
-
-				// TODO: is need to break the loop?
-				//event_loopbreak();
+				conn_server_shutdown();
 			}
 			else
 			{
@@ -844,10 +835,10 @@ void conn_server_init()
 void conn_server_shutdown()
 {
 	log_info("shutdown the listen server");
+	conn_server.flag |= CONN_SERVER_STOPPED;
 	event_del(&conn_server.listen_ev);
 	event_del(&conn_server.pipe_ev);
-	conn_server.flag |= CONN_SERVER_STOPPED;
-	close(conn_server.listen_ev.ev_fd);
+	event_loopbreak();
 }
 
 /**
@@ -1096,4 +1087,5 @@ void conn_server_start(int listen_sock)
 	log_notice("event loop end");
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
+	close(listen_sock);
 }

@@ -99,6 +99,7 @@ static tpool_t thr_pool;
 
 #define	TPOOL_INIT()			tpool_init(&thr_pool, MAX_THREAD_NUM, 0, 0)
 #define	TPOOL_DEINIT()			tpool_destroy(&thr_pool)
+#define	TPOOL_CANCEL()			tpool_cancel_nowait(&thr_pool)
 #define	TPOOL_ADD_TASK()		tpool_exec(&thr_pool, task_exec, task_cancel, conn)
 #define	TPOOL_KILL_TIMEOUT()	tpool_cancel_timeout(&thr_pool, MAX_WORKER_TIME)
 #define	TPOOL_LOG_STATUS()		log_info_conn("new task (USER:%s, SPARE:%d, TOTAL:%d)", \
@@ -200,8 +201,10 @@ static void worker_server_timeout()
 static void worker_cleanup()
 {
 	// cancel the tpool with wait
-	log_info("deinit thread pool");
-	TPOOL_DEINIT();
+	//log_info("deinit thread pool");
+	//TPOOL_DEINIT();
+	log_info("cancel threads");
+	TPOOL_CANCEL();
 }
 
 /**
@@ -282,12 +285,6 @@ static inline void main_cleanup()
 		return;
 	main_flag |= FLAG_ON_EXIT;
 	conn_server_shutdown();
-
-	if (listen_sock >= 0)
-	{
-		close(listen_sock);
-		listen_sock = -1;
-	}
 
 	if (IS_MASTER())
 	{
