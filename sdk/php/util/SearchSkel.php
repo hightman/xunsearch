@@ -90,7 +90,7 @@ try
 	foreach ($xs->getAllFields() as $field) /* @var $field XSFieldMeta */
 	{
 		if ($field->hasIndexSelf() && $field->type != XSFieldMeta::TYPE_BODY && !$field->isBoolIndex())
-			$vars['@set_filter@'] .= "\t\t\t<li><input type=\"radio\" name=\"f\" value=\"{$field->name}\" <?php echo \$f_{$field->name}; ?> />" . ucfirst($field->name) . "</li>\n";
+			$vars['@set_filter@'] .= "\t\t\t<label class=\"radio inline\"><input type=\"radio\" name=\"f\" value=\"{$field->name}\" <?php echo \$f_{$field->name}; ?> />" . ucfirst($field->name) . "</label>\n";
 		if ($field->isNumeric())
 		{
 			$vars['@set_sort@'] .= "\t\t\t\t\t<option value=\"" . $field->name . "_DESC\" <?php echo \$s_{$field->name}_DESC; ?>>" . ucfirst($field->name) . "从大到小</option>\n";
@@ -111,7 +111,7 @@ try
 				continue;
 			}
 		}
-		$vars['@field_info@'] .= "\t\t\t\t<li><span>" . ucfirst($field->name) . ":</span> <?php echo htmlspecialchars(\$doc->" . $field->name . "); ?></li>\n";
+		$vars['@field_info@'] .= "\t\t\t\t" . ucfirst($field->name) . ": <?php echo htmlspecialchars(\$doc->" . $field->name . "); ?>\n";
 	}
 
 	$vars['@set_filter@'] = trim($vars['@set_filter@']);
@@ -151,9 +151,14 @@ try
 		{
 			echo "正在复制 " . $entry . " ...\n";
 			$file = $output . '/' . $entry;
-			if (file_exists($file))
-				copy($file, $file . '.bak');
-			copy($input . '/' . $entry, $file);
+			if (is_dir($input . '/' . $entry))
+				XSUtil::copyDir($input . '/' . $entry, $file);
+			else
+			{
+				if (file_exists($file))
+					copy($file, $file . '.bak');
+				copy($input . '/' . $entry, $file);
+			}
 		}
 	}
 	$dir->close();

@@ -182,4 +182,26 @@ class XSUtil
 		if (ob_get_level() > 0)
 			ob_flush();
 	}
+
+	/**
+	 * 拷贝一个目录及其子目录文件
+	 */
+	public static function copyDir($src, $dst)
+	{
+		if (!($dir = @dir($src)) || (!is_dir($dst) && !@mkdir($dst, 0755, true)))
+			return false;
+		while (($entry = $dir->read()) !== false)
+		{
+			if ($entry === '.' || $entry === '..')
+				continue;
+			$psrc = $src . DIRECTORY_SEPARATOR . $entry;
+			$pdst = $dst . DIRECTORY_SEPARATOR . $entry;
+			if (is_dir($pdst))
+				self::copyDir($psrc, $pdst);
+			else
+				@copy($psrc, $pdst);
+		}
+		$dir->close();
+		return true;
+	}
 }

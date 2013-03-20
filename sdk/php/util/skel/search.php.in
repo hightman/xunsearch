@@ -87,7 +87,7 @@ try
 
 		// synonym search
 		$search->setAutoSynonyms($syn === 'yes');
-		
+
 		// set query
 		if (!empty($f) && $f != '_all')
 		{
@@ -124,9 +124,9 @@ try
 		{
 			// try to corrected, if resul too few
 			if ($count < 1 || $count < ceil(0.001 * $total))
-				$corrected = $search->getCorrectedQuery();			
+				$corrected = $search->getCorrectedQuery();
 			// get related query
-			$related = $search->getRelatedQuery();			
+			$related = $search->getRelatedQuery();
 		}
 
 		// gen pager
@@ -137,7 +137,7 @@ try
 			$pager = '';
 			do
 			{
-				$pager .= ($pb == $p) ? '<strong>' . $p . '</strong>' : '<a href="' . $bu . '&p=' . $pb . '">[' . $pb . ']</a>';
+				$pager .= ($pb == $p) ? '<li class="disabled"><a>' . $p . '</a></li>' : '<li><a href="' . $bu . '&p=' . $pb . '">' . $pb . '</a></li>';
 			}
 			while (++$pb < $pe);
 		}
