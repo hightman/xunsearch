@@ -5,13 +5,13 @@
 #
 
 AC_PREREQ([2.68])
-AC_INIT([xunsearch], [1.4.2], [http://www.xunsearch.com/bugs])
+AC_INIT([xunsearch], [1.4.3-dev], [http://www.xunsearch.com/bugs])
 
 # for automake
 AM_INIT_AUTOMAKE
 
 # Copy wright
-AC_COPYRIGHT([Copyright (C)2007-2011, hightman
+AC_COPYRIGHT([Copyright (C)2007-2013, hightman
 This package maybe copied, distributed and modified under
 the terms of my License; see COPYING for more detials.])
 
