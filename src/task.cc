@@ -141,6 +141,7 @@ struct cache_count
 	unsigned int lastid; // last docid
 };
 
+/// FIXME: when the thread/process was forced to abort during locking, may cause dead lock
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
 #    define	C_UNLOCK_CACHE()	G_UNLOCK_CACHE(); conn->flag ^= CONN_FLAG_CACHE_LOCKED
 #endif	/* HAVE_MEMORY_CACHE */

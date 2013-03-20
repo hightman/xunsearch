@@ -179,8 +179,16 @@ static int worker_zcmd_exec(XS_CONN *conn)
  */
 static void worker_submit_task(XS_CONN *conn)
 {
-	TPOOL_LOG_STATUS();
-	TPOOL_ADD_TASK();
+	if (main_flag & FLAG_ON_EXIT)
+	{
+		log_notice("ignore task on terminating");
+		CONN_QUIT(STOPPED);
+	}
+	else
+	{
+		TPOOL_LOG_STATUS();
+		TPOOL_ADD_TASK();
+	}
 }
 
 /**
