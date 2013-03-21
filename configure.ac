@@ -5,7 +5,7 @@
 #
 
 AC_PREREQ([2.68])
-AC_INIT([xunsearch], [1.4.3], [http://www.xunsearch.com/bugs])
+AC_INIT([xunsearch], [1.4.4-dev], [http://www.xunsearch.com/bugs])
 
 # for automake
 AM_INIT_AUTOMAKE

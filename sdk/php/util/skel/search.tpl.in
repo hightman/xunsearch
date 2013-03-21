@@ -90,10 +90,10 @@
       <dl class="result-list">
         <?php foreach ($docs as $doc): ?>
         <dt>
-          <a href="javascript:void(alert('pid: <?php echo $doc->pid; ?>'));"><h4><?php echo $doc->rank(); ?>. <?php echo $search->highlight(htmlspecialchars($doc->subject)); ?> <small>[<?php echo $doc->percent(); ?>%]</small></h4></a>          
+          <a href="javascript:void(alert('pid: <?php echo $doc->@field_id@; ?>'));"><h4><?php echo $doc->rank(); ?>. <?php echo $search->highlight(htmlspecialchars($doc->@field_title@)); ?> <small>[<?php echo $doc->percent(); ?>%]</small></h4></a>          
         </dt>
         <dd>
-          <p><?php echo $search->highlight(htmlspecialchars($doc->message)); ?></p>
+          <p><?php echo $search->highlight(htmlspecialchars($doc->@field_body@)); ?></p>
           <p class="text-error">
             @field_info@
           </p>
