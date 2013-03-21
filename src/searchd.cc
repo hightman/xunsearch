@@ -212,7 +212,7 @@ static void worker_cleanup()
 	// cancel the tpool with waiting
 	log_info("deinit thread pool");
 	TPOOL_DEINIT();
-#else
+//#else
 	// cancel the tpool with waiting
 	log_info("cancel thread pool");
 	TPOOL_CANCEL();
