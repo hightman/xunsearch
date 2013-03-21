@@ -208,11 +208,15 @@ static void worker_server_timeout()
  */
 static void worker_cleanup()
 {
-	// cancel the tpool with wait
-	//log_info("deinit thread pool");
-	//TPOOL_DEINIT();
-	log_info("cancel threads");
+#if 0
+	// cancel the tpool with waiting
+	log_info("deinit thread pool");
+	TPOOL_DEINIT();
+#else
+	// cancel the tpool with waiting
+	log_info("cancel thread pool");
 	TPOOL_CANCEL();
+#endif
 }
 
 /**
@@ -351,7 +355,8 @@ int signal_term(int sig)
 	}
 	else
 	{
-		main_cleanup();
+		if (sig == SIGTERM)
+			main_cleanup();
 		return main_flag & FLAG_NO_ERROR ? 0 : -1;
 	}
 }
@@ -456,7 +461,7 @@ static void become_worker(int idx, sigset_t *sigmask)
 
 	// end the worker
 	main_cleanup();
-	exit(0);
+	_exit(0);
 }
 
 /**

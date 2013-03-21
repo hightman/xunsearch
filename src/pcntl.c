@@ -218,12 +218,11 @@ static void _sig_term(int sig)
 {
 	int rc = signal_term(sig);
 
-#if 0	// hightman.130115: due to block here
-	// NOTE: special error signal
-	if ((sig == SIGFPE || sig == SIGILL || sig == SIGSEGV || sig == SIGBUS)
+#ifdef DEBUG
+	// NOTE: generate core file in DEBUG mode
+	if ((sig == SIGFPE || sig == SIGILL || sig == SIGBUS || sig == SIGSEGV || sig == SIGABRT)
 		&& signal(sig, SIG_DFL) != SIG_ERR)
 	{
-		// restore to SIG_DFL to dump core file
 		raise(sig);
 		return;
 	}
@@ -231,7 +230,7 @@ static void _sig_term(int sig)
 
 	// exit or not
 	if (rc != SIGNAL_TERM_LATER)
-		exit(rc);
+		_exit(rc);
 }
 
 #ifndef WIFCONTINUED

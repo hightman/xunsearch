@@ -838,7 +838,7 @@ void conn_server_shutdown()
 	conn_server.flag |= CONN_SERVER_STOPPED;
 	event_del(&conn_server.listen_ev);
 	event_del(&conn_server.pipe_ev);
-	event_loopbreak();
+	close(conn_server.listen_ev.ev_fd);
 }
 
 /**
@@ -1087,5 +1087,4 @@ void conn_server_start(int listen_sock)
 	log_notice("event loop end");
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	close(listen_sock);
 }

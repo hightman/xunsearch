@@ -141,7 +141,6 @@ struct cache_count
 	unsigned int lastid; // last docid
 };
 
-/// FIXME: when the thread/process was forced to abort during locking, may cause dead lock
 #    define	C_LOCK_CACHE()		G_LOCK_CACHE(); conn->flag |= CONN_FLAG_CACHE_LOCKED
 #    define	C_UNLOCK_CACHE()	G_UNLOCK_CACHE(); conn->flag ^= CONN_FLAG_CACHE_LOCKED
 #endif	/* HAVE_MEMORY_CACHE */
@@ -156,7 +155,6 @@ struct search_result
 #endif
 	unsigned int facets_len; // data length of facets result
 };
-
 
 /**
  * Get a queryparser object from cached chain
@@ -2089,7 +2087,9 @@ static void task_do_scws(XS_CONN *conn)
 	// init the params
 	tv_sec = conn->tv.tv_sec;
 	conn->tv.tv_sec = CONN_TIMEOUT;
+	pthread_mutex_lock(&qp_mutex);
 	conn->zarg = (void *) scws_fork(_scws);
+	pthread_mutex_unlock(&qp_mutex);
 	if (conn->zarg == NULL)
 	{
 		log_error_conn("scws_fork faillure (ERROR: out of memory?)");
@@ -2132,7 +2132,11 @@ scws_end:
 
 	// free scws
 	if (conn->zarg != NULL)
+	{
+		pthread_mutex_lock(&qp_mutex);
 		scws_free((scws_t) conn->zarg);
+		pthread_mutex_unlock(&qp_mutex);
+	}
 
 	// push back or force to quit the connection
 	if (rc != CMD_RES_PAUSE && rc != CMD_RES_TIMEOUT)
@@ -2162,7 +2166,9 @@ void task_cancel(void *arg)
 		if (conn->flag & CONN_FLAG_ON_SCWS)
 		{
 			conn->flag ^= CONN_FLAG_ON_SCWS;
+			pthread_mutex_lock(&qp_mutex);
 			scws_free((scws_t) conn->zarg);
+			pthread_mutex_unlock(&qp_mutex);
 		}
 		else
 		{
@@ -2211,9 +2217,10 @@ void task_exec(void *arg)
 		zarg.qp->set_stopper(&stopper);
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
 		// scws object
+		pthread_mutex_lock(&qp_mutex);
 		s = scws_fork(_scws);
-		// custom dict
 		zarg.qp->set_scws(s);
+		pthread_mutex_unlock(&qp_mutex);
 
 		// load default database, try to init queryparser, enquire
 		conn->flag &= ~(CONN_FLAG_CH_DB | CONN_FLAG_CH_SORT | CONN_FLAG_CH_COLLAPSE);
