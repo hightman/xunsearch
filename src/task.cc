@@ -176,7 +176,10 @@ static Xapian::QueryParser *get_queryparser()
 	{
 		debug_malloc(head, sizeof(struct cache_qp), struct cache_qp);
 		if (head == NULL)
+		{
+			pthread_mutex_unlock(&qp_mutex);
 			throw new Xapian::InternalError("not enough memory to create cache_qp");
+		}
 		log_debug("create qp (ADDR:%p)", head);
 		head->qp = new Xapian::QueryParser();
 		log_debug("new (Xapian::QueryParser *) %p", head->qp);
