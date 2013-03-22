@@ -208,11 +208,11 @@ static void worker_server_timeout()
  */
 static void worker_cleanup()
 {
-#if 0
+#if 1
 	// cancel the tpool with waiting
 	log_info("deinit thread pool");
 	TPOOL_DEINIT();
-//#else
+#else
 	// cancel the tpool with waiting
 	log_info("cancel thread pool");
 	TPOOL_CANCEL();
