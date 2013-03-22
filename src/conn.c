@@ -440,7 +440,7 @@ static int conn_zcmd_first(XS_CONN *conn)
 		int len = 0;
 
 		// basic info
-		len += sprintf(&buf[len], "{\n  id:%s, num_accept:%d, num_burst:%d, max_burst:%d,\n  sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d, flag:0x%04x\n}\n",
+		len += sprintf(&buf[len], "{\n  id:%s, num_accept:%d, num_burst:%d, max_burst:%d,\n  sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d,\n  flag:0x%04x, version:\"" PACKAGE_VERSION "\"\n}\n",
 			log_ident(NULL), conn_server.num_accept, conn_server.num_burst, conn_server.max_burst,
 			CONN_FD(), conn->user->name, conn->user->home, conn->rcv_size, conn->flag);
 		// db list
