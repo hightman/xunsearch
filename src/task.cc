@@ -161,7 +161,7 @@ struct search_result
  */
 static Xapian::QueryParser *get_queryparser()
 {
-	static struct cache_qp *head;
+	struct cache_qp *head;
 
 	pthread_mutex_lock(&qp_mutex);
 	for (head = qp_base; head != NULL; head = head->next)
@@ -198,7 +198,7 @@ static Xapian::QueryParser *get_queryparser()
  */
 static void free_queryparser(Xapian::QueryParser *qp)
 {
-	static struct cache_qp *head;
+	struct cache_qp *head;
 
 	pthread_mutex_lock(&qp_mutex);
 	for (head = qp_base; head != NULL; head = head->next)
@@ -2337,7 +2337,7 @@ void task_init()
 void task_deinit()
 {
 	// free cached qp
-	static struct cache_qp *head;
+	struct cache_qp *head;
 	pthread_mutex_lock(&qp_mutex);
 	while ((head = qp_base) != NULL)
 	{
