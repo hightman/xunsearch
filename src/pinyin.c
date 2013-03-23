@@ -267,6 +267,8 @@ py_list *py_convert(const char *str, int len)
 
 			// save data (try to check full pinyin or not)
 			cur = py_segment(str + i, j - i);
+			if (cur == NULL)
+				continue;
 			for (tail = cur; tail->next != NULL; tail = tail->next);
 			if (tail->flag & 0x01)
 			{
