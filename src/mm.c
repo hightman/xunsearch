@@ -228,14 +228,14 @@ void *mm_malloc_nolock(MM *mm, size_t size)
 					if (best_prev == NULL)
 					{
 						mm->free_list = (mm_free_bucket *) ((char *) best + realsize);
-						mm->free_list->size = best->size - realsize;
 						mm->free_list->next = best->next;
+						mm->free_list->size = best->size - realsize;						
 					}
 					else
 					{
 						best_prev->next = (mm_free_bucket *) ((char *) best + realsize);
-						best_prev->next->size = best->size - realsize;
 						best_prev->next->next = best->next;
+						best_prev->next->size = best->size - realsize;						
 					}
 					best->size = realsize;
 					x = (mm_mem_head *) best;
