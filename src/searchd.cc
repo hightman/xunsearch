@@ -687,7 +687,7 @@ int main(int argc, char *argv[])
 	mc_set_max_memory(mc, ((msize - 1) << 20));
 	mc_set_hash_size(mc, (msize - 1) * 1000);
 	mc_set_copy_flag(mc, MC_FLAG_COPY);
-	mc_set_dash_type(mc, MC_DASH_RBTREE);
+	mc_set_dash_type(mc, MC_DASH_CHAIN);
 #endif	/* HAVE_MEMORY_CACHE */
 
 	// create tcp server & listen (should before setproctitle)
