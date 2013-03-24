@@ -99,7 +99,7 @@ static tpool_t thr_pool;
 
 #define	TPOOL_INIT()			tpool_init(&thr_pool, MAX_THREAD_NUM, 0, 0)
 #define	TPOOL_DEINIT()			tpool_destroy(&thr_pool)
-#define	TPOOL_CANCEL()			tpool_cancel_nowait(&thr_pool)
+#define	TPOOL_CANCEL()			tpool_cancel(&thr_pool)
 #define	TPOOL_ADD_TASK()		tpool_exec(&thr_pool, task_exec, task_cancel, conn)
 #define	TPOOL_KILL_TIMEOUT()	tpool_cancel_timeout(&thr_pool, MAX_WORKER_TIME)
 #define	TPOOL_LOG_STATUS()		log_info_conn("new task (USER:%s, SPARE:%d, TOTAL:%d)", \
@@ -208,15 +208,15 @@ static void worker_server_timeout()
  */
 static void worker_cleanup()
 {
-#if 1
-	// cancel the tpool with waiting
+	// wait tpool end without error
+	if (main_flag & FLAG_NO_ERROR)
+	{
+		log_info("cancel and wait thread pool");
+		TPOOL_CANCEL();
+	}
+	// destroy the tpool
 	log_info("deinit thread pool");
 	TPOOL_DEINIT();
-#else
-	// cancel the tpool with waiting
-	log_info("cancel thread pool");
-	TPOOL_CANCEL();
-#endif
 }
 
 /**
@@ -460,6 +460,7 @@ static void become_worker(int idx, sigset_t *sigmask)
 	worker_start();
 
 	// end the worker
+	main_flag |= FLAG_NO_ERROR;
 	main_cleanup();
 	_exit(0);
 }
