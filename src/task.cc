@@ -399,8 +399,9 @@ static void zarg_add_object(struct search_zarg *zarg, enum object_type type, con
 {
 	struct object_chain *oc;
 
-	// TODO: check return value of malloc()
 	debug_malloc(oc, sizeof(struct object_chain), struct object_chain);
+	if (oc == NULL) return;
+
 	oc->type = type;
 	oc->key = key == NULL ? NULL : strdup(key);
 	oc->val = val;

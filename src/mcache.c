@@ -437,6 +437,7 @@ static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 	{
 		mc_node *sibl = _rb_sibling(n);
 
+		if (!sibl) return;
 		if (sibl->dash_color == MC_RB_RED)
 		{
 			n->dash_up->dash_color = MC_RB_RED;
@@ -448,6 +449,7 @@ static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 			sibl = _rb_sibling(n);
 		}
 
+		if (!sibl) return;
 		if (n->dash_up->dash_color == MC_RB_BLACK &&
 			sibl->dash_color == MC_RB_BLACK &&
 			(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK) &&
@@ -491,6 +493,7 @@ static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 					sibl = _rb_sibling(n);
 				}
 
+				if (!sibl) return;
 				sibl->dash_color = n->dash_up->dash_color;
 				n->dash_up->dash_color = MC_RB_BLACK;
 				if (_rb_is_left(n))
