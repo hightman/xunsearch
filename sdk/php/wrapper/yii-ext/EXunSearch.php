@@ -43,7 +43,7 @@ class EXunSearch extends CApplicationComponent
 
 	public function init()
 	{
-		$lib = $this->xsRoot . '/sdk/php/lib/XS.php';
+		$lib = $this->xsRoot . '/' . (is_dir($this->xsRoot . '/sdk') ? '' : 'xunsearch-') . 'sdk/lib/XS.php';
 		if (!file_exists($lib))
 			throw new CException('"XS.php" not found, please check value of ' . __CLASS__ . '::$xsRoot');
 		if (($path = Yii::getPathOfAlias($this->project)) !== false)

@@ -68,7 +68,7 @@ try
 		date_default_timezone_set('Asia/Chongqing');
 
 	// basic
-	$vars['@project@'] = $project;
+	$vars['@project@'] = is_file($project) ? realpath($project) : $project;
 	$vars['@charset@'] = $xs->getDefaultCharset();
 	if ($vars['@charset@'] !== 'GB2312' && $vars['@charset@'] !== 'GBK')
 		$vars['@charset@'] = 'UTF-8';
