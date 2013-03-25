@@ -162,7 +162,7 @@ static int _get_hasher(const char *s, int size)
 /**
  * Lookup collision item from linear chain list
  */
-mc_node *_chain_fetch(mc_node **root, const char *key)
+static mc_node *_chain_fetch(mc_node **root, const char *key)
 {
 	mc_node *node;
 	for (node = *root; node != NULL && strcmp(node->key, key); node = node->dash_next);
@@ -185,7 +185,7 @@ mc_node *_chain_fetch(mc_node **root, const char *key)
 /**
  * Insert collision item into linear chain list
  */
-void _chain_insert(mc_node **root, mc_node *node)
+static void _chain_insert(mc_node **root, mc_node *node)
 {
 	node->dash_prev = NULL;
 	if (*root != NULL)
@@ -197,7 +197,7 @@ void _chain_insert(mc_node **root, mc_node *node)
 /**
  * Remove collision item(s) from linear chain list
  */
-void _chain_remove(mc_node **root, mc_node *node)
+static void _chain_remove(mc_node **root, mc_node *node)
 {
 	if (node->dash_prev != NULL)
 		node->dash_prev->dash_next = node->dash_next;
@@ -212,6 +212,7 @@ void _chain_remove(mc_node **root, mc_node *node)
 		node->dash_next->dash_prev = node->dash_prev;
 }
 
+#if 0	/* buggy rbtree begin */
 /**
  * Collision scheme of red-black tree
  */
@@ -318,7 +319,7 @@ static void _rb_rebalance(mc_node **root, mc_node *node)
 /**
  * Lookup collision item from rb-tree
  */
-mc_node *_rbtree_fetch(mc_node **root, const char *key)
+static mc_node *_rbtree_fetch(mc_node **root, const char *key)
 {
 	int cmp;
 	mc_node *node = *root;
@@ -337,7 +338,7 @@ mc_node *_rbtree_fetch(mc_node **root, const char *key)
 /**
  * Insert collision item into rb-tree
  */
-void _rbtree_insert(mc_node **root, mc_node *node)
+static void _rbtree_insert(mc_node **root, mc_node *node)
 {
 	if (*root == NULL)
 	{
@@ -514,7 +515,7 @@ static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 /**
  *  Remove node from rb-tree
  */
-void _rbtree_remove(mc_node **root, mc_node *node)
+static void _rbtree_remove(mc_node **root, mc_node *node)
 {
 	mc_node *child;
 
@@ -544,6 +545,7 @@ void _rbtree_remove(mc_node **root, mc_node *node)
 
 	_rb_unlink(root, node);
 }
+#endif	/* buggy rbtree end */
 
 /**
  * Remove a node
@@ -743,6 +745,7 @@ int mc_set_dash_type(MC *mc, int type)
 		mc->remove = _chain_remove;
 		return MC_OK;
 	}
+#if 0	/* buggy rbtree */
 	else if (type == MC_DASH_RBTREE)
 	{
 		mc->fetch = _rbtree_fetch;
@@ -750,6 +753,7 @@ int mc_set_dash_type(MC *mc, int type)
 		mc->remove = _rbtree_remove;
 		return MC_OK;
 	}
+#endif
 	else
 	{
 		return MC_EINVALID;
@@ -1059,11 +1063,12 @@ int main(int argc, char *argv[])
 	char *s;
 	MM *mm;
 
-	mm = mm_create(4 * 1024 * 1024);
+	mm = mm_create(2 << 20);
 	printf("[P] mm=%p\n", mm);
 	mc = mc_create(mm);
 	mc_set_hash_size(mc, 5);
-	mc->size = 1;
+	mc->size = 3;
+	mc_set_max_memory(mc, 1 << 20);
 	mc_set_copy_flag(mc, MC_FLAG_COPY);
 	mc_set_dash_type(mc, (argc > 1 && !strcmp(argv[1], "chain")) ? MC_DASH_CHAIN : MC_DASH_RBTREE);
 	show_mc(mc);
@@ -1071,6 +1076,9 @@ int main(int argc, char *argv[])
 
 	if (fork() == 0)
 	{
+		printf("[C] wait the parent pressure test\n");
+		sleep(1);
+
 		printf("[C] try to get lock\n");
 		mm_lock1(mm);
 		printf("[C] child running. save gg0..\n");
@@ -1105,6 +1113,38 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+		int i, max = 99999;
+		char key[128], value[128];
+		int j = time(NULL) % 999;
+		
+		mm_lock1(mm);
+		printf("[P] testing put gg?? for %d times\n", max);
+		for (i = 0; i < max; i++)
+		{
+			sprintf(key, "gg%d", i);
+			sprintf(value, "hightman%d", i);
+			SAVE(key, value);
+		}
+		printf("[P] testing get gg?? for %d times\n", max);
+		for (i = 0; i < max; i++)
+		{
+			sprintf(key, "gg%d", i);
+			s = mc_get(mc, key);
+			if ((i % j) == 0)
+				printf("[P] ... mc_get(%s) = %s\n", key, s);
+		}
+		printf("[P] testing del gg?? for %d times\n", max);
+		for (i = 0; i < max; i++)
+		{
+			if ((i % j) != 0)
+			{
+				sprintf(key, "gg%d", i);
+				mc_del(mc, key);
+			}
+		}
+		printf("[P] testing end\n");
+		mm_unlock1(mm);
+		
 		printf("[P] begin to sleep(1) & wait child\n");
 		sleep(1);
 		mm_lock1(mm);
