@@ -741,6 +741,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
 	Xapian::Query qq;
 
+	conn_server_add_num_task(1);
 	// check db & data length
 	if (zarg->db == NULL)
 		return CONN_RES_ERR(NODB);
@@ -865,6 +866,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	Xapian::Query qq;
 	unsigned char facets[MAX_SEARCH_FACETS + 2];
 
+	conn_server_add_num_task(1);
 	// load & clear specified facets
 	memset(facets, 0, sizeof(facets));
 	facets[0] = (conn->flag & CONN_FLAG_EXACT_FACETS) ? '+' : '~';
@@ -1150,6 +1152,7 @@ static int zcmd_task_get_synonyms(XS_CONN *conn)
 	struct search_zarg *zarg = (struct search_zarg *) conn->zarg;
 	unsigned int off, limit;
 
+	conn_server_add_num_task(1);
 	// check db
 	if (zarg->db == NULL)
 		return CONN_RES_ERR(NODB);
@@ -1312,6 +1315,7 @@ static int zcmd_task_get_query(XS_CONN *conn)
 	string str;
 	Xapian::Query qq;
 
+	conn_server_add_num_task(1);
 	if (XS_CMD_BLEN(cmd) == 0)
 		qq = *(zarg->qq);
 	else
@@ -1477,6 +1481,7 @@ static int zcmd_task_get_corrected(XS_CONN *conn)
 	Xapian::MSet ms;
 	Xapian::Enquire eq(*db);
 
+	conn_server_add_num_task(1);
 	// fixed query, clean white characters
 	if (XS_CMD_BLEN(cmd) == 0)
 		return CONN_RES_ERR(EMPTYQUERY);
@@ -1671,6 +1676,7 @@ static int zcmd_task_get_expanded(XS_CONN *conn)
 	XS_CMD *cmd = conn->zcmd;
 	Xapian::Database *db = fetch_conn_database(conn, SEARCH_LOG_DB);
 
+	conn_server_add_num_task(1);
 	// fixed query, clean white characters
 	if (XS_CMD_BLEN(cmd) == 0)
 		return CONN_RES_ERR(EMPTYQUERY);
@@ -1898,6 +1904,7 @@ static int zcmd_scws_get(XS_CONN *conn)
 	XS_CMD *cmd = conn->zcmd;
 	scws_t scws = (scws_t) conn->zarg;
 
+	conn_server_add_num_task(1);
 	if (cmd->arg1 == CMD_SCWS_GET_VERSION)
 	{
 		return CONN_RES_OK2(INFO, SCWS_VERSION);

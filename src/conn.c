@@ -41,7 +41,7 @@ struct xs_server
 	unsigned int num_burst; // number of burst connection now
 	unsigned int max_burst; // max burst number
 	unsigned int num_task; // number of thread tasks
-	time_t uptime;	// start time
+	time_t uptime; // start time
 
 	zcmd_exec_t zcmd_handler; // called to execute zcmd
 	void (*pause_handler)(XS_CONN *); // called to run external task
@@ -443,13 +443,13 @@ static int conn_zcmd_first(XS_CONN *conn)
 		int uptime = time(NULL) - conn_server.uptime;
 
 		// basic info
-		len += sprintf(&buf[len], "{\n  id:%s, uptime:%d, num_burst:%d, max_burst:%d,\n  "
-			"num_accept:%d(%.1f/s), num_task:%d(%.1f/s),\n  "
+		len += sprintf(&buf[len], "{\n  id:%s, uptime:%d, num_burst:%u, max_burst:%u,\n  "
+			"num_accept:%u, aps:%.1f, num_task:%u, tps:%.1f,\n  "
 			"sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d,\n  "
 			"flag:0x%04x, version:\"" PACKAGE_VERSION "\"\n}\n",
 			log_ident(NULL), uptime, conn_server.num_burst, conn_server.max_burst,
 			conn_server.num_accept, (float) conn_server.num_accept / uptime,
-			conn_server.num_task, (float) conn_server.num_task / uptime, 
+			conn_server.num_task, (float) conn_server.num_task / uptime,
 			CONN_FD(), conn->user->name, conn->user->home, conn->rcv_size, conn->flag);
 		// db list
 		len += sprintf(&buf[len], "DBS:");
@@ -706,8 +706,7 @@ ev_try:
 		{
 			case CMD_RES_PAUSE:
 				// task should start safely from HERE
-				log_debug_conn("connection paused to run other async task");
-				conn_server_add_num_task(1);
+				log_debug_conn("connection paused to run other async task");				
 				(*conn_server.pause_handler)(conn);
 				break;
 			case CMD_RES_CONT:
@@ -912,7 +911,11 @@ void conn_server_set_max_accept(int max_accept)
  */
 void conn_server_add_num_task(int num)
 {
+	//if (conn_server.flag & CONN_SERVER_THREADS)
+	//	pthread_mutex_lock(&pipe_mutex);
 	conn_server.num_task += num;
+	//if (conn_server.flag & CONN_SERVER_THREADS)
+	//	pthread_mutex_unlock(&pipe_mutex);
 }
 
 /**
