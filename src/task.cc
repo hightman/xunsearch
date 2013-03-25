@@ -2187,11 +2187,13 @@ void task_cancel(void *arg)
 		}
 		conn->zarg = NULL;
 	}
+#ifdef HAVE_MEMORY_CACHE
 	// free cache locking
 	if (conn->flag & CONN_FLAG_CACHE_LOCKED)
 	{
 		C_UNLOCK_CACHE();
 	}
+#endif
 
 	// close the connection
 	CONN_RES_ERR(TASK_CANCELED);
