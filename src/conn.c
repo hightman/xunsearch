@@ -36,10 +36,12 @@ struct xs_server
 	struct event listen_ev;
 	struct event pipe_ev;
 	struct timeval tv; // timeout of listening socket
-	int max_accept; // max accept number for the server
-	int num_accept; // current accepted socket number
-	int num_burst; // number of burst connection now
-	int max_burst; // max burst number
+	unsigned int max_accept; // max accept number for the server
+	unsigned int num_accept; // current accepted socket number
+	unsigned int num_burst; // number of burst connection now
+	unsigned int max_burst; // max burst number
+	unsigned int num_task; // number of thread tasks
+	time_t uptime;	// start time
 
 	zcmd_exec_t zcmd_handler; // called to execute zcmd
 	void (*pause_handler)(XS_CONN *); // called to run external task
@@ -438,10 +440,16 @@ static int conn_zcmd_first(XS_CONN *conn)
 		XS_CMDS *cmds;
 		XS_DB *db;
 		int len = 0;
+		int uptime = time(NULL) - conn_server.uptime;
 
 		// basic info
-		len += sprintf(&buf[len], "{\n  id:%s, num_accept:%d, num_burst:%d, max_burst:%d,\n  sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d,\n  flag:0x%04x, version:\"" PACKAGE_VERSION "\"\n}\n",
-			log_ident(NULL), conn_server.num_accept, conn_server.num_burst, conn_server.max_burst,
+		len += sprintf(&buf[len], "{\n  id:%s, uptime:%d, num_burst:%d, max_burst:%d,\n  "
+			"num_accept:%d(%.1f/s), num_task:%d(%.1f/s),\n  "
+			"sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d,\n  "
+			"flag:0x%04x, version:\"" PACKAGE_VERSION "\"\n}\n",
+			log_ident(NULL), uptime, conn_server.num_burst, conn_server.max_burst,
+			conn_server.num_accept, (float) conn_server.num_accept / uptime,
+			conn_server.num_task, (float) conn_server.num_task / uptime, 
 			CONN_FD(), conn->user->name, conn->user->home, conn->rcv_size, conn->flag);
 		// db list
 		len += sprintf(&buf[len], "DBS:");
@@ -699,6 +707,7 @@ ev_try:
 			case CMD_RES_PAUSE:
 				// task should start safely from HERE
 				log_debug_conn("connection paused to run other async task");
+				conn_server_add_num_task(1);
 				(*conn_server.pause_handler)(conn);
 				break;
 			case CMD_RES_CONT:
@@ -827,6 +836,7 @@ void conn_server_init()
 	memset(&conn_server, 0, sizeof(conn_server));
 	conn_server.zcmd_handler = NULL;
 	conn_server.tv.tv_sec = (CONN_TIMEOUT << 2);
+	time(&conn_server.uptime);
 }
 
 /**
@@ -895,6 +905,14 @@ int conn_server_get_num_accept()
 void conn_server_set_max_accept(int max_accept)
 {
 	conn_server.max_accept = max_accept > 0 ? max_accept : 0;
+}
+
+/**
+ * increase num task of server
+ */
+void conn_server_add_num_task(int num)
+{
+	conn_server.num_task += num;
 }
 
 /**

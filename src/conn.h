@@ -145,6 +145,9 @@ int conn_server_get_num_accept();
 /* set the max number of request to be processed */
 void conn_server_set_max_accept(int max_accept);
 
+/* increase num task of server */
+void conn_server_add_num_task(int num);
+
 /* push-back the conn event to listening thread */
 void conn_server_push_back(XS_CONN *conn);
 

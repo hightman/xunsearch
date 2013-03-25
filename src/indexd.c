@@ -837,7 +837,7 @@ static int remove_conn_wdb(XS_CONN *conn)
  */
 static int save_conn_request(XS_CONN *conn)
 {
-	int rc = CMD_RES_CONT;
+	int last_count, rc = CMD_RES_CONT;
 	off_t off;
 	XS_CMD *cmd = conn->zcmd;
 	XS_DB *db;
@@ -866,6 +866,7 @@ static int save_conn_request(XS_CONN *conn)
 	}
 
 	// parse & save the commands
+	last_count = db->count;
 	off = lseek(db->fd, 0, SEEK_CUR);
 	if (cmd->cmd == CMD_INDEX_EXDATA)
 	{
@@ -929,6 +930,9 @@ static int save_conn_request(XS_CONN *conn)
 		goto save_end;
 	}
 	update_eff_size(db->fd);
+
+	// update num task
+	conn_server_add_num_task(db->count - last_count);
 
 	// check to commit
 	if (db->count >= queue_size && db->pid == 0)
