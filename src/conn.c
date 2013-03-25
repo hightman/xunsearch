@@ -443,7 +443,7 @@ static int conn_zcmd_first(XS_CONN *conn)
 		int uptime = time(NULL) - conn_server.uptime;
 
 		// basic info
-		len += sprintf(&buf[len], "{\n  id:%s, uptime:%d, num_burst:%u, max_burst:%u,\n  "
+		len += sprintf(&buf[len], "{\n  id:\"%s\", uptime:%d, num_burst:%u, max_burst:%u,\n  "
 			"num_accept:%u, aps:%.1f, num_task:%u, tps:%.1f,\n  "
 			"sock:%d, name:\"%s\", home:\"%s\", rcv_size:%d,\n  "
 			"flag:0x%04x, version:\"" PACKAGE_VERSION "\"\n}\n",
