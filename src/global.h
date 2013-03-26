@@ -24,7 +24,7 @@
 extern MM *mm_global;
 
 #define	G_DECL()			MM *mm_global
-#define	G_INIT(mb)			mm_global = mm_create(mb * (1<<20))
+#define	G_INIT(mb)			mm_global = mm_create((mb) <<20)
 #define	G_DEINIT()			mm_destroy(mm_global)
 #define	G_MALLOC(sz)		mm_malloc(mm_global, sz)
 #define	G_FREE(p)			mm_free(mm_global, p)

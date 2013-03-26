@@ -10,18 +10,23 @@
 /**
  * Xunsearch wrapper as an application component for YiiFramework
  *
+ * @method XSIndex getIndex()
+ * @method XSSearch getSearch()
+ *
  * @author hightman
  * @version $Id$
- * @package extensions
  * @since 1.0
  */
 class EXunSearch extends CApplicationComponent
 {
 	public $xsRoot, $project, $charset;
-	private $_xs;
+	private $_xs, $_scws;
 
 	public function __call($name, $parameters)
 	{
+		// check methods of xs
+		if ($this->_xs !== null && method_exists($this, $name))
+			return call_user_func_array(array($this->_xs, $name), $parameters);
 		// check methods of index object
 		if ($this->_xs !== null && method_exists('XSIndex', $name))
 		{
@@ -53,11 +58,19 @@ class EXunSearch extends CApplicationComponent
 		$this->_xs->setDefaultCharset($this->charset);
 	}
 
+	/**
+	 * Quickly add a new document (without checking key conflicts)
+	 * @param mixed $data XSDocument object or data array to be added
+	 */
 	public function add($data)
 	{
 		$this->update($data, true);
 	}
 
+	/**
+	 * @param mixed $data XSDocument object or data array to be updated
+	 * @param boolean $add whether to add directly, default to false
+	 */
 	public function update($data, $add = false)
 	{
 		if ($data instanceof XSDocument)
@@ -67,5 +80,15 @@ class EXunSearch extends CApplicationComponent
 			$doc = new XSDocument($data);
 			$this->_xs->index->update($doc, $add);
 		}
+	}
+
+	/**
+	 * @return XSTokenizerScws get scws tokenizer
+	 */
+	public function getScws()
+	{
+		if ($this->_scws === null)
+			$this->_scws = new XSTokenizerScws;
+		return $this->_scws;
 	}
 }
