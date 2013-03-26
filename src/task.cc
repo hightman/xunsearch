@@ -2108,6 +2108,13 @@ static void task_do_scws(XS_CONN *conn)
 		rc = CMD_RES_ERROR;
 		goto scws_end;
 	}
+	else
+	{
+		// loading custom dict
+		char fpath[256];
+		sprintf(fpath, "%s/" CUSTOM_DICT_FILE, conn->user->home);
+		scws_add_dict((scws_t) conn->zarg, fpath, SCWS_XDICT_TXT);
+	}
 
 	// begin the task, parse & execute cmds list
 	// TODO: is need to check conn->zhead, conn->ztail should not be NULL
