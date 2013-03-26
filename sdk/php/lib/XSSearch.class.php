@@ -920,29 +920,23 @@ class XSSearch extends XSServer
 					&& $field->vno != XSFieldScheme::MIXED_VNO)
 				{
 					$this->regQueryPrefix($name);
-					if (!$field->isBoolIndex() && substr($part, $pos + 1, 1) != '('
-						&& preg_match('/[\x81-\xfe]/', $part))
-					{
-						$newQuery .= substr($part, 0, $pos + 1) . '(' . substr($part, $pos + 1) . ')';
-					}
-					else if ($field->isBoolIndex())
+					if ($field->hasCustomTokenizer())
 					{
 						// force to lowercase for boolean terms
 						$value = substr($part, $pos + 1);
-						// Add custom tokenizer supported
-						if (!$field->hasCustomTokenizer())
-							$newQuery .= substr($part, 0, $pos + 1) . strtolower($value);
-						else
+						$terms = array();
+						$tokens = $field->getCustomTokenizer()->getTokens($value);
+						foreach ($tokens as $term)
 						{
-							$terms = array();
-							$tokens = $field->getCustomTokenizer()->getTokens($value);
-							foreach ($tokens as $term)
-							{
-								$terms[] = strtolower($term);
-							}
-							$terms = array_unique($terms);
-							$newQuery .= $name . ':' . implode(' ' . $name . ':', $terms);
+							$terms[] = strtolower($term);
 						}
+						$terms = array_unique($terms);
+						$newQuery .= $name . ':' . implode(' ' . $name . ':', $terms);
+					}
+					else if (substr($part, $pos + 1, 1) != '(' && preg_match('/[\x81-\xfe]/', $part))
+					{
+						// force to add brackets for default scws tokenizer
+						$newQuery .= substr($part, 0, $pos + 1) . '(' . substr($part, $pos + 1) . ')';
 					}
 					else
 					{

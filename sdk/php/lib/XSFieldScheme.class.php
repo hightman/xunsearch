@@ -140,7 +140,7 @@ class XSFieldScheme implements IteratorAggregate
 	{
 		if (!$field instanceof XSFieldMeta)
 			$field = new XSFieldMeta($field, $config);
-		
+
 		if (isset($this->_fields[$field->name]))
 			throw new XSException('Duplicated field name: `' . $field->name . '\'');
 
@@ -244,39 +244,46 @@ class XSFieldMeta
 	const FLAG_INDEX_MIXED = 0x02;
 	const FLAG_INDEX_BOTH = 0x03;
 	const FLAG_WITH_POSITION = 0x10;
-
+	const FLAG_NON_BOOL = 0x80; // 强制让该字段参与权重计算 (非布尔)
 	/**
 	 * @var string 字段名称
 	 * 理论上支持各种可视字符, 推荐字符范围:[0-9A-Za-z-_], 长度控制在 1~32 字节为宜
 	 */
 	public $name;
+
 	/**
 	 * @var int 剪取长度 (单位:字节)
 	 * 用于在返回搜索结果自动剪取较长内容的字段, 默认为 0表示不截取, body 型字段默认为 300 字节
 	 */
 	public $cutlen = 0;
+
 	/**
 	 * @var int 混合区检索时的相对权重
 	 * 取值范围: 1~63, title 类型的字段默认为 5, 其它字段默认为 1
 	 */
 	public $weight = 1;
+
 	/**
 	 * @var int 字段类型
 	 */
 	public $type = 0;
+
 	/**
 	 * @var int 字段序号
 	 * 取值为 0~255, 同一字段方案内不能重复, 由 {@link XSFieldScheme::addField} 进行确定
 	 */
 	public $vno = 0;
+
 	/**
 	 * @var string 词法分析器
 	 */
 	private $tokenizer = XSTokenizer::DFL;
+
 	/**
 	 * @var integer 索引标志设置
 	 */
 	private $flag = 0;
+
 	/**
 	 * @staticvar XSTokenizer[] 分词器实例缓存
 	 */
@@ -335,6 +342,8 @@ class XSFieldMeta
 	 */
 	public function isBoolIndex()
 	{
+		if ($this->flag & self::FLAG_NON_BOOL)
+			return false;
 		return (!$this->hasIndex() || $this->tokenizer !== XSTokenizer::DFL);
 	}
 
@@ -482,6 +491,9 @@ class XSFieldMeta
 			if ($this->type === self::TYPE_BODY || $this->type === self::TYPE_TITLE)
 				$str .= "phrase = no\n";
 		}
+		// non-bool
+		if ($this->flag & self::FLAG_NON_BOOL)
+			$str .= "non_bool = yes\n";
 		return $str;
 	}
 
@@ -539,6 +551,13 @@ class XSFieldMeta
 				$this->flag |= self::FLAG_WITH_POSITION;
 			else if (!strcasecmp($config['phrase'], 'no'))
 				$this->flag &= ~ self::FLAG_WITH_POSITION;
+		}
+		if (isset($config['non_bool']))
+		{
+			if (!strcasecmp($config['non_bool'], 'yes'))
+				$this->flag |= self::FLAG_NON_BOOL;
+			else if (!strcasecmp($config['non_bool'], 'no'))
+				$this->flag &= ~ self::FLAG_NON_BOOL;
 		}
 		if (isset($config['tokenizer']) && $this->type != self::TYPE_ID
 			&& $config['tokenizer'] != 'default')
