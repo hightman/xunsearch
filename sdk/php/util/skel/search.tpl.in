@@ -94,7 +94,7 @@
         </dt>
         <dd>
           <p><?php echo $search->highlight(htmlspecialchars($doc->@field_body@)); ?></p>
-          <p class="text-error">
+          <p class="field-info text-error">
             @field_info@
           </p>
         </dd>
@@ -150,7 +150,7 @@
 <footer>
   <div class="container">
     <p>(C)opyright 2011 - @project_name@ search - 页面处理总时间：<?php printf('%.4f', $total_cost); ?>秒<br>
-      Powered by <?php echo PACKAGE_NAME . '/' . PACKAGE_VERSION; ?></p>
+      Powered by <a href="http://www.xunsearch.com/" target="_blank" title="开源免费的中文全文检索"><?php echo PACKAGE_NAME . '/' . PACKAGE_VERSION; ?></a></p>
   </div>
 </footer>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>

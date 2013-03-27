@@ -70,6 +70,15 @@ footer p {
 .result-list dt {
 	margin-top: 30px;
 }
+.field-info span {
+	margin-right: 10px;
+}
+.field-info strong {
+	margin-right: 4px;
+	font-weight: normal;
+	font-style: italic;
+	font-size: 90%;
+}
 .demo-error {
 	font-weight: 900;	
 }
