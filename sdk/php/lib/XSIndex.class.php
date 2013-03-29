@@ -111,6 +111,8 @@ class XSIndex extends XSServer
 						{
 							foreach ($terms as $term)
 							{
+								if (strlen($term) > 200)
+									continue;
 								$term = strtolower($term);
 								$cmds[] = new XSCommand(CMD_DOC_TERM, 1, $field->vno, $term);
 							}
@@ -134,6 +136,8 @@ class XSIndex extends XSServer
 				foreach ($terms as $term => $wdf)
 				{
 					$term = strtolower($term);
+					if (strlen($term) > 200)
+						continue;
 					$wdf2 = $field->isBoolIndex() ? 1 : $wdf * $field->weight;
 					while ($wdf2 > XSFieldMeta::MAX_WDF)
 					{
@@ -158,6 +162,8 @@ class XSIndex extends XSServer
 					$terms = $field->getCustomTokenizer()->getTokens($text, $doc);
 					foreach ($terms as $term)
 					{
+						if (strlen($term) > 200)
+							continue;
 						$term = strtolower($term);
 						$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf, $field->vno, $term);
 					}

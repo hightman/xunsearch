@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/03/27 13:26 */
+/* Automatically generated at 2013/03/29 11:33 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -161,6 +161,6 @@ define('PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('PACKAGE_NAME',	"xunsearch");
 define('PACKAGE_TARNAME',	"xunsearch");
 define('PACKAGE_URL',	"");
-define('PACKAGE_VERSION',	"1.4.6");
+define('PACKAGE_VERSION',	"1.4.7-dev");
 /* end the cmd defination */
 
