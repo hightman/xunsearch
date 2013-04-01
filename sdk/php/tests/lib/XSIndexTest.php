@@ -251,4 +251,60 @@ EOF;
 		$this->assertEquals(1, $search->count('subject:测看'));
 		$this->assertEquals(0, $search->count('subject:看'));
 	}
+
+	private function countSubjectTerm($term)
+	{
+		$search = $this->object->xs->search->reopen(true)->setCharset('utf-8');
+		return $search->setQuery(null)->addQueryTerm('subject', $term)->count();
+	}
+
+	public function testScwsMulti()
+	{
+		// objects
+		$index = $this->object;
+		$doc = new XSDocument('utf-8');
+		$doc->pid = 7788;
+		$doc->subject = '管理制度';
+		$doc->message = '中华人民共和国';
+		// default scws
+		$this->assertEquals(3, $index->getScwsMulti());
+		$index->setScwsMulti(16);
+		$this->assertEquals(3, $index->getScwsMulti());
+		$index->setScwsMulti(-1);
+		$this->assertEquals(3, $index->getScwsMulti());
+		$index->update($doc);
+		$index->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $this->countSubjectTerm('管理制度'));
+		$this->assertEquals(1, $this->countSubjectTerm('管理'));
+		$this->assertEquals(0, $this->countSubjectTerm('管'));
+		$this->assertEquals(0, $this->countSubjectTerm('制'));
+		// multi = 0
+		$index->setScwsMulti(0);
+		$index->update($doc);
+		$index->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $this->countSubjectTerm('管理制度'));
+		$this->assertEquals(0, $this->countSubjectTerm('管理'));
+		$this->assertEquals(0, $this->countSubjectTerm('管'));
+		$this->assertEquals(0, $this->countSubjectTerm('制'));
+		// multi = 5
+		$index->setScwsMulti(5);
+		$index->update($doc);
+		$index->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $this->countSubjectTerm('管理制度'));
+		$this->assertEquals(1, $this->countSubjectTerm('管理'));
+		$this->assertEquals(1, $this->countSubjectTerm('管'));
+		$this->assertEquals(0, $this->countSubjectTerm('制'));
+		// multi = 15
+		$index->setScwsMulti(15);
+		$index->update($doc);
+		$index->flushIndex();
+		sleep(2);
+		$this->assertEquals(1, $this->countSubjectTerm('管理制度'));
+		$this->assertEquals(1, $this->countSubjectTerm('管理'));
+		$this->assertEquals(1, $this->countSubjectTerm('管'));
+		$this->assertEquals(1, $this->countSubjectTerm('制'));
+	}
 }

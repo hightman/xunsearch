@@ -16,6 +16,7 @@
 #define	SEARCH_LOG_DB		"log_db"
 #define	DEFAULT_BACKLOG		63			// default backlog for listen()
 #define	MAX_EXPAND_LEN		15
+#define DEFAULT_SCWS_MULTI	3			// default scws multi level
 
 #ifdef HAVE_MM
 

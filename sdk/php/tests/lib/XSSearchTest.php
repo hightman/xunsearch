@@ -547,12 +547,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertInstanceOf('XSException', $e2);
 		$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
 	}
-	
+
 	public function testCustomDict()
 	{
 		$index = self::$xs->index;
 		$search = self::$xs->search;
-		
+
 		// without custom dict
 		$index->setCustomDict('');
 		$query = $search->reopen(true)->getQuery('去测测看');
@@ -566,5 +566,18 @@ EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
 		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
+	}
+
+	public function testScwsMulti()
+	{
+		$search = self::$xs->search;
+		// default scws		
+		$this->assertEquals(array('管理制度', '管理', '制度'), $search->terms('管理制度'));
+		// multi = 0
+		$search->setScwsMulti(0);
+		$this->assertEquals(array('管理制度'), $search->terms('管理制度'));
+		// multi = 2
+		$search->setScwsMulti(2);
+		$this->assertEquals(array('管理制度', '管理', '理制', '制度'), $search->terms('管理制度'));
 	}
 }

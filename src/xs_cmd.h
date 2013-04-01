@@ -541,6 +541,7 @@ struct xs_import_hdr
 #define	CMD_SCWS_GET_RESULT		2
 #define	CMD_SCWS_GET_TOPS		3
 #define	CMD_SCWS_HAS_WORD		4
+#define	CMD_SCWS_GET_MULTI		5
 
 #define	CMD_SCWS_SET_IGNORE		50
 #define	CMD_SCWS_SET_MULTI		51

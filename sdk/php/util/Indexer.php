@@ -37,11 +37,12 @@ foreach ($params as $_)
 // file & database
 $file = XSUtil::getOpt(null, 'file', true);
 $db = XSUtil::getOpt('d', 'db');
+$scws_multi = XSUtil::getOpt(null, 'scws-multi');
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log 
-		&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym))
+	|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log
+	&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym && !$scws_multi))
 {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
@@ -79,6 +80,8 @@ Indexer - 索引批量管理、导入工具 ($version)
     --del-synonym=<raw1[:synonym1[,raw2[:synonym2]]]...>
                  删除一个或多个同义词, 多个之间用半角逗号分隔, 原词和同义词之间用冒号分隔
                  省略同义词则表示删除该原词的所有同义词
+    --scws-multi[=level]
+                 查看或设置搜索语句的 scws 复合分词等级（值：0-15，默认为 3）
     --rebuild    使用平滑重建方式导入数据，必须与 --source 配合使用
     --stop-rebuild 强制中止没未完成的索引重建状态 (慎用)
     --clean      清空库内当前的索引数据
@@ -161,6 +164,14 @@ try
 	if ($db !== null)
 		$index->setDb($db);
 
+	// scws multi
+	if ($scws_multi !== null && $scws_multi !== true)
+	{
+		$index->setScwsMulti($scws_multi);
+		if (!empty($source))
+			$scws_multi = null;
+	}
+
 	// special actions
 	if ($info !== null)
 	{
@@ -217,6 +228,11 @@ try
 				echo "OK\n";
 			}
 		}
+	}
+	else if ($scws_multi !== null)
+	{
+		$level = $index->getScwsMulti();
+		echo "当前索引库的 scws 复合分词等级为：$level\n";
 	}
 	else
 	{

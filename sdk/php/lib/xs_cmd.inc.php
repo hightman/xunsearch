@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/03/29 11:33 */
+/* Automatically generated at 2013/04/01 14:09 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -103,6 +103,7 @@ define('CMD_SCWS_GET_VERSION',	1);
 define('CMD_SCWS_GET_RESULT',	2);
 define('CMD_SCWS_GET_TOPS',	3);
 define('CMD_SCWS_HAS_WORD',	4);
+define('CMD_SCWS_GET_MULTI',	5);
 define('CMD_SCWS_SET_IGNORE',	50);
 define('CMD_SCWS_SET_MULTI',	51);
 define('CMD_SCWS_SET_DUALITY',	52);

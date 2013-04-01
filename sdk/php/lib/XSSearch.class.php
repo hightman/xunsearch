@@ -338,6 +338,26 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置当前搜索语句的分词复合等级
+	 * 复合等级是 scws 分词粒度控制的一个重要参数, 是长词细分处理依据, 默认为 3, 值范围 0~15
+	 * 注意: 这个设置仅直对本次搜索有效, 仅对设置之后的 {@link setQuery} 起作用, 由于 query
+	 * 设计的方式问题, 目前无法支持搜索语句单字切分, 但您可以在模糊检索时设为 0 来关闭复合分词
+	 * @param int $level 要设置的分词复合等级
+	 * @return XSSearch 返回自身对象以支持串接操作
+	 * @since 1.4.7
+	 */
+	public function setScwsMulti($level)
+	{
+		$level = intval($level);
+		if ($level >= 0 && $level < 16)
+		{
+			$cmd = array('cmd' => CMD_SEARCH_SCWS_SET, 'arg1' => CMD_SCWS_SET_MULTI, 'arg2' => $level);
+			$this->execCommand($cmd);
+		}
+		return $this;
+	}
+
+	/**
 	 * 设置搜索结果的数量和偏移
 	 * 用于搜索结果分页, 每次调用 {@link search} 后会还原这2个变量到初始值
 	 * @param int $limit 数量上限, 若设为 0 则启用默认值 self::PAGE_SIZE
@@ -838,7 +858,7 @@ class XSSearch extends XSServer
 	 * @param float $scale 权重计算缩放比例, 默认为 1表示不缩放, 其它值范围 0.xx ~ 655.35
 	 * @return string 修正后的搜索语句
 	 */
-	private function addQueryString($query, $addOp = CMD_QUERY_OP_AND, $scale = 1)
+	public function addQueryString($query, $addOp = CMD_QUERY_OP_AND, $scale = 1)
 	{
 		$query = $this->preQueryString($query);
 		$bscale = ($scale > 0 && $scale != 1) ? pack('n', intval($scale * 100)) : '';

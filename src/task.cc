@@ -645,9 +645,18 @@ static int zcmd_task_default(XS_CONN *conn)
 		}
 			break;
 		case CMD_SEARCH_SCWS_SET:
+			if (cmd->arg1 == CMD_SCWS_SET_MULTI)
+			{
+				scws_t scws = (scws_t) zarg->qp->get_scws();
+				if (scws != NULL)
+				{
+					scws_set_multi(scws, (cmd->arg2 << 12) & SCWS_MULTI_MASK);
+					log_debug_conn("change scws multi level (MODE:%d)", cmd->arg2);
+				}
+			}
+			break;
 		case CMD_SEARCH_SCWS_GET:
 			rc = CMD_RES_UNIMP;
-			break;
 		default:
 			rc = CMD_RES_NEXT;
 			break; // passed to next
@@ -1887,7 +1896,7 @@ static int zcmd_scws_set(XS_CONN *conn)
 	}
 	else if (cmd->arg1 == CMD_SCWS_SET_MULTI)
 	{
-		scws_set_multi(scws, (cmd->arg2 << 12));
+		scws_set_multi(scws, (cmd->arg2 << 12) & SCWS_MULTI_MASK);
 	}
 	else if (cmd->arg1 == CMD_SCWS_SET_IGNORE)
 	{
@@ -1908,6 +1917,12 @@ static int zcmd_scws_get(XS_CONN *conn)
 	if (cmd->arg1 == CMD_SCWS_GET_VERSION)
 	{
 		return CONN_RES_OK2(INFO, SCWS_VERSION);
+	}
+	else if (cmd->arg1 == CMD_SCWS_GET_MULTI)
+	{
+		char buf[8];
+		sprintf(buf, "%d", scws->mode & SCWS_MULTI_MASK);
+		return CONN_RES_OK2(INFO, buf);
 	}
 	else if (cmd->arg1 == CMD_SCWS_HAS_WORD)
 	{

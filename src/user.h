@@ -36,7 +36,8 @@ typedef struct xs_db
 {
 	char name[XS_MAX_NAME_LEN];
 	// name of database -> $HOME/$name (we can use stub file to support remote db)
-	int flag; // db flag, 0x01->to be cleand
+	short flag; // db flag, 0x01->to be cleand
+	short scws_multi; //scws multi setting
 	int fd; // temp fd to save received data
 	int count; // count of uncommitted documents
 	int lcount; // last count of record point

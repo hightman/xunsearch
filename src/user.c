@@ -191,6 +191,7 @@ XS_DB *xs_user_get_db(XS_USER *user, const char *name, int len)
 			memcpy(db->name, name, len);
 			db->next = user->db;
 			db->flag = XS_DBF_FORCE_COMMIT;
+			db->scws_multi = DEFAULT_SCWS_MULTI;
 			db->fd = -1;
 			user->db = db;
 		}

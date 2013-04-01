@@ -13,14 +13,15 @@ require_once dirname(__FILE__) . '/../lib/XS.php';
 require_once dirname(__FILE__) . '/XSUtil.class.php';
 
 // check arguments
-XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort', 'add-weight'));
+XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort', 'add-weight', 'scws-multi'));
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
 $synonyms = XSUtil::getOpt(null, 'list-synonyms');
 $terms = XSUtil::getOpt(null, 'terms');
 $weights = XSUtil::getOpt(null, 'add-weight');
-$info = XSUtil::getopt(null, 'info');
+$info = XSUtil::getOpt(null, 'info');
+$scws_multi = XSUtil::getOpt(null, 'scws-multi');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
@@ -55,6 +56,8 @@ Quest - 搜索查询和测试工具 ($version)
     -s <field1[,field2[,...]] 指定排序字段，在字段前加上 ~ 符号表示逆序
     --fuzzy      将搜索默认设为模糊搜索
     --synonym    开启自动同义词搜索功能
+    --scws-multi=<level>
+                 查看或设置搜索语句的 scws 复合分词等级（值：0-15，默认为 3）
     --add-weight=<[field1:]word1[:weight1][,[field2:]word2[:weight2]]>
                  添加搜索权重词汇，词与次数之间用半角冒号分隔
     --hot[=total|last|cur]
@@ -114,6 +117,8 @@ try
 			$search->addDb(trim($dbs[$i]));
 		}
 	}
+	if ($scws_multi !== null)
+		$search->setScwsMulti($scws_multi);
 
 	if ($hot !== null)
 	{

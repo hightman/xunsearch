@@ -218,7 +218,9 @@ static void db_import_call(XS_DB *db, XS_USER *user)
 	// fork child process to run the import
 	if ((pid = fork()) == 0)
 	{
-		EXTERNAL_CALL(xs_import, "xs-import", "-Q", dbpath, sndfile);
+		char arg[16];
+		sprintf(arg, "-m%d", db->scws_multi);
+		EXTERNAL_CALL(xs_import, "xs-import", "-Q", arg, dbpath, sndfile);
 	}
 	else if (pid > 0)
 	{
@@ -1221,6 +1223,21 @@ static int index_zcmd_exec(XS_CONN *conn)
 		case CMD_DOC_VALUE:
 		case CMD_DOC_INDEX:
 			rc = CMD_RES_CONT | CMD_RES_SAVE;
+			break;
+			// scws multi
+		case CMD_SEARCH_SCWS_SET:
+			if (cmd->arg1 == CMD_SCWS_SET_MULTI && get_conn_wdb(conn) != NULL)
+				conn->wdb->scws_multi = (short) cmd->arg2;
+			break;
+		case CMD_SEARCH_SCWS_GET:
+			if (cmd->arg1 != CMD_SCWS_GET_MULTI || get_conn_wdb(conn) == NULL)
+				rc = CMD_RES_UNIMP;
+			else
+			{
+				char buf[8];
+				sprintf(buf, "%d", conn->wdb->scws_multi);
+				rc = CONN_RES_OK2(INFO, buf);
+			}
 			break;
 			// others, passed to next handler
 		default:

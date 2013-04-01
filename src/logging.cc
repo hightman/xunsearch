@@ -91,7 +91,7 @@ static scws_t load_user_scws(int multi, char *dbpath)
 	scws_set_dict(s, SCWS_ETCDIR "/dict.utf8.xdb", SCWS_XDICT_MEM);
 	scws_add_dict(s, SCWS_ETCDIR "/" CUSTOM_DICT_FILE, SCWS_XDICT_TXT);
 	scws_add_dict(s, ptr, SCWS_XDICT_TXT);
-	scws_set_multi(s, multi << 12);
+	scws_set_multi(s, (multi << 12) & SCWS_MULTI_MASK);
 	return s;
 }
 

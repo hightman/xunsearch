@@ -225,7 +225,8 @@ int conn_quit(XS_CONN *conn, int res)
 	close(CONN_FD());
 
 	debug_free(conn);
-	conn_server.num_burst--;
+	if (conn_server.num_burst > 0)
+		conn_server.num_burst--;
 	return CMD_RES_QUIT;
 }
 

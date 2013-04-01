@@ -304,6 +304,40 @@ class XSIndex extends XSServer
 	}
 
 	/**
+	 * 设置当前索引库的分词复合等级
+	 * 复合等级是 scws 分词粒度控制的一个重要参数, 是长词细分处理依据, 默认为 3, 值范围 0~15
+	 * 注意: 这个设置仅直对当前索引库有效, 多次调用设置值被覆盖仅最后那次设置有效,
+	 * 而且仅对设置之后提交的索引数据起作用, 如需对以前的索引数据生效请重建索引.
+	 * @param int $level 要设置的分词复合等级
+	 * @return XSIndex 返回自身对象以支持串接操作
+	 * @since 1.4.7
+	 * @throw XSException 出错时抛出异常
+	 */
+	public function setScwsMulti($level)
+	{
+		$level = intval($level);
+		if ($level >= 0 && $level < 16)
+		{
+			$cmd = array('cmd' => CMD_SEARCH_SCWS_SET, 'arg1' => CMD_SCWS_SET_MULTI, 'arg2' => $level);
+			$this->execCommand($cmd);
+		}
+		return $this;
+	}
+
+	/**
+	 * 获取当前索引库的分词复合等级
+	 * @return int 返回当前库的分词复合等级
+	 * @see setScwsMulti
+	 * @since 1.4.7
+	 */
+	public function getScwsMulti()
+	{
+		$cmd = array('cmd' => CMD_SEARCH_SCWS_GET, 'arg1' => CMD_SCWS_GET_MULTI);
+		$res = $this->execCommand($cmd, CMD_OK_INFO);
+		return intval($res->buf);
+	}
+
+	/**
 	 * 开启索引命令提交缓冲区
 	 * 为优化网络性能, 有必要先将本地提交的 add/update/del 等索引变动指令缓存下来, 
 	 * 当总大小达到参数指定的 size 时或调用 {@link closeBuffer} 时再真正提交到服务器

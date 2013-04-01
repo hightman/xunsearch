@@ -4,6 +4,7 @@
 // $Id$
 $prefix = trim(file_get_contents(getenv('HOME') . '/.xs_installed'));
 shell_exec($prefix . '/bin/xs-ctl.sh restart');
+sleep(1);
 
 // global temp ini files
 $GLOBALS['fixIniData'] = array(
