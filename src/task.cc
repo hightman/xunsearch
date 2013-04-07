@@ -2379,6 +2379,7 @@ void task_deinit()
 		debug_free(head);
 	}
 	pthread_mutex_unlock(&qp_mutex);
+	pthread_mutex_destroy(&qp_mutex);
 
 	// unload scws base
 	if (_scws != NULL)

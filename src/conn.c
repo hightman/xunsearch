@@ -1107,6 +1107,8 @@ void conn_server_start(int listen_sock)
 
 	// end the event loop
 	log_notice("event loop end");
+	if (conn_server.flag & CONN_SERVER_THREADS)
+		pthread_mutex_destroy(&pipe_mutex);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
 }

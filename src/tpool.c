@@ -344,6 +344,7 @@ void tpool_destroy(tpool_t *tp)
 		// cancel & wait
 		tpool_do_cancel(tp, 1);
 	}
+	pthread_mutex_destroy(&tp->mutex);
 
 	// clean inited status
 	tp->status ^= TPOOL_STATUS_INITED;
