@@ -479,6 +479,9 @@ class XSSearch extends XSServer
 		$query = $query === null ? '' : $this->preQueryString($query);
 		$page = pack('II', $this->_offset, $this->_limit > 0 ? $this->_limit : self::PAGE_SIZE);
 
+		// init special field hrere
+		$this->initSpecialField();
+
 		// get result header
 		$cmd = new XSCommand(CMD_SEARCH_GET_RESULT, 0, $this->_defaultOp, $query, $page);
 		$res = $this->execCommand($cmd, CMD_OK_RESULT_BEGIN);
@@ -973,26 +976,6 @@ class XSSearch extends XSServer
 			}
 			$newQuery .= $part;
 		}
-
-		// check to send cutlen/numeric once
-		if ($this->_fieldSet !== true)
-		{
-			foreach ($this->xs->getAllFields() as $field) /* @var $field XSFieldMeta */
-			{
-				if ($field->cutlen != 0)
-				{
-					$len = min(127, ceil($field->cutlen / 10));
-					$cmd = new XSCommand(CMD_SEARCH_SET_CUT, $len, $field->vno);
-					$this->execCommand($cmd);
-				}
-				if ($field->isNumeric())
-				{
-					$cmd = new XSCommand(CMD_SEARCH_SET_NUMERIC, 0, $field->vno);
-					$this->execCommand($cmd);
-				}
-			}
-			$this->_fieldSet = true;
-		}
 		return XS::convert($newQuery, 'UTF-8', $this->_charset);
 	}
 
@@ -1011,6 +994,30 @@ class XSSearch extends XSServer
 			$this->execCommand($cmd);
 			$this->_prefix[$name] = true;
 		}
+	}
+
+	/**
+	 * 设置字符型字段及裁剪长度
+	 */
+	private function initSpecialField()
+	{
+		if ($this->_fieldSet === true)
+			return;
+		foreach ($this->xs->getAllFields() as $field) /* @var $field XSFieldMeta */
+		{
+			if ($field->cutlen != 0)
+			{
+				$len = min(127, ceil($field->cutlen / 10));
+				$cmd = new XSCommand(CMD_SEARCH_SET_CUT, $len, $field->vno);
+				$this->execCommand($cmd);
+			}
+			if ($field->isNumeric())
+			{
+				$cmd = new XSCommand(CMD_SEARCH_SET_NUMERIC, 0, $field->vno);
+				$this->execCommand($cmd);
+			}
+		}
+		$this->_fieldSet = true;
 	}
 
 	/**
