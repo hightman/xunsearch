@@ -211,7 +211,8 @@ int conn_quit(XS_CONN *conn, int res)
 	}
 
 	// flush all output buffer
-	CONN_FLUSH();
+	if (res != CMD_RES_IOERR)
+		CONN_FLUSH();
 
 	// check to free zcmd
 	if (conn->zcmd != NULL && (conn->flag & CONN_FLAG_ZMALLOC))
@@ -660,7 +661,9 @@ int conn_cmds_parse(XS_CONN *conn, zcmd_exec_t func)
 	}
 
 	// flush the send buffer
-	if (CONN_FLUSH() != 0)
+	// **IMPORTANT** skip ioerr & pause
+	// otherwise, if ioerr here will cause async task broken
+	if (rc != CMD_RES_IOERR && rc != CMD_RES_PAUSE && CONN_FLUSH() != 0)
 		rc = CMD_RES_IOERR;
 
 	// move the buffer
@@ -705,18 +708,18 @@ ev_try:
 		}
 		switch (rc)
 		{
-			case CMD_RES_PAUSE:
-				// task should start safely from HERE
-				log_debug_conn("connection paused to run other async task");				
-				(*conn_server.pause_handler)(conn);
-				break;
 			case CMD_RES_CONT:
 				goto ev_try;
+			case CMD_RES_PAUSE:
+				// task should start safely from HERE
+				log_debug_conn("connection paused to run other async task");
+				(*conn_server.pause_handler)(conn);
+				return;
 			default:
 				// CMD_RES_QUIT,CMD_RES_CLOSED, CMD_RES_IOERR
 				// CMD_RES_NOMEM, CMD_RES_ERROR, CMD_RES_OTHER
 				conn_quit(conn, rc);
-				break;
+				return;
 		}
 	}
 
