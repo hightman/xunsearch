@@ -140,6 +140,7 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_SEARCH_SET_NUMERIC:
 		case CMD_SEARCH_SET_COLLAPSE:
 		case CMD_SEARCH_SET_FACETS:
+		case CMD_SEARCH_SET_CUTOFF:
 		case CMD_QUERY_INIT:
 		case CMD_QUERY_PARSE:
 		case CMD_QUERY_TERM:

@@ -87,6 +87,23 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置百分比/权重剔除参数
+	 * 通常是在开启 {setFuzzy} 或使用 OR 连接搜索语句时才需要设置此项
+	 * @param int $percent 剔除匹配百分比低于此值的文档, 值范围 0-100
+	 * @param float $weight 剔除权重低于此值的文档, 值范围 0.1-25.5, 0 表示不剔除
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @see setFuzzy
+	 */
+	public function setCutOff($percent, $weight = 0)
+	{
+		$percent = max(0, min(100, intval($percent)));
+		$weight = max(0, (intval($weight * 10) & 255));
+		$cmd = new XSCommand(CMD_SEARCH_SET_CUTOFF, $percent, $weight);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
 	 * 开启自动同义词搜索功能
 	 * @param bool $value 设为 true 表示开启同义词功能, 设为 false 关闭同义词功能
 	 * @return XSSearch 返回对象本身以支持串接操作

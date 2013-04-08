@@ -13,7 +13,7 @@ require_once dirname(__FILE__) . '/../lib/XS.php';
 require_once dirname(__FILE__) . '/XSUtil.class.php';
 
 // check arguments
-XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort', 'add-weight', 'scws-multi'));
+XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's', 'project', 'query', 'db', 'limit', 'charset', 'sort', 'add-weight', 'scws-multi', 'cut-off'));
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
@@ -22,6 +22,7 @@ $terms = XSUtil::getOpt(null, 'terms');
 $weights = XSUtil::getOpt(null, 'add-weight');
 $info = XSUtil::getOpt(null, 'info');
 $scws_multi = XSUtil::getOpt(null, 'scws-multi');
+$cut_off = XSUtil::getOpt(null, 'cut-off');
 
 // magick output charset
 $charset = XSUtil::getOpt('c', 'charset');
@@ -72,6 +73,8 @@ Quest - 搜索查询和测试工具 ($version)
     --limit=<num>用于设置 suggest|hot|related 的返回数量，两者默认值均为 10 个
                  对于普通搜索和列出同义词时，还支持用 --limit=offset,num 的格式
     --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
+    --cut-off=<percent[,weight>
+                 设置搜索结果剔除的匹配百分比及权限（百分比：0-100，权重：0.1-25.5）
     --terms      列出搜索词被切分后的词（不含排除及权重词）
     --info       显示当前连接服务端的信息及线程（仅绘制当前 worker 进程）
     -h|--help    显示帮助信息
@@ -313,6 +316,17 @@ try
 			}
 		}
 
+		// cut off
+		if ($cut_off !== null)
+		{
+			if (($pos = strpos($cut_off, ',')))
+				$search->setCutOff(substr($cut_off, 0, $pos), substr($cut_off, $pos + 1));
+			else if (strpos($cut_off, '.') !== false)
+				$search->setCutOff(0, $cut_off);
+			else
+				$search->setCutOff($cut_off);
+		}
+
 		// preform search
 		$begin = microtime(true);
 		$result = $search->setLimit($limit1, $offset)->search();
@@ -348,7 +362,7 @@ try
 				$body = cli_highlight($doc->f($fbody)) . "\n";
 
 			// main fields
-			printf("\n%d. \033[4m%s#%s# [%d%%]\033[m\n", $doc->rank(), $title, $doc->f($fid), $doc->percent());
+			printf("\n%d. \033[4m%s#%s# [%d%%,%.2f]\033[m\n", $doc->rank(), $title, $doc->f($fid), $doc->percent(), $doc->weight());
 			echo $body;
 
 			// other fields

@@ -410,6 +410,12 @@ struct xs_import_hdr
 #define	CMD_SEARCH_SCWS_SET		198
 
 /**
+ * Set the percentage and/or weight cutoffs
+ * arg1:percent_off(0-100), arg2:weight_off(0.1-25.5)
+ */
+#define	CMD_SEARCH_SET_CUTOFF	199
+
+/**
  * ----------------------------------
  * Commands for search query: 224~255
  * ----------------------------------
