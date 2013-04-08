@@ -26,20 +26,24 @@ class XSCommand extends XSComponent
 	 * 通常是预定义常量 CMD_xxx, 取值范围 0~255
 	 */
 	public $cmd = CMD_NONE;
+
 	/**
 	 * @var int 参数1
 	 * 取值范围 0~255, 具体含义根据不同的 CMD 而变化
 	 */
 	public $arg1 = 0;
+
 	/**
 	 * @var int 参数2
 	 * 取值范围 0~255, 常用于存储 value no, 具体参照不同 CMD 而确定
 	 */
 	public $arg2 = 0;
+
 	/**
 	 * @var string 主数据内容, 最长 2GB
 	 */
 	public $buf = '';
+
 	/**
 	 * @var string 辅数据内容, 最长 255字节
 	 */
@@ -127,10 +131,10 @@ class XSServer extends XSComponent
 	 * @var XS 服务端关联的 XS 对象
 	 */
 	public $xs;
-	private $_sock, $_conn;
-	private $_flag;
-	private $_project;
-	private $_sendBuffer;
+	protected $_sock, $_conn;
+	protected $_flag;
+	protected $_project;
+	protected $_sendBuffer;
 
 	/**
 	 * 构造函数, 打开连接
@@ -344,7 +348,7 @@ class XSServer extends XSComponent
 	 * @param string $len 要写入的长度, 默认为字符串长度
 	 * @throw XSException 失败时抛出异常
 	 */
-	private function write($buf, $len = 0)
+	protected function write($buf, $len = 0)
 	{
 		// quick return for empty buf
 		$buf = strval($buf);
@@ -380,7 +384,7 @@ class XSServer extends XSComponent
 	 * @return string 成功时返回读到的字符串
 	 * @throw XSException 失败时抛出异常
 	 */
-	private function read($len)
+	protected function read($len)
 	{
 		// quick return for zero size
 		if ($len == 0)
@@ -412,7 +416,7 @@ class XSServer extends XSComponent
 	 * 检测服务端的连接情况
 	 * @throw XSException 连接不可用时抛出异常
 	 */
-	private function check()
+	protected function check()
 	{
 		if ($this->_sock === null)
 			throw new XSException('No server connection');
@@ -424,7 +428,7 @@ class XSServer extends XSComponent
 	 * 连接服务端
 	 * @throw XSException 无法连接时抛出异常
 	 */
-	private function connect()
+	protected function connect()
 	{
 		// connect to server
 		$conn = $this->_conn;
