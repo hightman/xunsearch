@@ -65,6 +65,8 @@ if test "$enable_debug" = "yes"; then
 	tmp_cxxflags=`echo $CXXFLAGS | sed 's/-g//g'`
 	if test "$tmp_cflags" = "$CFLAGS" ; then CFLAGS="$CFLAGS -g"; fi
 	if test "$tmp_cxxflags" = "$CXXFLAGS" ; then CXXFLAGS="$CXXFLAGS -g"; fi
+	CFLAGS=`echo $CFLAGS | sed 's/-O@<:@0-9@:>@/-O0/g'`
+	CXXFLAGS=`echo $CXXFLAGS | sed 's/-O@<:@0-9@:>@/-O0/g'`
 	AC_DEFINE(DEBUG, 1, [Define to 1 if you want to enable debug flags])
 else
 	tmp_cflags=`echo $CFLAGS | sed 's/-O//g'`
