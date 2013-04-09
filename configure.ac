@@ -102,7 +102,7 @@ if test "$with_libevent" != "no" ; then
 	LIBEVENT_DIR=""
 	if test "$with_libevent" = "yes" ; then
         search_dirs=`echo $ac_search_dirs | sed 's#<name>#libevent#g'`
-		for tmpdir in $ac_search_dirs; do
+		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/event.h ; then
 				LIBEVENT_DIR=$tmpdir
 				break;
@@ -163,7 +163,7 @@ if test "$with_scws" != "no" ; then
 	SCWS_DIR=""
 	if test "$with_scws" = "yes" ; then
         search_dirs=`echo $ac_search_dirs | sed 's#<name>#scws#g'`
-		for tmpdir in $ac_search_dirs; do
+		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/scws/scws.h ; then
 				SCWS_DIR=$tmpdir
 				break;
@@ -219,7 +219,7 @@ if test "$with_xapian" != "no" ; then
 	XAPIAN_DIR=""
 	if test "$with_xapian" = "yes" ; then
         search_dirs=`echo $ac_search_dirs | sed 's#<name>#xapian#g'`       
-		for tmpdir in $ac_search_dirs; do
+		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/xapian.h ; then
 				XAPIAN_DIR=$tmpdir
 				break;
