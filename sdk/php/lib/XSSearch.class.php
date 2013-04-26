@@ -962,8 +962,15 @@ class XSSearch extends XSServer
 					$this->regQueryPrefix($name);
 					if ($field->hasCustomTokenizer())
 					{
+						$prefix = $i > 0 ? substr($part, 0, $i) : '';
+						$suffix = '';
 						// force to lowercase for boolean terms
 						$value = substr($part, $pos + 1);
+						if (substr($value, -1, 1) === ')')
+						{
+							$suffix = ')';
+							$value = substr($value, 0, -1);
+						}
 						$terms = array();
 						$tokens = $field->getCustomTokenizer()->getTokens($value);
 						foreach ($tokens as $term)
@@ -971,7 +978,7 @@ class XSSearch extends XSServer
 							$terms[] = strtolower($term);
 						}
 						$terms = array_unique($terms);
-						$newQuery .= $name . ':' . implode(' ' . $name . ':', $terms);
+						$newQuery .= $prefix . $name . ':' . implode(' ' . $name . ':', $terms) . $suffix;
 					}
 					else if (substr($part, $pos + 1, 1) != '(' && preg_match('/[\x81-\xfe]/', $part))
 					{

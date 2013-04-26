@@ -176,6 +176,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('subject:项目管理制度', 'Xapian::Query((B项目:(pos=1) AND (B管理制度:(pos=2) SYNONYM (B管理:(pos=90) AND B制度:(pos=91)))))'),
 			array('几句说明', 'Xapian::Query((几句:(pos=1) AND 说明:(pos=2)))'),
 			array('说明几句', 'Xapian::Query((说明:(pos=1) AND 几句:(pos=2)))'),
+			array('pid:1 AND pid:2', 'Xapian::Query((0 * A1 AND 0 * A2))'),
+			array('(pid:1 AND pid:2) OR pid:3', 'Xapian::Query(((0 * A1 AND 0 * A2) OR 0 * A3))'),
 		);
 	}
 
