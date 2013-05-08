@@ -253,19 +253,23 @@ class XS extends XSComponent
 	 * @var XSIndex 索引操作对象
 	 */
 	private $_index;
+
 	/**
 	 * @var XSSearch 搜索操作对象
 	 */
 	private $_search;
+
 	/**
 	 * @var XSServer scws 分词服务器
 	 */
 	private $_scws;
+
 	/**
 	 * @var XSFieldScheme 当前字段方案
 	 */
 	private $_scheme, $_bindScheme;
 	private $_config;
+
 	/**
 	 * @var XS 最近创建的 XS 对象
 	 */
@@ -390,9 +394,21 @@ class XS extends XSComponent
 	{
 		if ($this->_index === null)
 		{
+			$adds = array();
 			$conn = isset($this->_config['server.index']) ? $this->_config['server.index'] : 8383;
+			if (($pos = strpos($conn, ';')) !== false)
+			{
+				$adds = explode(';', substr($conn, $pos + 1));
+				$conn = substr($conn, 0, $pos);
+			}
 			$this->_index = new XSIndex($conn, $this);
 			$this->_index->setTimeout(0);
+			foreach ($adds as $conn)
+			{
+				$conn = trim($conn);
+				if ($conn !== '')
+					$this->_index->addServer($conn)->setTimeout(0);
+			}
 		}
 		return $this->_index;
 	}
@@ -405,9 +421,34 @@ class XS extends XSComponent
 	{
 		if ($this->_search === null)
 		{
-			$conn = isset($this->_config['server.search']) ? $this->_config['server.search'] : 8384;
-			$this->_search = new XSSearch($conn, $this);
-			$this->_search->setCharset($this->getDefaultCharset());
+			$conns = array();
+			if (!isset($this->_config['server.search']))
+				$conns[] = 8384;
+			else
+			{
+				foreach (explode(';', $this->_config['server.search']) as $conn)
+				{
+					$conn = trim($conn);
+					if ($conn !== '')
+						$conns[] = $conn;
+				}
+			}
+			if (count($conns) > 1)
+				shuffle($conns);
+			for ($i = 0; $i < count($conns); $i++)
+			{
+				try
+				{
+					$this->_search = new XSSearch($conns[$i], $this);
+					$this->_search->setCharset($this->getDefaultCharset());
+					return $this->_search;
+				}
+				catch (XSException $e)
+				{
+					if (($i + 1) === count($conns))
+						throw $e;
+				}
+			}
 		}
 		return $this->_search;
 	}
@@ -648,7 +689,7 @@ spl_autoload_register('XS::autoload', true, true);
  */
 function xs_error_handler($errno, $error, $file, $line)
 {
-	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT)))	
+	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT)))
 		throw new XSErrorException($errno, $error, $file, $line);
 	return false;
 }

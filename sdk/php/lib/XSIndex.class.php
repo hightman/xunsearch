@@ -22,6 +22,34 @@ class XSIndex extends XSServer
 	private $_buf = '';
 	private $_bufSize = 0;
 	private $_rebuild = false;
+	private static $_adds = array();
+
+	/**
+	 * 增加一个同步索引服务器
+	 * @param string $conn 索引服务端连接参数
+	 * @return XSServer
+	 * @throw XSException 出错时抛出异常
+	 */
+	public function addServer($conn)
+	{
+		$srv = new XSServer($conn, $this->xs);
+		self::$_adds[] = $srv;
+		return $srv;
+	}
+
+	/**
+	 * 执行服务端指令并获取返回值
+	 * 重写此方法是为了同步到额外增加的多个索引服务端
+	 */
+	public function execCommand($cmd, $res_arg = CMD_NONE, $res_cmd = CMD_OK)
+	{
+		$res = parent::execCommand($cmd, $res_arg, $res_cmd);
+		foreach (self::$_adds as $srv)
+		{
+			$srv->execCommand($cmd, $res_arg, $res_cmd);
+		}
+		return $res;
+	}
 
 	/**
 	 * 完全清空索引数据
@@ -531,6 +559,11 @@ class XSIndex extends XSServer
 				
 			}
 		}
+		foreach (self::$_adds as $srv)
+		{
+			$srv->close();
+		}
+		self::$_adds = array();
 		parent::__destruct();
 	}
 }
