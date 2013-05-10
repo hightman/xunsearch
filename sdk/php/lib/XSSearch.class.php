@@ -496,9 +496,6 @@ class XSSearch extends XSServer
 		$query = $query === null ? '' : $this->preQueryString($query);
 		$page = pack('II', $this->_offset, $this->_limit > 0 ? $this->_limit : self::PAGE_SIZE);
 
-		// init special field hrere
-		$this->initSpecialField();
-
 		// get result header
 		$cmd = new XSCommand(CMD_SEARCH_GET_RESULT, 0, $this->_defaultOp, $query, $page);
 		$res = $this->execCommand($cmd, CMD_OK_RESULT_BEGIN);
@@ -939,6 +936,8 @@ class XSSearch extends XSServer
 		// force to clear query with resetScheme
 		if ($this->_resetScheme === true)
 			$this->clearQuery();
+		// init special field here
+		$this->initSpecialField();
 
 		$newQuery = '';
 		$parts = preg_split('/[ \t\r\n]+/', $query);
@@ -1214,6 +1213,7 @@ class XSSearch extends XSServer
 			$word1 = 0 - $word1;
 			if ($word2 != 0)
 				++$word1;
+			$word2 = 0 - $word2;
 			$word1 &= 0x03ffffff;
 		}
 
