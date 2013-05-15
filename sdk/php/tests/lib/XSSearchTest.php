@@ -172,8 +172,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('subject:项目测试', 'Xapian::Query((B项目:(pos=1) AND B测试:(pos=2)))'),
 			array('subject2:测试', 'Xapian::Query((Zsubject2:(pos=1) AND 测试:(pos=2)))'),
 			array('subject2:Hello', 'Xapian::Query((subject2:(pos=1) PHRASE 2 hello:(pos=2)))'),
-			array('项目管理制度', 'Xapian::Query((项目:(pos=1) AND (管理制度:(pos=2) SYNONYM 0.9000000000000000222 * (管理:(pos=90) AND 制度:(pos=91)))))'),
-			array('subject:项目管理制度', 'Xapian::Query((B项目:(pos=1) AND (B管理制度:(pos=2) SYNONYM 0.9000000000000000222 * (B管理:(pos=90) AND B制度:(pos=91)))))'),
+			array('项目管理制度', 'Xapian::Query((项目:(pos=1) AND (管理制度:(pos=2) SYNONYM (管理:(pos=90) AND 制度:(pos=91)))))'),
+			array('subject:项目管理制度', 'Xapian::Query((B项目:(pos=1) AND (B管理制度:(pos=2) SYNONYM (B管理:(pos=90) AND B制度:(pos=91)))))'),
 			array('几句说明', 'Xapian::Query((几句:(pos=1) AND 说明:(pos=2)))'),
 			array('说明几句', 'Xapian::Query((说明:(pos=1) AND 几句:(pos=2)))'),
 			array('pid:1 AND pid:2', 'Xapian::Query((0 * A1 AND 0 * A2))'),
@@ -466,7 +466,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// test fuzzy multi query
 		$search->setFuzzy();
-		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM 0.9000000000000000222 * (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
+		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
 		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');
 		$search->setFuzzy(false);
 
@@ -487,12 +487,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		// test synonym query
 		$search->setAutoSynonyms();
 		$queries = array(
-			'项目test' => 'Xapian::Query((项目:(pos=1) AND (Ztest:(pos=2) SYNONYM 0.9000000000000000222 * quiz:(pos=79) SYNONYM 0.9000000000000000222 * 测试:(pos=80))))',
-			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND (ZBtest:(pos=3) SYNONYM 0.9000000000000000222 * Bquiz:(pos=80) SYNONYM 0.9000000000000000222 * B测试:(pos=81))))',
-			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND ((Zhello:(pos=2) AND Zworld:(pos=3)) SYNONYM 0.9000000000000000222 * 有意思:(pos=68))))',
-			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND (迅搜:(pos=2) SYNONYM 0.9000000000000000222 * xunsearch:(pos=90))))',
+			'项目test' => 'Xapian::Query((项目:(pos=1) AND (Ztest:(pos=2) SYNONYM quiz:(pos=79) SYNONYM 测试:(pos=80))))',
+			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND (ZBtest:(pos=3) SYNONYM Bquiz:(pos=80) SYNONYM B测试:(pos=81))))',
+			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND ((Zhello:(pos=2) AND Zworld:(pos=3)) SYNONYM 有意思:(pos=68))))',
+			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND (迅搜:(pos=2) SYNONYM xunsearch:(pos=90))))',
 			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
-			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM 0.9000000000000000222 * Zquiz:(pos=78) SYNONYM 0.9000000000000000222 * 测试:(pos=79)))',
+			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',
 		);
 		foreach ($queries as $raw => $expect)
 		{
@@ -567,7 +567,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM 0.9000000000000000222 * (测测:(pos=90) AND 测看:(pos=91)))))', $query);
+		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
 	}
 
 	public function testScwsMulti()

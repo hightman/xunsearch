@@ -56,7 +56,8 @@ Quest - 搜索查询和测试工具 ($version)
     --sort=<field1[,field2[,...]]
     -s <field1[,field2[,...]] 指定排序字段，在字段前加上 ~ 符号表示逆序
     --fuzzy      将搜索默认设为模糊搜索
-    --synonym    开启自动同义词搜索功能
+    --synonym[=scale]
+                 开启自动同义词搜索功能，可选择设置同义词权重调整（0.01~2.55）
     --scws-multi=<level>
                  查看或设置搜索语句的 scws 复合分词等级（值：0-15，默认为 3）
     --add-weight=<[field1:]word1[:weight1][,[field2:]word2[:weight2]]>
@@ -236,8 +237,13 @@ try
 		// fuzzy search
 		if (XSUtil::getOpt(null, 'fuzzy') !== null)
 			$search->setFuzzy();
-		if (XSUtil::getOpt(null, 'synonym') !== null)
+		$syn = XSUtil::getOpt(null, 'synonym');
+		if ($syn !== null)
+		{
 			$search->setAutoSynonyms();
+			if ($syn !== true)
+				$search->setSynonymScale(floatval($syn));
+		}
 
 		if (($pos = strpos($limit, ',')) === false)
 			$offset = 0;

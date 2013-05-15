@@ -399,7 +399,7 @@ struct xs_import_hdr
 
 /**
  * Register value slot for facets searching
- * arg1: 0/1(exact or not), blen: field number, buf: vno list
+ * arg1:0/1(exact or not), blen: field number, buf: vno list
  */
 #define	CMD_SEARCH_SET_FACETS	197
 
@@ -414,6 +414,13 @@ struct xs_import_hdr
  * arg1:percent_off(0-100), arg2:weight_off(0.1-25.5)
  */
 #define	CMD_SEARCH_SET_CUTOFF	199
+
+/**
+ * Set misc options of search
+ * arg1:type(syn_scale|...)
+ * arg2:scale*10
+ */
+#define	CMD_SEARCH_SET_MISC		200
 
 /**
  * ----------------------------------

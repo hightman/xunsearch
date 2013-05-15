@@ -120,6 +120,22 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置同义词搜索的权重比例
+	 * @param float $value 取值范围 0.01-2.55, 1 表示不调整
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @notice scws 的复合分词也是以同义词方式呈现的
+	 * @since 1.4.7
+	 */
+	public function setSynonymScale($value)
+	{
+		$arg1 = 1;
+		$arg2 = max(0, (intval($value * 100) & 255));
+		$cmd = new XSCommand(CMD_SEARCH_SET_MISC, $arg1, $arg2);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
 	 * 获取当前库内的全部同义词列表
 	 * @param int $limit 数量上限, 若设为 0 则启用默认值 100 个
 	 * @param int $offset 偏移量, 即跳过的结果数量, 默认为 0

@@ -602,6 +602,10 @@ static int zcmd_task_default(XS_CONN *conn)
 		case CMD_SEARCH_SET_CUTOFF:
 			zarg->eq->set_cutoff(cmd->arg1 > 100 ? 100 : cmd->arg1, (double) cmd->arg2 / 10.0);
 			break;
+		case CMD_SEARCH_SET_MISC:
+			if (cmd->arg1 == 1)
+				zarg->qp->set_syn_scale((double) cmd->arg2 / 100.0);
+			break;
 		case CMD_QUERY_INIT:
 			if (!zarg->qq->empty())
 			{
