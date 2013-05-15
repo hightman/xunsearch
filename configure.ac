@@ -98,7 +98,7 @@ AC_ARG_WITH(libevent,
 	AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
 		[specify the install directory of libevent, The version should be 1.4.14 or greater.]),
 	[ ], [with_libevent=yes]
-)	
+)
 if test "$with_libevent" != "no" ; then
 	AC_MSG_CHECKING([for event.h of libevent])
 	LIBEVENT_DIR=""
@@ -107,7 +107,7 @@ if test "$with_libevent" != "no" ; then
 		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/event.h ; then
 				LIBEVENT_DIR=$tmpdir
-				break;
+				break
 			fi
 		done
 	elif test -f "$with_libevent/include/event.h" ; then
@@ -146,10 +146,10 @@ yes
             fi
 		], [
 			AC_MSG_ERROR([event_init() NOT found in libevent, please check it first.])
-		], [ 
+		], [
 			-L$LIBEVENT_DIR/lib
 		]
-	) 	
+	)
 else
 	AC_MSG_ERROR([libevent is required, get it from: http://monkey.org/~provos/libevent/])
 fi
@@ -159,7 +159,7 @@ AC_ARG_WITH(scws,
 	AS_HELP_STRING([--with-scws@<:@=DIR@:>@],
 		[specify the install directory of scws.]),
 	[ ], [with_scws=yes]
-)	
+)
 if test "$with_scws" != "no" ; then
 	AC_MSG_CHECKING([for scws.h of scws])
 	SCWS_DIR=""
@@ -168,7 +168,7 @@ if test "$with_scws" != "no" ; then
 		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/scws/scws.h ; then
 				SCWS_DIR=$tmpdir
-				break;
+				break
 			fi
 		done
 	elif test -f "$with_scws/include/scws/scws.h" ; then
@@ -202,10 +202,10 @@ if test "$with_scws" != "no" ; then
 			AC_DEFINE_UNQUOTED(SCWS_ETCDIR, "$SCWS_ETCDIR", [Resource directory of scws])
 		], [
 			AC_MSG_ERROR([scws_new() NOT found in libscws, please check it first.])
-		], [ 
+		], [
 			-L$SCWS_DIR/lib
 		]
-	) 	
+	)
 else
 	AC_MSG_ERROR([scws is required, get it from: http://www.xunsearch.com/scws/])
 fi
@@ -224,7 +224,7 @@ if test "$with_xapian" != "no" ; then
 		for tmpdir in $search_dirs; do
 			if test -f $tmpdir/include/xapian.h ; then
 				XAPIAN_DIR=$tmpdir
-				break;
+				break
 			fi
 		done
 	elif test -f "$with_xapian/include/xapian.h" ; then
@@ -267,7 +267,7 @@ Xapian::TermGenerator indexer;
 indexer.load_scws(NULL, 0, 0);
 indexer.set_document(doc);
 			])
-		], [ 
+		], [
 			LIBS=$saved_libs
 			CXXFLAGS=$saved_cxxflags
             tmp_extra_added=`echo $ac_extra_added | sed "s#$XAPIAN_DIR##"`
@@ -279,7 +279,7 @@ indexer.set_document(doc);
             fi
 			AC_DEFINE_UNQUOTED(XAPIAN_DIR, "$XAPIAN_DIR", [Install directory of xapian])
 			AC_MSG_RESULT(ok)
-		], [ 
+		], [
 			AC_MSG_RESULT(no)
 			AC_MSG_ERROR([Invalid xapian library, maybe not do the patch with scws?.]) 
 		]
