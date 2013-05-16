@@ -213,6 +213,19 @@ class XSServer extends XSComponent
 	}
 
 	/**
+	 * @return string 连接字符串
+	 */
+	public function getConnString()
+	{
+		$str = $this->_conn;
+		if (is_int($str) || is_numeric($str))
+			$str = 'localhost:' . $str;
+		else if (strpos($str, ':') === false)
+			$str = 'unix://' . $str;
+		return $str;
+	}
+
+	/**
 	 * 获取连接资源描述符
 	 * @return mixed 连接标识, 仅用于内部测试等目的
 	 */
