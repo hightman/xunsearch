@@ -349,6 +349,14 @@ class XS extends XSComponent
 	}
 
 	/**
+	 * @return array 获取配置原始数据
+	 */
+	public function getConfig()
+	{
+		return $this->_config;
+	}
+
+	/**
 	 * 获取当前项目名称
 	 * @return string 当前项目名称
 	 */
