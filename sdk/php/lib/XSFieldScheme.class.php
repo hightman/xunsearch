@@ -65,6 +65,11 @@ class XSFieldScheme implements IteratorAggregate
 			$name = $this->_typeMap[XSFieldMeta::TYPE_TITLE];
 			return $this->_fields[$name];
 		}
+		foreach ($this->_fields as $name => $field)
+		{
+			if ($field->type === XSFieldMeta::TYPE_STRING && !$field->isBoolIndex())
+				return $field;
+		}
 		return false;
 	}
 
