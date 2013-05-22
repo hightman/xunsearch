@@ -231,9 +231,13 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 	if (cut & CMD_VALUE_FLAG_NUMERIC)
 	{
 		// convert to numeric string
+		int i;
 		char buf[64];
 		buf[63] = '\0';
-		snprintf(buf, sizeof(buf) - 1, "%g", Xapian::sortable_unserialise(s));
+		snprintf(buf, sizeof(buf) - 1, "%f", Xapian::sortable_unserialise(s));
+		i = strlen(buf) - 1;
+		while (i >= 0 && buf[i] == '0')
+			buf[i--] = '\0';
 		s = string(buf);
 	}
 	else
