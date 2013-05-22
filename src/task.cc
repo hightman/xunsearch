@@ -236,8 +236,19 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 		buf[63] = '\0';
 		snprintf(buf, sizeof(buf) - 1, "%f", Xapian::sortable_unserialise(s));
 		i = strlen(buf) - 1;
-		while (i >= 0 && buf[i] == '0')
-			buf[i--] = '\0';
+		while (i >= 0)
+		{
+			if (buf[i] == '0')
+			{
+				buf[i] = '\0';
+				i--;
+			}
+			else if (buf[i] == '.')
+			{
+				buf[i] = '\0';
+				break;
+			}
+		}
 		s = string(buf);
 	}
 	else
