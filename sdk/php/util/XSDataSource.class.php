@@ -20,6 +20,7 @@
 abstract class XSDataSource
 {
 	protected $type, $arg;
+	protected $inCli;
 	private $dataList, $dataPos;
 
 	/**
@@ -30,6 +31,7 @@ abstract class XSDataSource
 	{
 		$this->type = $type;
 		$this->arg = $arg;
+		$this->inCli = php_sapi_name() === 'cli';
 		$this->init();
 	}
 
@@ -273,11 +275,12 @@ class XSDatabaseDataSource extends XSDataSource
 class XSJsonDataSource extends XSDataSource
 {
 	private $fd, $line;
+	public $invalidLines = 0;
 
 	protected function init()
 	{
 		$file = $this->arg;
-		if (empty($file))
+		if (empty($file) && $this->inCli)
 		{
 			echo "WARNING: input file not specified, read data from <STDIN>\n";
 			$file = 'php://stdin';
@@ -313,7 +316,8 @@ class XSJsonDataSource extends XSDataSource
 		// empty line (end of file)
 		if (empty($line))
 		{
-			echo "INFO: reach end of the file, total lines: " . $this->line . "\n";
+			if ($this->inCli)
+				echo "INFO: reach end of the file, total lines: " . $this->line . "\n";
 			return false;
 		}
 
@@ -322,7 +326,9 @@ class XSJsonDataSource extends XSDataSource
 		$line = rtrim($line, "\r\n");
 		if (strlen($line) === 0)
 		{
-			echo "WARNING: empty line #" . $this->line . "\n";
+			if ($this->inCli)
+				echo "WARNING: empty line #" . $this->line . "\n";
+			$this->invalidLines++;
 			return $this->getDataList();
 		}
 
@@ -344,7 +350,9 @@ class XSJsonDataSource extends XSDataSource
 					$error = (count($item) === 0 ? ' - Empty array' : '');
 					break;
 			}
-			echo "WARNING: invalid line #" . $this->line . $error . "\n";
+			if ($this->inCli)
+				echo "WARNING: invalid line #" . $this->line . $error . "\n";
+			$this->invalidLines++;
 			return $this->getDataList();
 		}
 		return array($item);
@@ -361,12 +369,13 @@ class XSJsonDataSource extends XSDataSource
  */
 class XSCsvDataSource extends XSDataSource
 {
-	private $delim = ',';
+	private $delim = ',', $line;
+	public $invalidLines = 0;
 
 	protected function init()
 	{
 		$file = $this->arg;
-		if (empty($file))
+		if (empty($file) && $this->inCli)
 		{
 			echo "WARNING: input file not specified, read data from <STDIN>\n";
 			$file = 'php://stdin';
@@ -391,14 +400,17 @@ class XSCsvDataSource extends XSDataSource
 	{
 		if (($item = fgetcsv($this->fd, 0, $this->delim)) === false)
 		{
-			echo "INFO: reach end of file or error occured, total lines: " . $this->line . "\n";
+			if ($this->inCli)
+				echo "INFO: reach end of file or error occured, total lines: " . $this->line . "\n";
 			return false;
 		}
 
 		$this->line++;
 		if (count($item) === 1 && is_null($item[0]))
 		{
-			echo "WARNING: invalid csv line #" . $this->line . "\n";
+			if ($this->inCli)
+				echo "WARNING: invalid csv line #" . $this->line . "\n";
+			$this->invalidLines++;
 			return $this->getDataList();
 		}
 		return array($item);
