@@ -1105,7 +1105,7 @@ static int index_zcmd_exec(XS_CONN *conn)
 				rc = rebuild_conn_wdb(conn);
 			else
 			{
-				XS_DB *db = conn->wdb;
+				XS_DB *db = get_conn_wdb(conn);
 				if (!db || !(db->flag & XS_DBF_REBUILD_BEGIN))
 					rc = CONN_RES_ERR(WRONGPLACE);
 				else if (cmd->arg1 == 2) // force to stop rebuild
@@ -1124,7 +1124,7 @@ static int index_zcmd_exec(XS_CONN *conn)
 					}
 					else
 					{
-						log_info_conn("force to stop rebuilding");
+						log_notice_conn("force to stop rebuilding");
 						db->flag &= ~XS_DBF_REBUILD_MASK;
 						db->flag |= XS_DBF_FORCE_COMMIT;
 					}

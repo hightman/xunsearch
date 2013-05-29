@@ -181,7 +181,7 @@ try
 		echo "\n---------- SERVER INFO END ----------\n";
 		$res = $index->execCommand(CMD_INDEX_GET_DB);
 		$res = json_decode($res->buf);
-		echo "数据库名：" . $res->name . "\n";
+		echo "数据库名：" . sprintf('%s[0x%04x]', $res->name, $res->flag) . "\n";
 		echo "队列数据：" . $res->count . "条\n";
 		echo "导入进程：" . ($res->pid > 0 ? '#' . $res->pid : '无') . "\n";
 	}
