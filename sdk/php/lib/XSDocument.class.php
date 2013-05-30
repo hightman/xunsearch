@@ -135,6 +135,15 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	}
 
 	/**
+	 * 获取字段值
+	 * @return array 返回已设置的字段键值数组
+	 */
+	public function getFields()
+	{
+		return $this->_data;
+	}
+
+	/**
 	 * 批量设置字段值
 	 * 这里是以合并方式赋值, 即不会清空已赋值并且不在参数中的字段.
 	 * @param array $data 字段名及其值组成的数组
