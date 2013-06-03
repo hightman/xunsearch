@@ -78,8 +78,8 @@ fi
 
 # Memory Cache flag check
 AC_ARG_ENABLE(memory-cache,
-	AS_HELP_STRING([--disable-memory-cache], [disable memory cache for search result. NOTE: cache may cause some un-stable in some platforms.]),
-	[ ], [enable_memory_cache=yes]
+	AS_HELP_STRING([--enable-memory-cache], [enable memory cache for search result. NOTE: cache may cause some un-stable in some platforms.]),
+	[ ], [enable_memory_cache=no]
 )
 if test "$enable_memory_cache" != "no" ; then
 	AC_DEFINE(HAVE_MEMORY_CACHE, 1, [Define to 1 if you want to enable memory cache for search result])
