@@ -719,7 +719,7 @@ static int rebuild_conn_wdb(XS_CONN *conn)
 	else if (db->flag & XS_DBF_STUB)
 		return CMD_RES_UNIMP;
 		/* allow rebuild during rebuilding, just clean exists data */
-	else if (db->flag & XS_DBF_REBUILD_STOP)
+	else if (db->flag & (XS_DBF_REBUILD_STOP | XS_DBF_REBUILD_BEGIN))
 		return CONN_RES_ERR(REBUILDING);
 	else
 	{
