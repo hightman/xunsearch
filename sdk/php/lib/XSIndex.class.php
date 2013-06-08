@@ -137,12 +137,13 @@ class XSIndex extends XSServer
 						// self: [bool term, NOT weight, NOT stem, NOT pos]
 						if ($field->hasIndexSelf())
 						{
+							$wdf = $field->isBoolIndex() ? 1 : ($field->weight | CMD_INDEX_FLAG_CHECKSTEM);
 							foreach ($terms as $term)
 							{
 								if (strlen($term) > 200)
 									continue;
 								$term = strtolower($term);
-								$cmds[] = new XSCommand(CMD_DOC_TERM, 1, $field->vno, $term);
+								$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf, $field->vno, $term);
 							}
 						}
 						// mixed: [use default tokenizer]
