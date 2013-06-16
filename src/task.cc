@@ -157,6 +157,39 @@ struct search_result
 };
 
 /**
+ * @param conn
+ * @return CMD_RES_CONT
+ */
+int task_add_search_log(XS_CONN *conn)
+{
+	XS_CMD *cmd = conn->zcmd;
+	if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
+	{
+		log_warning_conn("search log too long to add (LOG:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
+		return CONN_RES_ERR(TOOLONG);
+	}
+	else
+	{
+		FILE *fp;
+		char fpath[256];
+		sprintf(fpath, "%s/" SEARCH_LOG_FILE, conn->user->home);
+		if ((fp = fopen(fpath, "a")) == NULL)
+		{
+			log_error_conn("failed to open search log (PATH:%s, ERROR:%s)", fpath, strerror(errno));
+		}
+		else
+		{
+			if (XS_CMD_BLEN1(cmd) != 4)
+				fprintf(fp, "%.*s\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
+			else
+				fprintf(fp, "%.*s\t%d\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd), (*(int *) XS_CMD_BUF1(cmd)));
+			fclose(fp);
+		}
+		return CONN_RES_OK(LOGGED);
+	}
+}
+
+/**
  * Get a queryparser object from cached chain
  */
 static Xapian::QueryParser *get_queryparser()
@@ -509,30 +542,7 @@ static int zcmd_task_default(XS_CONN *conn)
 				rc = CONN_RES_OK3(DB_TOTAL, (char *) &zarg->db_total, sizeof(zarg->db_total));
 			break;
 		case CMD_SEARCH_ADD_LOG:
-			if (XS_CMD_BLEN(cmd) > MAX_QUERY_LENGTH)
-			{
-				log_warning_conn("search log too long to add (LOG:%.*s)", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
-				rc = CONN_RES_ERR(TOOLONG);
-			}
-			else
-			{
-				char fpath[256];
-				FILE *fp;
-				sprintf(fpath, "%s/" SEARCH_LOG_FILE, conn->user->home);
-				if ((fp = fopen(fpath, "a")) == NULL)
-				{
-					log_error_conn("failed to open search log (PATH:%s, ERROR:%s)", fpath, strerror(errno));
-				}
-				else
-				{
-					if (XS_CMD_BLEN1(cmd) != 4)
-						fprintf(fp, "%.*s\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd));
-					else
-						fprintf(fp, "%.*s\t%d\n", XS_CMD_BLEN(cmd), XS_CMD_BUF(cmd), (*(int *) XS_CMD_BUF1(cmd)));
-					fclose(fp);
-				}
-				rc = CONN_RES_OK(LOGGED);
-			}
+			rc = task_add_search_log(conn);
 			break;
 		case CMD_SEARCH_GET_DB:
 			if (zarg->db == NULL)

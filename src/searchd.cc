@@ -153,8 +153,9 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_SEARCH_SCWS_SET:
 			// save the command
 			return CMD_RES_CONT | CMD_RES_SAVE;
-		case CMD_SEARCH_FINISH:
 		case CMD_SEARCH_ADD_LOG:
+			return task_add_search_log(conn);
+		case CMD_SEARCH_FINISH:
 			return CONN_RES_ERR(WRONGPLACE);
 		case CMD_SEARCH_KEEPALIVE:
 			if (conn->zcmd->arg1 == 0)
