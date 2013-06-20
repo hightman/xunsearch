@@ -273,14 +273,12 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 		{
 			if (buf[i] == '0')
 			{
-				buf[i] = '\0';
-				i--;
+				buf[i--] = '\0';
+				continue;
 			}
-			else if (buf[i] == '.')
-			{
+			if (buf[i] == '.')
 				buf[i] = '\0';
-				break;
-			}
+			break;
 		}
 		s = string(buf);
 	}
