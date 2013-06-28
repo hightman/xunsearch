@@ -128,6 +128,7 @@ abstract class XSDataSource
 class XSDatabaseDataSource extends XSDataSource
 {
 	const PLIMIT = 1000;
+
 	private $sql, $offset, $limit;
 	private $db; /* @var $db XSDatabase */
 
@@ -486,7 +487,7 @@ class XSDatabaseMySQL extends XSDatabase
 	public function connect($param)
 	{
 		$host = isset($param['host']) ? $param['host'] : ini_get('mysql.default_host');
-		$host .= ( (isset($param['port']) && $param['port'] != 3306) ? ':' . $param['port'] : '');
+		$host .= (isset($param['port']) && $param['port'] != 3306) ? ':' . $param['port'] : '';
 		$user = isset($param['user']) ? $param['user'] : ini_get('mysql.default_user');
 		$pass = isset($param['pass']) ? $param['pass'] : ini_get('mysql.default_pw');
 		if (($this->link = mysql_connect($host, $user, $pass)) === false)
@@ -545,6 +546,71 @@ class XSDatabaseMySQL extends XSDatabase
 		if (version_compare(mysql_get_server_info($this->link), '4.1.0', '>='))
 			return @mysql_query("SET NAMES utf8", $this->link);
 		return false;
+	}
+}
+
+/**
+ * 面向对象的 PostgreSQL 扩展
+ *
+ * @author freechoice <freechoice@qq.com>
+ * @version 1.0.0
+ * @package XS.util.db
+ */
+class XSDatabasePgSQL extends XSDatabase
+{
+	private $link;
+
+	public function connect($param)
+	{
+		$dsn = "host={$param['host']} ";
+		$dsn .= isset($param['port']) ? "port={$param['port']} " : '';
+		$dsn .= "dbname={$param['dbname']} user={$param['user']} password={$param['pass']}";
+		if (!($this->link = @pg_connect($dsn)))
+		{
+			throw new XSException('Error connecting to PGSQL database:' . $param['dbname'] . '.');
+			pg_set_error_verbosity($this->link, PGSQL_ERRORS_DEFAULT);
+			pg_query('SET standard_conforming_strings=off');
+		}
+	}
+
+	/**
+	 * 关闭数据库连接
+	 */
+	public function close()
+	{
+		if (is_resource($this->link))
+		{
+			pg_close($this->link);
+			$this->link = null;
+		}
+	}
+
+	/**
+	 * 执行 SQL 语句查询
+	 * @param string $sql 要执行的 SQL 语句
+	 * @return mixed
+	 */
+	public function query($query)
+	{
+		//echo "[DEBUG] SQL: $sql\n";
+		$res = pg_query($this->link, $query);
+		if ($res === false)
+			throw new XSException('PgSQL ERROR: ' . pg_last_error($this->link));
+		$ret = array();
+		while ($tmp = pg_fetch_assoc($res))
+		{
+			$ret[] = $tmp;
+		}
+		pg_free_result($res);
+		return $ret;
+	}
+
+	/**
+	 * 将输出字符集设置为 UTF-8
+	 */
+	public function setUtf8()
+	{
+		pg_set_client_encoding($this->link, 'UTF8');
 	}
 }
 
@@ -848,6 +914,38 @@ class XSDatabasePDO_MySQL extends XSDatabasePDO
 	{
 		// BUGFIXED: 此处应为不带引号的 utf8
 		return $this->obj->prepare("SET NAMES utf8")->execute();
+	}
+}
+
+/**
+ * PDO.Pgsql 实现
+ *
+ * @author freechoice <freechoice@qq.com>
+ * @version 1.0.0
+ * @package XS.util.db
+ */
+class XSDatabasePDO_PgSQL extends XSDatabasePDO
+{
+
+	/**
+	 * 生成 Postgres DSN
+	 * @param array $param 包含 path 为数据库路径
+	 * @return string
+	 */
+	protected function makeDsn($param)
+	{
+		$dsn = "pgsql:host={$param['host']};";
+		$dsn .= isset($param['port']) ? "port={$param['port']};" : '';
+		$dsn .= "dbname={$param['dbname']};client_encoding=utf-8";
+		return $dsn;
+	}
+
+	/**
+	 * 将输出字符集设置为 UTF-8
+	 */
+	public function setUtf8()
+	{
+		return true;
 	}
 }
 
