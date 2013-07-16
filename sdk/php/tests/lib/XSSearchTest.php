@@ -180,6 +180,15 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('(pid:1 AND pid:2) OR pid:3', 'Xapian::Query(((0 * A1 AND 0 * A2) OR 0 * A3))'),
 		);
 	}
+	
+	public function testSetDocOrder()
+	{
+		$search = self::$xs->search;
+		$docs = $search->setDocOrder(true)->setLimit(1)->search('other:master');
+		$this->assertEquals(3, $docs[0]->pid);		
+		$docs = $search->setDocOrder()->setLimit(1)->search('other:master');
+		$this->assertEquals(21, $docs[0]->pid);
+	}
 
 	public function testSetSort()
 	{

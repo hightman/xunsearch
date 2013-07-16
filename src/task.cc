@@ -558,12 +558,18 @@ static int zcmd_task_default(XS_CONN *conn)
 			{
 				int type = cmd->arg1 & CMD_SORT_TYPE_MASK;
 				bool reverse = (cmd->arg1 & CMD_SORT_FLAG_ASCENDING) ? false : true;
+				bool rv_first = (cmd->arg1 & CMD_SORT_FLAG_RELEVANCE) ? true : false;
 
 				conn->flag |= CONN_FLAG_CH_SORT;
 				if (type == CMD_SORT_TYPE_DOCID)
 					zarg->eq->set_docid_order(reverse ? Xapian::Enquire::DESCENDING : Xapian::Enquire::ASCENDING);
 				else if (type == CMD_SORT_TYPE_VALUE)
-					zarg->eq->set_sort_by_value_then_relevance(cmd->arg2, reverse);
+				{
+					if (rv_first == true)
+						zarg->eq->set_sort_by_relevance_then_value(cmd->arg2, reverse);
+					else
+						zarg->eq->set_sort_by_value_then_relevance(cmd->arg2, reverse);
+				}
 				else if (type == CMD_SORT_TYPE_RELEVANCE)
 				{
 					zarg->eq->set_sort_by_relevance();
@@ -581,7 +587,10 @@ static int zcmd_task_default(XS_CONN *conn)
 					}
 					zarg_add_object(zarg, OTYPE_KEYMAKER, NULL, sorter);
 					log_debug_conn("new (Xapian::MultiValueKeyMaker *) %p", sorter);
-					zarg->eq->set_sort_by_key_then_relevance(sorter, false);
+					if (rv_first == true)
+						zarg->eq->set_sort_by_relevance_then_key(sorter, reverse);
+					else
+						zarg->eq->set_sort_by_key_then_relevance(sorter, reverse);
 				}
 			}
 			break;

@@ -486,6 +486,7 @@ struct xs_import_hdr
 #define	CMD_SORT_TYPE_VALUE			2
 #define	CMD_SORT_TYPE_MULTI			3	// mutli fields sort
 #define	CMD_SORT_TYPE_MASK			0x3f
+#define	CMD_SORT_FLAG_RELEVANCE		0x40
 #define	CMD_SORT_FLAG_ASCENDING		0x80
 
 // 2. query_op (defined as a global static array in task.cc)

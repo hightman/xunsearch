@@ -207,13 +207,15 @@ class XSSearch extends XSServer
 	 * 设置多字段组合排序方式
 	 * 当您需要根据多个字段的值按不同的方式综合排序时, 请使用这项
 	 * @param array $fields 排序依据的字段数组, 以字段名称为键, true/false 为值表示正序或逆序
+	 * @param bool $reverse 是否为倒序显示, 默认为正向, 此处和 {@link setSort} 略有不同
+	 * @param bool $relevance_first 是否优先相关性排序, 默认为否
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 * @since 1.1.0
 	 */
-	public function setMultiSort($fields)
+	public function setMultiSort($fields, $reverse = false, $relevance_first = false)
 	{
 		if (!is_array($fields))
-			return $this->setSort($fields);
+			return $this->setSort($fields, !$reverse, $relevance_first);
 
 		// [vno][0/1] (0:reverse,1:asc)
 		$buf = '';
@@ -234,7 +236,12 @@ class XSSearch extends XSServer
 		}
 		if ($buf !== '')
 		{
-			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, CMD_SORT_TYPE_MULTI, 0, $buf);
+			$type = CMD_SORT_TYPE_MULTI;
+			if ($relevance_first)
+				$type |= CMD_SORT_FLAG_RELEVANCE;
+			if (!$reverse)
+				$type |= CMD_SORT_FLAG_ASCENDING;
+			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, $type, 0, $buf);
 			$this->execCommand($cmd);
 		}
 		return $this;
@@ -246,21 +253,39 @@ class XSSearch extends XSServer
 	 * 此函数第一参数的用法与 {@link setMultiSort} 兼容, 即也可以用该方法实现多字段排序
 	 * @param string $field 依据指定字段的值排序, 设为 null 则用默认顺序
 	 * @param bool $asc 是否为正序排列, 即从小到大, 从少到多, 默认为反序
+	 * @param bool $relevance_first 是否优先相关性排序, 默认为否
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
-	public function setSort($field, $asc = false)
+	public function setSort($field, $asc = false, $relevance_first = false)
 	{
 		if (is_array($field))
-			return $this->setMultiSort($field);
+			return $this->setMultiSort($field, $asc, $relevance_first);
 		if ($field === null)
 			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, CMD_SORT_TYPE_RELEVANCE);
 		else
 		{
-			$type = CMD_SORT_TYPE_VALUE | ($asc ? CMD_SORT_FLAG_ASCENDING : 0);
+			$type = CMD_SORT_TYPE_VALUE;
+			if ($relevance_first)
+				$type |= CMD_SORT_FLAG_RELEVANCE;
+			if ($asc)
+				$type |= CMD_SORT_FLAG_ASCENDING;
 			$vno = $this->xs->getField($field, true)->vno;
-
 			$cmd = new XSCommand(CMD_SEARCH_SET_SORT, $type, $vno);
 		}
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
+	 * 设置结果按索引入库先后排序
+	 * 注意, 此项排序不影响相关排序, 权重高的仍会在前面, 主要适合用于布尔检索
+	 * @param bool $asc 是否为正序排列, 即从先到后, 默认为反序
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 */
+	public function setDocOrder($asc = false)
+	{
+		$type = CMD_SORT_TYPE_DOCID | ($asc ? CMD_SORT_FLAG_ASCENDING : 0);
+		$cmd = new XSCommand(CMD_SEARCH_SET_SORT, $type);
 		$this->execCommand($cmd);
 		return $this;
 	}

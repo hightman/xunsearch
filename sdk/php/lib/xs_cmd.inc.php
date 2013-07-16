@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/05/16 15:39 */
+/* Automatically generated at 2013/07/16 10:42 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -67,6 +67,7 @@ define('CMD_SORT_TYPE_DOCID',	1);
 define('CMD_SORT_TYPE_VALUE',	2);
 define('CMD_SORT_TYPE_MULTI',	3);
 define('CMD_SORT_TYPE_MASK',	0x3f);
+define('CMD_SORT_FLAG_RELEVANCE',	0x40);
 define('CMD_SORT_FLAG_ASCENDING',	0x80);
 define('CMD_QUERY_OP_AND',	0);
 define('CMD_QUERY_OP_OR',	1);
