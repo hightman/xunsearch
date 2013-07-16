@@ -154,13 +154,23 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->object->add($doc);
 		$this->object->add($doc);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
-		$this->object->beginRebuild();
+		$e = null;
+		try
+		{
+			$this->object->beginRebuild();
+		}
+		catch (XSException $e)
+		{
+			
+		}
+		$this->assertNotNull($e);
+		$this->assertEquals(CMD_ERR_REBUILDING, $e->getCode());
 		$this->object->add($doc);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
 		$this->object->endRebuild();
 		$this->object->flushIndex();
 		sleep(2);
-		$this->assertEquals(1, $search->reopen(true)->dbTotal);
+		$this->assertEquals(3, $search->reopen(true)->dbTotal);
 
 		$this->object->beginRebuild();
 		$this->object->add($doc);
@@ -169,7 +179,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->object->stopRebuild();
 		$this->object->flushIndex();
 		sleep(2);
-		$this->assertEquals(1, $search->reopen(true)->dbTotal);
+		$this->assertEquals(3, $search->reopen(true)->dbTotal);
 	}
 
 	public function testSynonyms($buffer = false)
