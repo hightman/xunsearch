@@ -55,19 +55,18 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function __construct($p = null, $d = null)
 	{
 		$this->_data = array();
-		if (is_array($p))
+		if (is_array($p)) {
 			$this->_data = $p;
-		else if (is_string($p))
-		{
-			if (strlen($p) !== self::$_resSize)
-			{
+		} elseif (is_string($p)) {
+			if (strlen($p) !== self::$_resSize) {
 				$this->setCharset($p);
 				return;
 			}
 			$this->_meta = unpack(self::$_resFormat, $p);
 		}
-		if ($d !== null && is_string($d))
+		if ($d !== null && is_string($d)) {
 			$this->setCharset($d);
+		}
 	}
 
 	/**
@@ -78,8 +77,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function __get($name)
 	{
-		if (!isset($this->_data[$name]))
+		if (!isset($this->_data[$name])) {
 			return null;
+		}
 		return $this->autoConvert($this->_data[$name]);
 	}
 
@@ -91,8 +91,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function __set($name, $value)
 	{
-		if ($this->_meta !== null)
+		if ($this->_meta !== null) {
 			throw new XSException('Magick property of result document is read-only');
+		}
 		$this->setField($name, $value);
 	}
 
@@ -105,11 +106,11 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function __call($name, $args)
 	{
-		if ($this->_meta !== null)
-		{
+		if ($this->_meta !== null) {
 			$name = strtolower($name);
-			if (isset($this->_meta[$name]))
+			if (isset($this->_meta[$name])) {
 				return $this->_meta[$name];
+			}
 		}
 		throw new XSException('Call to undefined method `' . get_class($this) . '::' . $name . '()\'');
 	}
@@ -130,8 +131,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function setCharset($charset)
 	{
 		$this->_charset = strtoupper($charset);
-		if ($this->_charset == 'UTF8')
+		if ($this->_charset == 'UTF8') {
 			$this->_charset = 'UTF-8';
+		}
 	}
 
 	/**
@@ -150,13 +152,12 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function setFields($data)
 	{
-		if ($data === null)
-		{
+		if ($data === null) {
 			$this->_data = array();
 			$this->_meta = $this->_terms = $this->_texts = null;
-		}
-		else
+		} else {
 			$this->_data = array_merge($this->_data, $data);
+		}
 	}
 
 	/**
@@ -166,10 +167,11 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function setField($name, $value)
 	{
-		if ($value === null)
+		if ($value === null) {
 			unset($this->_data[$name]);
-		else
+		} else {
 			$this->_data[$name] = $value;
+		}
 	}
 
 	/**
@@ -190,11 +192,11 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function getAddTerms($field)
 	{
 		$field = strval($field);
-		if ($this->_terms === null || !isset($this->_terms[$field]))
+		if ($this->_terms === null || !isset($this->_terms[$field])) {
 			return null;
+		}
 		$terms = array();
-		foreach ($this->_terms[$field] as $term => $weight)
-		{
+		foreach ($this->_terms[$field] as $term => $weight) {
 			$term = $this->autoConvert($term);
 			$terms[$term] = $weight;
 		}
@@ -209,8 +211,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function getAddIndex($field)
 	{
 		$field = strval($field);
-		if ($this->_texts === null || !isset($this->_texts[$field]))
+		if ($this->_texts === null || !isset($this->_texts[$field])) {
 			return null;
+		}
 		return $this->autoConvert($this->_texts[$field]);
 	}
 
@@ -223,14 +226,16 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function addTerm($field, $term, $weight = 1)
 	{
 		$field = strval($field);
-		if (!is_array($this->_terms))
+		if (!is_array($this->_terms)) {
 			$this->_terms = array();
-		if (!isset($this->_terms[$field]))
+		}
+		if (!isset($this->_terms[$field])) {
 			$this->_terms[$field] = array($term => $weight);
-		else if (!isset($this->_terms[$field][$term]))
+		} elseif (!isset($this->_terms[$field][$term])) {
 			$this->_terms[$field][$term] = $weight;
-		else
+		} else {
 			$this->_terms[$field][$term] += $weight;
+		}
 	}
 
 	/**
@@ -241,12 +246,14 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	public function addIndex($field, $text)
 	{
 		$field = strval($field);
-		if (!is_array($this->_texts))
+		if (!is_array($this->_texts)) {
 			$this->_texts = array();
-		if (!isset($this->_texts[$field]))
+		}
+		if (!isset($this->_texts[$field])) {
 			$this->_texts[$field] = strval($text);
-		else
+		} else {
 			$this->_texts[$field] .= "\n" . strval($text);
+		}
 	}
 
 	/**
@@ -254,8 +261,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function getIterator()
 	{
-		if ($this->_charset !== null && $this->_charset !== 'UTF-8')
-		{
+		if ($this->_charset !== null && $this->_charset !== 'UTF-8') {
 			$from = $this->_meta === null ? $this->_charset : 'UTF-8';
 			$to = $this->_meta === null ? 'UTF-8' : $this->_charset;
 			return new ArrayIterator(XS::convert($this->_data, $to, $from));
@@ -292,8 +298,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function offsetSet($name, $value)
 	{
-		if (!is_null($name))
+		if (!is_null($name)) {
 			$this->__set(strval($name), $value);
+		}
 	}
 
 	/**
@@ -313,8 +320,9 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 */
 	public function beforeSubmit(XSIndex $index)
 	{
-		if ($this->_charset === null)
+		if ($this->_charset === null) {
 			$this->_charset = $index->xs->getDefaultCharset();
+		}
 		return true;
 	}
 
@@ -340,8 +348,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	{
 		// Is the value need to convert
 		if ($this->_charset === null || $this->_charset == 'UTF-8'
-			|| !is_string($value) || !preg_match('/[\x81-\xfe]/', $value))
-		{
+				|| !is_string($value) || !preg_match('/[\x81-\xfe]/', $value)) {
 			return $value;
 		}
 

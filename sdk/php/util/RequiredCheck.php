@@ -9,7 +9,6 @@
  * @license http://www.xunsearch.com/license/
  * @version $Id$
  */
-
 require_once dirname(__FILE__) . '/../lib/XS.php';
 require dirname(__FILE__) . '/XSUtil.class.php';
 
@@ -34,7 +33,7 @@ $result = array(
 		'type' => extension_loaded('pcre') ? 'OK' : 'ERROR',
 		'used' => 'XSDocument, XSSearch',
 		'note' => '用于字符串切割、判断',
-	),	
+	),
 	'编码转换' => array(
 		'type' => check_conv(),
 		'used' => 'XSDocument, XSSearch',
@@ -54,7 +53,7 @@ $result = array(
 		'type' => extension_loaded('xml') ? 'OK' : 'WARNING',
 		'used' => 'util.Indexer',
 		'note' => '用于读取导入 XML 格式的数据',
-	),	
+	),
 	'MySQL 扩展' => array(
 		'type' => check_mysql(),
 		'used' => 'util.Indexer',
@@ -64,7 +63,7 @@ $result = array(
 		'type' => check_sqlite(),
 		'used' => 'util.Indexer',
 		'note' => '用于读取导入 SQLite 的数据库',
-	),	
+	),
 );
 
 // output
@@ -84,11 +83,10 @@ out_line();
 out_line('项目', '结果', '用于', '备注');
 out_line();
 $num_ok = $num_warning = $num_error = 0;
-foreach ($result as $key => $val)
-{
+foreach ($result as $key => $val) {
 	if (substr($val['type'], 0, 7) == 'WARNING')
 		$num_warning++;
-	else if (substr($val['type'], 0, 5) == 'ERROR')
+	elseif (substr($val['type'], 0, 5) == 'ERROR')
 		$num_error++;
 	else
 		$num_ok++;
@@ -103,25 +101,29 @@ out_line();
 共计 <?php echo $num_ok; ?> 项通过，<?php echo $num_warning; ?> 项警告，<?php echo $num_error; ?> 项错误。
 
 <?php if ($num_error > 0): ?>
-您的服务器配置不符合 Xunsearch/PHP-SDK 的最低要求。
-请仔细查看上面表格中结果为 ERROR 的项目，并针对性的做出修改和调整。
+	您的服务器配置不符合 Xunsearch/PHP-SDK 的最低要求。
+	请仔细查看上面表格中结果为 ERROR 的项目，并针对性的做出修改和调整。
 <?php else: ?>
-您的服务器配置符合 Xunsearch/PHP-SDK 的最低要求。
-<?php if ($num_warning > 0): ?>
-如果您需要使用特定的功能，请关注上述的 WARNING 项。 
-<?php endif; ?>
+	您的服务器配置符合 Xunsearch/PHP-SDK 的最低要求。
+	<?php if ($num_warning > 0): ?>
+		如果您需要使用特定的功能，请关注上述的 WARNING 项。 
+	<?php endif; ?>
 <?php endif; ?>
 <?php
+
 // check conv
 function check_conv()
 {
 	$rec = array();
-	if (function_exists('mb_convert_encoding'))
+	if (function_exists('mb_convert_encoding')) {
 		$rec[] = 'mbstring';
-	if (function_exists('iconv'))
+	}
+	if (function_exists('iconv')) {
 		$rec[] = 'iconv';
-	if (count($rec) === 0)
+	}
+	if (count($rec) === 0) {
 		return 'WARNING';
+	}
 	return current($rec);
 }
 
@@ -129,14 +131,18 @@ function check_conv()
 function check_cache()
 {
 	$rec = array();
-	if (function_exists('apc_fetch'))
+	if (function_exists('apc_fetch')) {
 		$rec[] = 'apc';
-	if (function_exists('xcache_get'))
+	}
+	if (function_exists('xcache_get')) {
 		$rec[] = 'xcache';
-	if (function_exists('eaccelerator_get'))
-		$rec[] = 'eAccelerator';	
-	if (count($rec) === 0)
+	}
+	if (function_exists('eaccelerator_get')) {
+		$rec[] = 'eAccelerator';
+	}
+	if (count($rec) === 0) {
 		return 'WARNING';
+	}
 	return current($rec);
 }
 
@@ -144,14 +150,18 @@ function check_cache()
 function check_mysql()
 {
 	$rec = array();
-	if (function_exists('mysql_connect'))
+	if (function_exists('mysql_connect')) {
 		$rec[] = 'mysql';
-	if (class_exists('mysqli'))
+	}
+	if (class_exists('mysqli')) {
 		$rec[] = 'mysqli';
-	if (extension_loaded('pdo_mysql'))
-		$rec[] = 'PDO_MySQL';	
-	if (count($rec) === 0)
+	}
+	if (extension_loaded('pdo_mysql')) {
+		$rec[] = 'PDO_MySQL';
+	}
+	if (count($rec) === 0) {
 		return 'WARNING';
+	}
 	return current($rec);
 }
 
@@ -159,14 +169,18 @@ function check_mysql()
 function check_sqlite()
 {
 	$rec = array();
-	if (function_exists('sqlite_open'))
+	if (function_exists('sqlite_open')) {
 		$rec[] = 'sqlite';
-	if (class_exists('sqlite3'))
+	}
+	if (class_exists('sqlite3')) {
 		$rec[] = 'sqlite3';
-	if (extension_loaded('pdo_sqlite'))
-		$rec[] = 'PDO_SQLite';	
-	if (count($rec) === 0)
+	}
+	if (extension_loaded('pdo_sqlite')) {
+		$rec[] = 'PDO_SQLite';
+	}
+	if (count($rec) === 0) {
 		return 'WARNING';
+	}
 	return current($rec);
 }
 
@@ -174,20 +188,11 @@ function check_sqlite()
 function out_line()
 {
 	$args = func_get_args();
-	if (count($args) == 4)
-	{
-		printf("| %s | %s | %s | %s |\n",
-			XSUtil::fixWidth($args[0], 10),
-			XSUtil::fixWidth($args[1], 10),
-			XSUtil::fixWidth($args[2], 24),
-			XSUtil::fixWidth($args[3], 30));
+	if (count($args) == 4) {
+		printf("| %s | %s | %s | %s |\n", XSUtil::fixWidth($args[0], 10), XSUtil::fixWidth($args[1], 10),
+				XSUtil::fixWidth($args[2], 24), XSUtil::fixWidth($args[3], 30));
+	} else {
+		printf("+-%s-+-%s-+-%s-+-%s-+\n", XSUtil::fixWidth('', 10, '-'), XSUtil::fixWidth('', 10, '-'),
+				XSUtil::fixWidth('', 24, '-'), XSUtil::fixWidth('', 30, '-'));
 	}
-	else
-	{
-		printf("+-%s-+-%s-+-%s-+-%s-+\n",
-			XSUtil::fixWidth('', 10, '-'),
-			XSUtil::fixWidth('', 10, '-'),
-			XSUtil::fixWidth('', 24, '-'),
-			XSUtil::fixWidth('', 30, '-'));	
-	}		
 }

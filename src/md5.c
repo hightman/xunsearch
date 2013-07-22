@@ -75,13 +75,11 @@ static void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned
 
 	/* Handle any leading odd-sized chunks */
 
-	if (t)
-	{
+	if (t) {
 		unsigned char *p = ctx->in + t;
 
 		t = 64 - t;
-		if (len < t)
-		{
+		if (len < t) {
 			memcpy(p, (void *) buf, len);
 			return;
 		}
@@ -92,8 +90,7 @@ static void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned
 	}
 	/* Process data in 64-byte chunks */
 
-	while (len >= 64)
-	{
+	while (len >= 64) {
 		memcpy(ctx->in, (void *) buf, 64);
 		MD5Transform(ctx->buf, ctx->in);
 		buf += 64;
@@ -146,17 +143,14 @@ static void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 	count = 64 - 1 - count;
 
 	/* Pad out to 56 mod 64 */
-	if (count < 8)
-	{
+	if (count < 8) {
 		/* Two lots of padding:  Pad the first block to 64 bytes */
 		memset(p, 0, count);
 		MD5Transform(ctx->buf, ctx->in);
 
 		/* Now fill the next block with 56 bytes */
 		memset(ctx->in, 0, 56);
-	}
-	else
-	{
+	} else {
 		/* Pad block to 56 bytes */
 		memset(p, 0, count - 8);
 	}
@@ -170,7 +164,7 @@ static void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 	PUT_32BIT_LSB_FIRST(digest + 4, ctx->buf[1]);
 	PUT_32BIT_LSB_FIRST(digest + 8, ctx->buf[2]);
 	PUT_32BIT_LSB_FIRST(digest + 12, ctx->buf[3]);
-	memset(ctx, 0, sizeof(ctx)); /* In case it's sensitive */
+	memset(ctx, 0, sizeof (ctx)); /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5
@@ -285,8 +279,7 @@ static void make_digest(char *md5str, unsigned char *digest)
 {
 	int i;
 
-	for (i = 0; i < 16; i++)
-	{
+	for (i = 0; i < 16; i++) {
 		sprintf(md5str, "%02x", digest[i]);
 		md5str += 2;
 	}

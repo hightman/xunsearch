@@ -31,12 +31,11 @@ class XSUtil
 	 */
 	public static function fixWidth($text, $size, $pad = ' ')
 	{
-		for ($i = $j = 0; $i < strlen($text) && $j < $size; $i++, $j++)
-		{
-			if ((ord($text[$i]) & 0xe0) == 0xe0)
-			{
-				if (($size - $j) == 1)
+		for ($i = $j = 0; $i < strlen($text) && $j < $size; $i++, $j++) {
+			if ((ord($text[$i]) & 0xe0) === 0xe0) {
+				if (($size - $j) == 1) {
 					break;
+				}
 				$j++;
 				$i += 2;
 			}
@@ -51,8 +50,7 @@ class XSUtil
 	 */
 	public static function setCharset($charset)
 	{
-		if ($charset !== null && strcasecmp($charset, 'utf8') && strcasecmp($charset, 'utf-8'))
-		{
+		if ($charset !== null && strcasecmp($charset, 'utf8') && strcasecmp($charset, 'utf-8')) {
 			self::$charset = $charset;
 			ob_start(array(__CLASS__, 'convertOut'));
 		}
@@ -65,8 +63,9 @@ class XSUtil
 	 */
 	public static function convertOut($buf)
 	{
-		if (self::$charset !== null)
+		if (self::$charset !== null) {
 			return XS::convert($buf, self::$charset, 'UTF-8');
+		}
 		return $buf;
 	}
 
@@ -77,8 +76,9 @@ class XSUtil
 	 */
 	public static function convertIn($buf)
 	{
-		if (self::$charset !== null)
+		if (self::$charset !== null) {
 			return XS::convert($buf, 'UTF-8', self::$charset);
+		}
 		return $buf;
 	}
 
@@ -91,52 +91,38 @@ class XSUtil
 	{
 		$result = array('-' => array());
 		$params = isset($_SERVER['argv']) ? $_SERVER['argv'] : array();
-		for ($i = 0; $i < count($params); $i++)
-		{
-			if ($params[$i] === '--')
-			{
-				for ($i = $i + 1; $i < count($params); $i++)
+		for ($i = 0; $i < count($params); $i++) {
+			if ($params[$i] === '--') {
+				for ($i = $i + 1; $i < count($params); $i++) {
 					$result['-'][] = $params[$i];
+				}
 				break;
-			}
-			else if ($params[$i][0] === '-')
-			{
+			} elseif ($params[$i][0] === '-') {
 				$value = true;
 				$pname = substr($params[$i], 1);
-				if ($pname[0] === '-')
-				{
+				if ($pname[0] === '-') {
 					$pname = substr($pname, 1);
-					if (($pos = strpos($pname, '=')) !== false)
-					{
+					if (($pos = strpos($pname, '=')) !== false) {
 						$value = substr($pname, $pos + 1);
 						$pname = substr($pname, 0, $pos);
 					}
-				}
-				else if (strlen($pname) > 1)
-				{
-					for ($j = 1; $j < strlen($params[$i]); $j++)
-					{
+				} elseif (strlen($pname) > 1) {
+					for ($j = 1; $j < strlen($params[$i]); $j++) {
 						$pname = substr($params[$i], $j, 1);
-						if (in_array($pname, $valued))
-						{
+						if (in_array($pname, $valued)) {
 							$value = substr($params[$i], $j + 1);
 							break;
-						}
-						else if (($j + 1) != strlen($params[$i]))
-						{
+						} elseif (($j + 1) != strlen($params[$i])) {
 							$result[$pname] = true;
 						}
 					}
 				}
-				if ($value === true && in_array($pname, $valued) && isset($params[$i + 1]))
-				{
+				if ($value === true && in_array($pname, $valued) && isset($params[$i + 1])) {
 					$value = $params[$i + 1];
 					$i++;
 				}
 				$result[$pname] = $value;
-			}
-			else
-			{
+			} else {
 				$result['-'][] = $params[$i];
 			}
 		}
@@ -156,17 +142,17 @@ class XSUtil
 	 */
 	public static function getOpt($short, $long = null, $extra = false)
 	{
-		if (self::$options === null)
+		if (self::$options === null) {
 			self::parseOpt();
+		}
 
 		$value = null;
 		$options = self::$options;
-		if ($long !== null && isset($options[$long]))
+		if ($long !== null && isset($options[$long])) {
 			$value = $options[$long];
-		else if ($short !== null && isset($options[$short]))
+		} elseif ($short !== null && isset($options[$short])) {
 			$value = $options[$short];
-		else if ($extra === true && isset($options['-'][self::$optind]))
-		{
+		} elseif ($extra === true && isset($options['-'][self::$optind])) {
 			$value = $options['-'][self::$optind];
 			self::$optind++;
 		}
@@ -179,8 +165,9 @@ class XSUtil
 	public static function flush()
 	{
 		flush();
-		if (ob_get_level() > 0)
+		if (ob_get_level() > 0) {
 			ob_flush();
+		}
 	}
 
 	/**
@@ -188,18 +175,20 @@ class XSUtil
 	 */
 	public static function copyDir($src, $dst)
 	{
-		if (!($dir = @dir($src)) || (!is_dir($dst) && !@mkdir($dst, 0755, true)))
+		if (!($dir = @dir($src)) || (!is_dir($dst) && !@mkdir($dst, 0755, true))) {
 			return false;
-		while (($entry = $dir->read()) !== false)
-		{
-			if ($entry === '.' || $entry === '..')
+		}
+		while (($entry = $dir->read()) !== false) {
+			if ($entry === '.' || $entry === '..') {
 				continue;
+			}
 			$psrc = $src . DIRECTORY_SEPARATOR . $entry;
 			$pdst = $dst . DIRECTORY_SEPARATOR . $entry;
-			if (is_dir($pdst))
+			if (is_dir($pdst)) {
 				self::copyDir($psrc, $pdst);
-			else
+			} else {
 				@copy($psrc, $pdst);
+			}
 		}
 		$dir->close();
 		return true;

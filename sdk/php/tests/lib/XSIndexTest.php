@@ -61,14 +61,11 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	{
 		$search = $this->object->xs->search;
 		// without primary key
-		try
-		{
+		try {
 			$e = null;
 			$doc = new XSDocument;
 			$this->object->add($doc);
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			
 		}
 		$this->assertInstanceOf('XSException', $e);
@@ -155,12 +152,9 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->object->add($doc);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
 		$e = null;
-		try
-		{
+		try {
 			$this->object->beginRebuild();
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			
 		}
 		$this->assertNotNull($e);
@@ -188,15 +182,17 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$search = $this->object->xs->search;
 
 		// simple add synonyms
-		if ($buffer)
+		if ($buffer) {
 			$index->openBuffer();
+		}
 		$index->addSynonym('foo', 'bar');
 		$index->addSynonym('FOO', 'Bra');
 		$index->addSynonym('Hello World', 'hi');
 		$index->addSynonym('检索', '搜索');
 		$index->addSynonym('search', '搜索');
-		if ($buffer)
+		if ($buffer) {
 			$index->closeBuffer();
+		}
 		$index->flushIndex();
 		sleep(4);
 
@@ -212,13 +208,15 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('搜索', implode(' ', $synonyms['search']));
 
 		// simple del synonyms
-		if ($buffer)
+		if ($buffer) {
 			$index->openBuffer();
+		}
 		$index->delSynonym('FOO', 'Bra');
 		$index->delSynonym('Hello World');
 		$index->delSynonym('检索', '搜索');
-		if ($buffer)
+		if ($buffer) {
 			$index->closeBuffer();
+		}
 		$index->flushIndex();
 		sleep(2);
 

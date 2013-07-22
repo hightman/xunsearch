@@ -61,16 +61,13 @@ class XSCommand extends XSComponent
 	 */
 	public function __construct($cmd, $arg1 = 0, $arg2 = 0, $buf = '', $buf1 = '')
 	{
-		if (is_array($cmd))
-		{
-			foreach ($cmd as $key => $value)
-			{
+		if (is_array($cmd)) {
+			foreach ($cmd as $key => $value) {
 				if ($key === 'arg' || property_exists($this, $key))
 					$this->$key = $value;
 			}
 		}
-		else
-		{
+		else {
 			$this->cmd = $cmd;
 			$this->arg1 = $arg1;
 			$this->arg2 = $arg2;
@@ -85,8 +82,9 @@ class XSCommand extends XSComponent
 	 */
 	public function __toString()
 	{
-		if (strlen($this->buf1) > 0xff)
+		if (strlen($this->buf1) > 0xff) {
 			$this->buf1 = substr($this->buf1, 0, 0xff);
+		}
 		return pack('CCCCI', $this->cmd, $this->arg1, $this->arg2, strlen($this->buf1), strlen($this->buf)) . $this->buf . $this->buf1;
 	}
 
@@ -127,6 +125,7 @@ class XSServer extends XSComponent
 	 */
 	const FILE = 0x01;
 	const BROKEN = 0x02;
+
 	/**
 	 * @var XS 服务端关联的 XS 对象
 	 */
@@ -144,8 +143,9 @@ class XSServer extends XSComponent
 	public function __construct($conn = null, $xs = null)
 	{
 		$this->xs = $xs;
-		if ($conn !== null)
+		if ($conn !== null) {
 			$this->open($conn);
+		}
 	}
 
 	/**
@@ -171,8 +171,9 @@ class XSServer extends XSComponent
 		$this->_project = null;
 		$this->connect();
 		$this->_flag ^= self::BROKEN;
-		if ($this->xs instanceof XS)
+		if ($this->xs instanceof XS) {
 			$this->setProject($this->xs->getName());
+		}
 	}
 
 	/**
@@ -183,8 +184,9 @@ class XSServer extends XSComponent
 	 */
 	public function reopen($force = false)
 	{
-		if ($this->_flag & self::BROKEN || $force === true)
+		if ($this->_flag & self::BROKEN || $force === true) {
 			$this->open($this->_conn);
+		}
 		return $this;
 	}
 
@@ -195,15 +197,12 @@ class XSServer extends XSComponent
 	 */
 	public function close($ioerr = false)
 	{
-		if ($this->_sock && !($this->_flag & self::BROKEN))
-		{
-			if (!$ioerr && $this->_sendBuffer !== '')
-			{
+		if ($this->_sock && !($this->_flag & self::BROKEN)) {
+			if (!$ioerr && $this->_sendBuffer !== '') {
 				$this->write($this->_sendBuffer);
 				$this->_sendBuffer = '';
 			}
-			if (!$ioerr && !($this->_flag & self::FILE))
-			{
+			if (!$ioerr && !($this->_flag & self::FILE)) {
 				$cmd = new XSCommand(CMD_QUIT);
 				fwrite($this->_sock, $cmd);
 			}
@@ -218,10 +217,11 @@ class XSServer extends XSComponent
 	public function getConnString()
 	{
 		$str = $this->_conn;
-		if (is_int($str) || is_numeric($str))
+		if (is_int($str) || is_numeric($str)) {
 			$str = 'localhost:' . $str;
-		else if (strpos($str, ':') === false)
+		} elseif (strpos($str, ':') === false) {
 			$str = 'unix://' . $str;
+		}
 		return $str;
 	}
 
@@ -250,8 +250,7 @@ class XSServer extends XSComponent
 	 */
 	public function setProject($name, $home = '')
 	{
-		if ($name !== $this->_project)
-		{
+		if ($name !== $this->_project) {
 			$cmd = array('cmd' => CMD_USE, 'buf' => $name, 'buf1' => $home);
 			$this->execCommand($cmd, CMD_OK_PROJECT);
 			$this->_project = $name;
@@ -280,12 +279,12 @@ class XSServer extends XSComponent
 	public function execCommand($cmd, $res_arg = CMD_NONE, $res_cmd = CMD_OK)
 	{
 		// create command object
-		if (!$cmd instanceof XSCommand)
+		if (!$cmd instanceof XSCommand) {
 			$cmd = new XSCommand($cmd);
+		}
 
 		// just cache the cmd for those need not answer
-		if ($cmd->cmd & 0x80)
-		{
+		if ($cmd->cmd & 0x80) {
 			$this->_sendBuffer .= $cmd;
 			return true;
 		}
@@ -296,18 +295,21 @@ class XSServer extends XSComponent
 		$this->write($buf);
 
 		// return true directly for local file
-		if ($this->_flag & self::FILE)
+		if ($this->_flag & self::FILE) {
 			return true;
+		}
 
 		// got the respond
 		$res = $this->getRespond();
 
 		// check respond
-		if ($res->cmd === CMD_ERR && $res_cmd != CMD_ERR)
+		if ($res->cmd === CMD_ERR && $res_cmd != CMD_ERR) {
 			throw new XSException($res->buf, $res->arg);
+		}
 		// got unexpected respond command
-		if ($res->cmd != $res_cmd || ($res_arg != CMD_NONE && $res->arg != $res_arg))
+		if ($res->cmd != $res_cmd || ($res_arg != CMD_NONE && $res->arg != $res_arg)) {
 			throw new XSException('Unexpected respond {CMD:' . $res->cmd . ', ARG:' . $res->arg . '}');
+		}
 		return $res;
 	}
 
@@ -318,8 +320,9 @@ class XSServer extends XSComponent
 	 */
 	public function sendCommand($cmd)
 	{
-		if (!$cmd instanceof XSCommand)
+		if (!$cmd instanceof XSCommand) {
 			$cmd = new XSCommand($cmd);
+		}
 		$this->write(strval($cmd));
 	}
 
@@ -347,8 +350,9 @@ class XSServer extends XSComponent
 	public function hasRespond()
 	{
 		// check socket
-		if ($this->_sock === null || $this->_flag & (self::BROKEN | self::FILE))
+		if ($this->_sock === null || $this->_flag & (self::BROKEN | self::FILE)) {
 			return false;
+		}
 		$wfds = $xfds = array();
 		$rfds = array($this->_sock);
 		$res = stream_select($rfds, $wfds, $xfds, 0, 0);
@@ -365,23 +369,23 @@ class XSServer extends XSComponent
 	{
 		// quick return for empty buf
 		$buf = strval($buf);
-		if ($len == 0 && ($len = $size = strlen($buf)) == 0)
+		if ($len == 0 && ($len = $size = strlen($buf)) == 0) {
 			return true;
+		}
 
 		// loop to send data
 		$this->check();
-		while (true)
-		{
+		while (true) {
 			$bytes = fwrite($this->_sock, $buf, $len);
-			if ($bytes === false || $bytes === 0 || $bytes === $len)
+			if ($bytes === false || $bytes === 0 || $bytes === $len) {
 				break;
+			}
 			$len -= $bytes;
 			$buf = substr($buf, $bytes);
 		}
 
 		// error occured
-		if ($bytes === false || $bytes === 0)
-		{
+		if ($bytes === false || $bytes === 0) {
 			$meta = stream_get_meta_data($this->_sock);
 			$this->close(true);
 			$reason = $meta['timed_out'] ? 'timeout' : ($meta['eof'] ? 'closed' : 'unknown');
@@ -400,20 +404,22 @@ class XSServer extends XSComponent
 	protected function read($len)
 	{
 		// quick return for zero size
-		if ($len == 0)
+		if ($len == 0) {
 			return '';
+		}
 
 		// loop to send data
 		$this->check();
-		for ($buf = '', $size = $len;;)
-		{
+		for ($buf = '', $size = $len;;) {
 			$bytes = fread($this->_sock, $len);
-			if ($bytes === false || strlen($bytes) == 0)
+			if ($bytes === false || strlen($bytes) == 0) {
 				break;
+			}
 			$len -= strlen($bytes);
 			$buf .= $bytes;
-			if ($len === 0)
+			if ($len === 0) {
 				return $buf;
+			}
 		}
 
 		// error occured
@@ -431,10 +437,12 @@ class XSServer extends XSComponent
 	 */
 	protected function check()
 	{
-		if ($this->_sock === null)
+		if ($this->_sock === null) {
 			throw new XSException('No server connection');
-		if ($this->_flag & self::BROKEN)
+		}
+		if ($this->_flag & self::BROKEN) {
 			throw new XSException('Broken server connection');
+		}
 	}
 
 	/**
@@ -445,34 +453,29 @@ class XSServer extends XSComponent
 	{
 		// connect to server
 		$conn = $this->_conn;
-		if (is_int($conn) || is_numeric($conn))
-		{
+		if (is_int($conn) || is_numeric($conn)) {
 			$host = 'localhost';
 			$port = intval($conn);
-		}
-		else if (!strncmp($conn, 'file://', 7))
-		{
+		} elseif (!strncmp($conn, 'file://', 7)) {
 			// write-only for saving index exchangable data to file
 			// NOTE: this will cause file content be turncated
 			$conn = substr($conn, 7);
-			if (($sock = @fopen($conn, 'wb')) === false)
+			if (($sock = @fopen($conn, 'wb')) === false) {
 				throw new XSException('Failed to open local file for writing: `' . $conn . '\'');
+			}
 			$this->_flag |= self::FILE;
 			$this->_sock = $sock;
 			return;
-		}
-		else if (($pos = strpos($conn, ':')) !== false)
-		{
+		} elseif (($pos = strpos($conn, ':')) !== false) {
 			$host = substr($conn, 0, $pos);
 			$port = intval(substr($conn, $pos + 1));
-		}
-		else
-		{
+		} else {
 			$host = 'unix://' . $conn;
 			$port = -1;
 		}
-		if (($sock = @fsockopen($host, $port, $errno, $error, 5)) === false)
+		if (($sock = @fsockopen($host, $port, $errno, $error, 5)) === false) {
 			throw new XSException($error . '(C#' . $errno . ', ' . $host . ':' . $port . ')');
+		}
 
 		// set socket options
 		$timeout = ini_get('max_execution_time');

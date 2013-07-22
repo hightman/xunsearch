@@ -10,25 +10,19 @@ class XSExceptionTest extends PHPUnit_Framework_TestCase
 
 	public function test__toString()
 	{
-		try
-		{
+		try {
 			throw new XSException('Test without code');
-		}
-		catch (XSException $e1)
-		{
+		} catch (XSException $e1) {
 			
 		}
-		try
-		{
+		try {
 			throw new XSException('Test with code', 400);
-		}
-		catch (XSException $e2)
-		{
+		} catch (XSException $e2) {
 			
 		}
 		$this->assertInstanceOf('XSException', $e1);
-		$this->assertEquals('[XSException] lib/XSExceptionTest.php(15): Test without code', strval($e1));
-		
+		$this->assertEquals('[XSException] lib/XSExceptionTest.php(14): Test without code', strval($e1));
+
 		$this->assertInstanceOf('XSException', $e2);
 		$this->assertEquals('[XSException] lib/XSExceptionTest.php(23): Test with code(S#400)', '' . $e2);
 	}

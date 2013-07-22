@@ -59,15 +59,13 @@ EOF;
 		echo "开始加载文件 ... ";
 		$root = dirname(__FILE__) . '/../../lib';
 		$content = @file_get_contents($root . '/xs_cmd.inc.php');
-		if ($content === false || strpos($content, 'CMD_NONE') === false)
-		{
+		if ($content === false || strpos($content, 'CMD_NONE') === false) {
 			echo "ERROR: xs_cmd.inc.php 文件不存在或包含无效内容。\n";
 			exit(0);
 		}
 		$files = glob($root . '/*.class.php');
 		sort($files);
-		foreach ($files as $file)
-		{
+		foreach ($files as $file) {
 			$content .= "\n" . file_get_contents($file);
 		}
 		echo "完成，共计 " . (count($files) + 1) . " 个文件 (" . number_format(strlen($content)) . " 字节)\n";
@@ -75,7 +73,7 @@ EOF;
 		$content = "<?php\n" . preg_replace('/^(\?>|<\?php)/m', '', $content) . "\n";
 		$content = $this->stripComments($content);
 		$content = preg_replace('/^include(_once)?.*\s*;\s*$/m', '', $content);
-		$content = preg_replace('/^spl_autoload_register\s*\(.*$/m', '', $content);		
+		$content = preg_replace('/^spl_autoload_register\s*\(.*$/m', '', $content);
 		$content = $this->stripEmptyLines($content);
 		$content = substr_replace($content, $comment . "\n", 6, 0);
 		echo "完成，最终大小为 " . number_format(strlen($content)) . " 字节\n";
@@ -88,15 +86,12 @@ EOF;
 	{
 		$tokens = token_get_all($source);
 		$output = '';
-		foreach ($tokens as $token)
-		{
-			if (is_string($token))
+		foreach ($tokens as $token) {
+			if (is_string($token)) {
 				$output .= $token;
-			else
-			{
+			} else {
 				list($id, $text) = $token;
-				switch ($id)
-				{
+				switch ($id) {
 					case T_DOC_COMMENT:
 						break;
 					default: $output .= $text;

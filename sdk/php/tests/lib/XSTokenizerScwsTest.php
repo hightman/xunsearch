@@ -12,6 +12,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 	 * @var XSTokenizerScws
 	 */
 	protected $object;
+
 	/** 	 
 	 * @var XSDocument
 	 */
@@ -94,6 +95,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 
 	public function testGetResult()
 	{
+		
 	}
 
 	public function testGetTops()

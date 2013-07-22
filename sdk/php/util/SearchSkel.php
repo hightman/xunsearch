@@ -16,8 +16,7 @@ require_once dirname(__FILE__) . '/XSUtil.class.php';
 XSUtil::parseOpt(array('p', 'o', 'project', 'output'));
 $project = XSUtil::getOpt('p', 'project', true);
 
-if (XSUtil::getOpt('h', 'help') !== null || !is_string($project))
-{
+if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)) {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
 SearchSkel - 搜索骨架代码生成工具 ($version)
@@ -41,20 +40,17 @@ EOF;
 $output = XSUtil::getOpt('o', 'output', true);
 if ($output === null)
 	$output = '.';
-if (!is_dir($output))
-{
+if (!is_dir($output)) {
 	echo "错误：输出目录 ($output) 不是一个有效的目录。\n";
 	exit(-1);
 }
-if (!is_writable($output))
-{
+if (!is_writable($output)) {
 	echo "错误：输出目录 ($output) 不可写入，请注意检查权限。\n";
 	exit(-1);
 }
 
 // execute the search
-try
-{
+try {
 	// create xs object
 	echo "初始化项目对象 ...\n";
 	$xs = new XS($project);
@@ -82,31 +78,30 @@ try
 	$vars['@set_filter@'] = '';
 	$vars['@set_sort@'] = '';
 	$vars['@field_id@'] = $xs->getFieldId()->name;
-	if (($field = $xs->getFieldTitle()) !== false)
+	if (($field = $xs->getFieldTitle()) !== false) {
 		$vars['@field_title@'] = $field->name;
-	if (($field = $xs->getFieldBody()) !== false)
+	}
+	if (($field = $xs->getFieldBody()) !== false) {
 		$vars['@field_body@'] = $field->name;
+	}
 	$vars['@field_info@'] = '';
-	foreach ($xs->getAllFields() as $field) /* @var $field XSFieldMeta */
-	{
-		if ($field->hasIndexSelf() && $field->type != XSFieldMeta::TYPE_BODY && !$field->isBoolIndex())
+	foreach ($xs->getAllFields() as $field) /* @var $field XSFieldMeta */ {
+		if ($field->hasIndexSelf() && $field->type != XSFieldMeta::TYPE_BODY && !$field->isBoolIndex()) {
 			$vars['@set_filter@'] .= "\t\t\t<label class=\"radio inline\"><input type=\"radio\" name=\"f\" value=\"{$field->name}\" <?php echo \$f_{$field->name}; ?> />" . ucfirst($field->name) . "</label>\n";
-		if ($field->isNumeric())
-		{
+		}
+		if ($field->isNumeric()) {
 			$vars['@set_sort@'] .= "\t\t\t\t\t<option value=\"" . $field->name . "_DESC\" <?php echo \$s_{$field->name}_DESC; ?>>" . ucfirst($field->name) . "从大到小</option>\n";
 			$vars['@set_sort@'] .= "\t\t\t\t\t<option value=\"" . $field->name . "_ASC\" <?php echo \$s_{$field->name}_ASC; ?>>" . ucfirst($field->name) . "从小到大</option>\n";
 		}
-		if ($field->isSpeical())
+		if ($field->isSpeical()) {
 			continue;
-		if ($field->type == XSFieldMeta::TYPE_STRING)
-		{
-			if (!isset($vars['@field_title@']))
-			{
+		}
+		if ($field->type == XSFieldMeta::TYPE_STRING) {
+			if (!isset($vars['@field_title@'])) {
 				$vars['@field_title@'] = $field->name;
 				continue;
 			}
-			if (!isset($vars['@field_body@']))
-			{
+			if (!isset($vars['@field_body@'])) {
 				$vars['@field_body@'] = $field->name;
 				continue;
 			}
@@ -117,55 +112,55 @@ try
 	$vars['@set_filter@'] = trim($vars['@set_filter@']);
 	$vars['@set_sort@'] = trim($vars['@set_sort@']);
 	$vars['@field_info@'] = trim($vars['@field_info@']);
-	if (!isset($vars['@field_title@']))
+	if (!isset($vars['@field_title@'])) {
 		$vars['@field_title@'] = 'title';
-	if (!isset($vars['@field_body@']))
+	}
+	if (!isset($vars['@field_body@'])) {
 		$vars['@field_body@'] = 'body';
+	}
 
 	// output dir
 	echo "检测并创建输出目录 ...\n";
 	$output .= '/' . $xs->name;
-	if (!is_dir($output) && !mkdir($output))
+	if (!is_dir($output) && !mkdir($output)) {
 		throw new XSException('Failed to create output directory: ' . $output);
+	}
 
 	// loop to write-in files
 	$input = dirname(__FILE__) . '/skel';
 	$dir = dir($input);
-	while (($entry = $dir->read()) !== false)
-	{
-		if ($entry === '.' || $entry === '..')
+	while (($entry = $dir->read()) !== false) {
+		if ($entry === '.' || $entry === '..') {
 			continue;
-		if (substr($entry, -3) === '.in')
-		{
+		}
+		if (substr($entry, -3) === '.in') {
 			echo "正在生成 " . substr($entry, 0, -3) . " ...\n";
 			$file = $output . '/' . substr($entry, 0, -3);
-			if (file_exists($file))
+			if (file_exists($file)) {
 				copy($file, $file . '.bak');
+			}
 			$content = file_get_contents($input . '/' . $entry);
 			$content = strtr($content, $vars);
-			if ($vars['@charset@'] !== 'UTF-8')
+			if ($vars['@charset@'] !== 'UTF-8') {
 				$content = XS::convert($content, $vars['@charset@'], 'UTF-8');
+			}
 			file_put_contents($file, $content);
-		}
-		else
-		{
+		} else {
 			echo "正在复制 " . $entry . " ...\n";
 			$file = $output . '/' . $entry;
-			if (is_dir($input . '/' . $entry))
+			if (is_dir($input . '/' . $entry)) {
 				XSUtil::copyDir($input . '/' . $entry, $file);
-			else
-			{
-				if (file_exists($file))
+			} else {
+				if (file_exists($file)) {
 					copy($file, $file . '.bak');
+				}
 				copy($input . '/' . $entry, $file);
 			}
 		}
 	}
 	$dir->close();
 	echo "完成，请将 `$output` 目录转移到 web 可达目录，然后访问 search.php 即可。\n";
-}
-catch (XSException $e)
-{
+} catch (XSException $e) {
 	// Exception
 	$start = dirname(dirname(__FILE__)) . '/';
 	$relative = substr(XSException::getRelPath($start), 0, -1);

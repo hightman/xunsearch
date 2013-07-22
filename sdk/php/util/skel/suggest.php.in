@@ -13,15 +13,11 @@ require_once '@xs_lib_root@/XS.php';
 $q = isset($_GET['term']) ? trim($_GET['term']) : '';
 $q = get_magic_quotes_gpc() ? stripslashes($q) : $q;
 $terms = array();
-if (!empty($q) && strpos($q, ':') === false)
-{
-	try
-	{
+if (!empty($q) && strpos($q, ':') === false) {
+	try {
 		$xs = new XS('@project@');
 		$terms = $xs->search->setCharset('UTF-8')->getExpandedQuery($q);
-	}
-	catch (XSException $e)
-	{
+	} catch (XSException $e) {
 		
 	}
 }

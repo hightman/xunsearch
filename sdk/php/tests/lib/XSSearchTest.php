@@ -44,8 +44,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// create testing data
 		$doc = new XSDocument('utf-8');
-		foreach ($data as $tmp)
-		{
+		foreach ($data as $tmp) {
 			$doc->setFields(null);
 			$doc->setFields($tmp);
 			$index->add($doc);
@@ -55,8 +54,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// create another db
 		$index->setDb('db2');
-		foreach ($data as $tmp)
-		{
+		foreach ($data as $tmp) {
 			$tmp['pid'] += 1000;
 			$doc->setFields(null);
 			$doc->setFields($tmp);
@@ -69,8 +67,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			'迅搜' => 'xunsearch',
 		);
 		$index->openBuffer();
-		foreach ($synonyms as $raw => $syn)
-		{
+		foreach ($synonyms as $raw => $syn) {
 			$index->addSynonym($raw, $syn);
 		}
 		$index->addSynonym('test', 'quiz');
@@ -180,12 +177,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('(pid:1 AND pid:2) OR pid:3', 'Xapian::Query(((0 * A1 AND 0 * A2) OR 0 * A3))'),
 		);
 	}
-	
+
 	public function testSetDocOrder()
 	{
 		$search = self::$xs->search;
 		$docs = $search->setDocOrder(true)->setLimit(1)->search('other:master');
-		$this->assertEquals(3, $docs[0]->pid);		
+		$this->assertEquals(3, $docs[0]->pid);
 		$docs = $search->setDocOrder()->setLimit(1)->search('other:master');
 		$this->assertEquals(21, $docs[0]->pid);
 	}
@@ -475,7 +472,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// test fuzzy multi query
 		$search->setFuzzy();
-		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
+		$this->testQuery('中华人民共和国',
+				'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
 		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');
 		$search->setFuzzy(false);
 
@@ -488,8 +486,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
 			'testing' => 'Xapian::Query(Ztest:(pos=1))',
 		);
-		foreach ($queries as $raw => $expect)
-		{
+		foreach ($queries as $raw => $expect) {
 			$this->testQuery($raw, $expect);
 		}
 
@@ -503,8 +500,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
 			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',
 		);
-		foreach ($queries as $raw => $expect)
-		{
+		foreach ($queries as $raw => $expect) {
 			$this->testQuery($raw, $expect);
 		}
 
@@ -535,23 +531,17 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		sleep(1);
 
 		$search = self::$xs->search;
-		try
-		{
+		try {
 			$e1 = null;
 			$search->setDb(null);
-		}
-		catch (XSException $e1)
-		{
+		} catch (XSException $e1) {
 			
 		}
 		$search->reopen(true);
-		try
-		{
+		try {
 			$e2 = null;
 			$search->setDb('db');
-		}
-		catch (XSException $e2)
-		{
+		} catch (XSException $e2) {
 			
 		}
 		$this->assertNull($e1);
@@ -576,7 +566,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
+		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))',
+				$query);
 	}
 
 	public function testScwsMulti()

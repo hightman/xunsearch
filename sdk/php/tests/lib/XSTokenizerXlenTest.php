@@ -12,10 +12,11 @@ class XSTokenizerXlenTest extends PHPUnit_Framework_TestCase
 	 * @var XSTokenizerXlen
 	 */
 	protected $object;
-	/**	 
+
+	/** 	 
 	 * @var XSDocument
 	 */
-	protected $doc;		
+	protected $doc;
 
 	/**
 	 * Sets up the fixture, for example, opens a network connection.
@@ -24,7 +25,7 @@ class XSTokenizerXlenTest extends PHPUnit_Framework_TestCase
 	protected function setUp()
 	{
 		$this->object = new XSTokenizerXlen;
-		$this->doc = new XSDocument;		
+		$this->doc = new XSDocument;
 	}
 
 	/**
@@ -33,26 +34,26 @@ class XSTokenizerXlenTest extends PHPUnit_Framework_TestCase
 	 */
 	protected function tearDown()
 	{
-		$this->doc = null;		
+		$this->doc = null;
 	}
 
-    /**
-     * @dataProvider provider
-     */	
+	/**
+	 * @dataProvider provider
+	 */
 	public function testGetTokens($words, $str)
 	{
 		$this->assertEquals($words, $this->object->getTokens($str, $this->doc));
 	}
-	
-    /**
-     * @dataProvider provider3
-     */	
+
+	/**
+	 * @dataProvider provider3
+	 */
 	public function testGetTokens3($words, $str)
 	{
 		$this->object = new XSTokenizerXlen('3');
 		$this->assertEquals($words, $this->object->getTokens($str, $this->doc));
 	}
-	
+
 	public function provider()
 	{
 		return array(
@@ -66,7 +67,7 @@ class XSTokenizerXlenTest extends PHPUnit_Framework_TestCase
 			)
 		);
 	}
-	
+
 	public function provider3()
 	{
 		return array(
@@ -76,13 +77,13 @@ class XSTokenizerXlenTest extends PHPUnit_Framework_TestCase
 			),
 			array(
 				array('hel', 'lo ', 'wor', 'ld'),
-				'hello world'				
+				'hello world'
 			),
 			array(
 				array('测', '试', '一', '下'),
 				'测试一下'
 			)
-		);	
+		);
 	}
 }
 

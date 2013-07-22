@@ -7,6 +7,7 @@ require_once dirname(__FILE__) . '/../../lib/XS.class.php';
  */
 class XSErrorExceptionTest extends PHPUnit_Framework_TestCase
 {
+
 	/**
 	 * @expectedException XSErrorException
 	 * @expectedExceptionMessage test user warning
@@ -17,18 +18,17 @@ class XSErrorExceptionTest extends PHPUnit_Framework_TestCase
 		trigger_error('test user notice', E_USER_NOTICE);
 		throw new XSErrorException(E_USER_WARNING, 'test user warning', __FILE__, 18);
 	}
-	
+
 	public function test__toString()
 	{
-		try
-		{
+		try {
 			throw new XSErrorException(E_USER_WARNING, 'test user warning', __FILE__, 25);
+		} catch (Exception $e) {
+			
 		}
-		catch (Exception $e)
-		{			
-		}
-		
+
 		$this->assertInstanceOf('XSErrorException', $e);
-		$this->assertEquals('[XSErrorException] lib/XSErrorExceptionTest.php(25): test user warning(512)', strval($e));
-	}	
+		$this->assertEquals('[XSErrorException] lib/XSErrorExceptionTest.php(25): test user warning(512)',
+				strval($e));
+	}
 }

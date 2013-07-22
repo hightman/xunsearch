@@ -12,6 +12,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	 * @var XS
 	 */
 	protected $xs;
+
 	/**
 	 * @var XSFieldScheme
 	 */
@@ -36,7 +37,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 		$this->object = null;
 		$this->xs = null;
 	}
-	
+
 	/**
 	 * @expectedException XSException
 	 * @expectedExceptionMessage Duplicated field name: `pid'
@@ -45,7 +46,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	{
 		$this->object->addField(new XSFieldMeta('pid'));
 	}
-	
+
 	/**
 	 * @expectedException XSException
 	 * @expectedExceptionMessage Duplicated TITLE field: `subject2' and `subject'
@@ -54,7 +55,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	{
 		$this->object->addField('subject2', array('type' => 'title'));
 	}
-	
+
 	public function testAddField3()
 	{
 		$fields = $this->object->getAllFields();
@@ -64,12 +65,12 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($field->hasIndexMixed());
 		$this->assertTrue($field->hasIndexSelf());
 		$this->assertEquals(count($fields), $field->vno);
-	}			
+	}
 
 	public function testCheckValid()
 	{
 		$this->assertTrue($this->object->checkValid());
-		
+
 		$object = new XSFieldScheme;
 		$this->assertFalse($object->checkValid());
 	}
@@ -77,8 +78,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	public function testGetIterator()
 	{
 		$fields = $this->object->getAllFields();
-		foreach ($this->object as $key => $value)
-		{
+		foreach ($this->object as $key => $value) {
 			$this->assertArrayHasKey($key, $fields);
 			$this->assertEquals($fields[$key], $value);
 		}

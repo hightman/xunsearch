@@ -33,8 +33,7 @@ class XSFieldScheme implements IteratorAggregate
 	public function __toString()
 	{
 		$str = '';
-		foreach ($this->_fields as $field)
-		{
+		foreach ($this->_fields as $field) {
 			$str .= $field->toConfig() . "\n";
 		}
 		return $str;
@@ -46,8 +45,7 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function getFieldId()
 	{
-		if (isset($this->_typeMap[XSFieldMeta::TYPE_ID]))
-		{
+		if (isset($this->_typeMap[XSFieldMeta::TYPE_ID])) {
 			$name = $this->_typeMap[XSFieldMeta::TYPE_ID];
 			return $this->_fields[$name];
 		}
@@ -60,15 +58,14 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function getFieldTitle()
 	{
-		if (isset($this->_typeMap[XSFieldMeta::TYPE_TITLE]))
-		{
+		if (isset($this->_typeMap[XSFieldMeta::TYPE_TITLE])) {
 			$name = $this->_typeMap[XSFieldMeta::TYPE_TITLE];
 			return $this->_fields[$name];
 		}
-		foreach ($this->_fields as $name => $field)
-		{
-			if ($field->type === XSFieldMeta::TYPE_STRING && !$field->isBoolIndex())
+		foreach ($this->_fields as $name => $field) {
+			if ($field->type === XSFieldMeta::TYPE_STRING && !$field->isBoolIndex()) {
 				return $field;
+			}
 		}
 		return false;
 	}
@@ -79,8 +76,7 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function getFieldBody()
 	{
-		if (isset($this->_typeMap[XSFieldMeta::TYPE_BODY]))
-		{
+		if (isset($this->_typeMap[XSFieldMeta::TYPE_BODY])) {
 			$name = $this->_typeMap[XSFieldMeta::TYPE_BODY];
 			return $this->_fields[$name];
 		}
@@ -96,20 +92,19 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function getField($name, $throw = true)
 	{
-		if (is_int($name))
-		{
-			if (!isset($this->_vnoMap[$name]))
-			{
-				if ($throw === true)
+		if (is_int($name)) {
+			if (!isset($this->_vnoMap[$name])) {
+				if ($throw === true) {
 					throw new XSException('Not exists field with vno: `' . $name . '\'');
+				}
 				return false;
 			}
 			$name = $this->_vnoMap[$name];
 		}
-		if (!isset($this->_fields[$name]))
-		{
-			if ($throw === true)
+		if (!isset($this->_fields[$name])) {
+			if ($throw === true) {
 				throw new XSException('Not exists field with name: `' . $name . '\'');
+			}
 			return false;
 		}
 		return $this->_fields[$name];
@@ -143,16 +138,16 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function addField($field, $config = null)
 	{
-		if (!$field instanceof XSFieldMeta)
+		if (!$field instanceof XSFieldMeta) {
 			$field = new XSFieldMeta($field, $config);
+		}
 
-		if (isset($this->_fields[$field->name]))
+		if (isset($this->_fields[$field->name])) {
 			throw new XSException('Duplicated field name: `' . $field->name . '\'');
+		}
 
-		if ($field->isSpeical())
-		{
-			if (isset($this->_typeMap[$field->type]))
-			{
+		if ($field->isSpeical()) {
+			if (isset($this->_typeMap[$field->type])) {
 				$prev = $this->_typeMap[$field->type];
 				throw new XSException('Duplicated ' . strtoupper($config['type']) . ' field: `' . $field->name . '\' and `' . $prev . '\'');
 			}
@@ -163,10 +158,11 @@ class XSFieldScheme implements IteratorAggregate
 		$this->_vnoMap[$field->vno] = $field->name;
 
 		// save field, ensure ID is the first field
-		if ($field->type == XSFieldMeta::TYPE_ID)
+		if ($field->type == XSFieldMeta::TYPE_ID) {
 			$this->_fields = array_merge(array($field->name => $field), $this->_fields);
-		else
+		} else {
 			$this->_fields[$field->name] = $field;
+		}
 	}
 
 	/**
@@ -178,10 +174,10 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public function checkValid($throw = false)
 	{
-		if (!isset($this->_typeMap[XSFieldMeta::TYPE_ID]))
-		{
-			if ($throw)
+		if (!isset($this->_typeMap[XSFieldMeta::TYPE_ID])) {
+			if ($throw) {
 				throw new XSException('Missing field of type ID');
+			}
 			return false;
 		}
 		return true;
@@ -201,8 +197,7 @@ class XSFieldScheme implements IteratorAggregate
 	 */
 	public static function logger()
 	{
-		if (self::$_logger === null)
-		{
+		if (self::$_logger === null) {
 			$scheme = new self;
 			$scheme->addField('id', array('type' => 'id'));
 			$scheme->addField('pinyin');
@@ -250,6 +245,7 @@ class XSFieldMeta
 	const FLAG_INDEX_BOTH = 0x03;
 	const FLAG_WITH_POSITION = 0x10;
 	const FLAG_NON_BOOL = 0x80; // 强制让该字段参与权重计算 (非布尔)
+
 	/**
 	 * @var string 字段名称
 	 * 理论上支持各种可视字符, 推荐字符范围:[0-9A-Za-z-_], 长度控制在 1~32 字节为宜
@@ -302,8 +298,9 @@ class XSFieldMeta
 	public function __construct($name, $config = null)
 	{
 		$this->name = strval($name);
-		if (is_array($config))
+		if (is_array($config)) {
 			$this->fromConfig($config);
+		}
 	}
 
 	/**
@@ -322,11 +319,11 @@ class XSFieldMeta
 	 */
 	public function val($value)
 	{
-		if ($this->type == self::TYPE_DATE)
-		{
+		if ($this->type == self::TYPE_DATE) {
 			// 日期类型: 转换成专用的 YYYYmmdd 格式
-			if (!is_numeric($value) || strlen($value) != 8)
+			if (!is_numeric($value) || strlen($value) !== 8) {
 				$value = date('Ymd', is_numeric($value) ? $value : strtotime($value));
+			}
 		}
 		return $value;
 	}
@@ -347,8 +344,9 @@ class XSFieldMeta
 	 */
 	public function isBoolIndex()
 	{
-		if ($this->flag & self::FLAG_NON_BOOL)
+		if ($this->flag & self::FLAG_NON_BOOL) {
 			return false;
+		}
 		return (!$this->hasIndex() || $this->tokenizer !== XSTokenizer::DFL);
 	}
 
@@ -414,27 +412,25 @@ class XSFieldMeta
 	 */
 	public function getCustomTokenizer()
 	{
-		if (isset(self::$_tokenizers[$this->tokenizer]))
+		if (isset(self::$_tokenizers[$this->tokenizer])) {
 			return self::$_tokenizers[$this->tokenizer];
-		else
-		{
+		} else {
 			if (($pos1 = strpos($this->tokenizer, '(')) !== false
-				&& ($pos2 = strrpos($this->tokenizer, ')', $pos1 + 1)))
-			{
+					&& ($pos2 = strrpos($this->tokenizer, ')', $pos1 + 1))) {
 				$name = 'XSTokenizer' . ucfirst(trim(substr($this->tokenizer, 0, $pos1)));
 				$arg = substr($this->tokenizer, $pos1 + 1, $pos2 - $pos1 - 1);
-			}
-			else
-			{
+			} else {
 				$name = 'XSTokenizer' . ucfirst($this->tokenizer);
 				$arg = null;
 			}
-			if (!class_exists($name))
+			if (!class_exists($name)) {
 				throw new XSException('Undefined custom tokenizer `' . $this->tokenizer . '\' for field `' . $this->name . '\'');
+			}
 
 			$obj = $arg === null ? new $name : new $name($arg);
-			if (!$obj instanceof XSTokenizer)
+			if (!$obj instanceof XSTokenizer) {
 				throw new XSException($name . ' for field `' . $this->name . '\' dose not implement the interface: XSTokenizer');
+			}
 			self::$_tokenizers[$this->tokenizer] = $obj;
 			return $obj;
 		}
@@ -448,57 +444,57 @@ class XSFieldMeta
 	{
 		// type
 		$str = "[" . $this->name . "]\n";
-		if ($this->type === self::TYPE_NUMERIC)
+		if ($this->type === self::TYPE_NUMERIC) {
 			$str .= "type = numeric\n";
-		else if ($this->type === self::TYPE_DATE)
+		} elseif ($this->type === self::TYPE_DATE) {
 			$str .= "type = date\n";
-		else if ($this->type === self::TYPE_ID)
+		} elseif ($this->type === self::TYPE_ID) {
 			$str .= "type = id\n";
-		else if ($this->type === self::TYPE_TITLE)
+		} elseif ($this->type === self::TYPE_TITLE) {
 			$str .= "type = title\n";
-		else if ($this->type === self::TYPE_BODY)
+		} elseif ($this->type === self::TYPE_BODY) {
 			$str .= "type = body\n";
+		}
 		// index
-		if ($this->type !== self::TYPE_BODY && ($index = ($this->flag & self::FLAG_INDEX_BOTH)))
-		{
-			if ($index === self::FLAG_INDEX_BOTH)
-			{
-				if ($this->type !== self::TYPE_TITLE)
+		if ($this->type !== self::TYPE_BODY && ($index = ($this->flag & self::FLAG_INDEX_BOTH))) {
+			if ($index === self::FLAG_INDEX_BOTH) {
+				if ($this->type !== self::TYPE_TITLE) {
 					$str .= "index = both\n";
-			}
-			else if ($index === self::FLAG_INDEX_MIXED)
-			{
+				}
+			} elseif ($index === self::FLAG_INDEX_MIXED) {
 				$str .= "index = mixed\n";
-			}
-			else
-			{
-				if ($this->type != self::TYPE_ID)
+			} else {
+				if ($this->type !== self::TYPE_ID) {
 					$str .= "index = self\n";
+				}
 			}
 		}
 		// tokenizer
-		if ($this->type !== self::TYPE_ID && $this->tokenizer !== XSTokenizer::DFL)
+		if ($this->type !== self::TYPE_ID && $this->tokenizer !== XSTokenizer::DFL) {
 			$str .= "tokenizer = " . $this->tokenizer . "\n";
-		// cutlen
-		if ($this->cutlen > 0 && !($this->cutlen === 300 && $this->type === self::TYPE_BODY))
-			$str .= "cutlen = " . $this->cutlen . "\n";
-		// weight
-		if ($this->weight !== 1 && !($this->weight === 5 && $this->type === self::TYPE_TITLE))
-			$str .= "weight = " . $this->weight . "\n";
-		// phrase
-		if ($this->flag & self::FLAG_WITH_POSITION)
-		{
-			if ($this->type !== self::TYPE_BODY && $this->type !== self::TYPE_TITLE)
-				$str .= "phrase = yes\n";
 		}
-		else
-		{
-			if ($this->type === self::TYPE_BODY || $this->type === self::TYPE_TITLE)
+		// cutlen
+		if ($this->cutlen > 0 && !($this->cutlen === 300 && $this->type === self::TYPE_BODY)) {
+			$str .= "cutlen = " . $this->cutlen . "\n";
+		}
+		// weight
+		if ($this->weight !== 1 && !($this->weight === 5 && $this->type === self::TYPE_TITLE)) {
+			$str .= "weight = " . $this->weight . "\n";
+		}
+		// phrase
+		if ($this->flag & self::FLAG_WITH_POSITION) {
+			if ($this->type !== self::TYPE_BODY && $this->type !== self::TYPE_TITLE) {
+				$str .= "phrase = yes\n";
+			}
+		} else {
+			if ($this->type === self::TYPE_BODY || $this->type === self::TYPE_TITLE) {
 				$str .= "phrase = no\n";
+			}
 		}
 		// non-bool
-		if ($this->flag & self::FLAG_NON_BOOL)
+		if ($this->flag & self::FLAG_NON_BOOL) {
 			$str .= "non_bool = yes\n";
+		}
 		return $str;
 	}
 
@@ -509,24 +505,17 @@ class XSFieldMeta
 	public function fromConfig($config)
 	{
 		// type & default setting
-		if (isset($config['type']))
-		{
+		if (isset($config['type'])) {
 			$predef = 'self::TYPE_' . strtoupper($config['type']);
-			if (defined($predef))
-			{
+			if (defined($predef)) {
 				$this->type = constant($predef);
-				if ($this->type == self::TYPE_ID)
-				{
+				if ($this->type == self::TYPE_ID) {
 					$this->flag = self::FLAG_INDEX_SELF;
 					$this->tokenizer = 'full';
-				}
-				else if ($this->type == self::TYPE_TITLE)
-				{
+				} elseif ($this->type == self::TYPE_TITLE) {
 					$this->flag = self::FLAG_INDEX_BOTH | self::FLAG_WITH_POSITION;
 					$this->weight = 5;
-				}
-				else if ($this->type == self::TYPE_BODY)
-				{
+				} elseif ($this->type == self::TYPE_BODY) {
 					$this->vno = XSFieldScheme::MIXED_VNO;
 					$this->flag = self::FLAG_INDEX_SELF | self::FLAG_WITH_POSITION;
 					$this->cutlen = 300;
@@ -534,39 +523,39 @@ class XSFieldMeta
 			}
 		}
 		// index flag
-		if (isset($config['index']) && $this->type != self::TYPE_BODY)
-		{
+		if (isset($config['index']) && $this->type != self::TYPE_BODY) {
 			$predef = 'self::FLAG_INDEX_' . strtoupper($config['index']);
-			if (defined($predef))
-			{
+			if (defined($predef)) {
 				$this->flag &= ~ self::FLAG_INDEX_BOTH;
 				$this->flag |= constant($predef);
 			}
-			if ($this->type == self::TYPE_ID)
+			if ($this->type == self::TYPE_ID) {
 				$this->flag |= self::FLAG_INDEX_SELF;
+			}
 		}
 		// others
-		if (isset($config['cutlen']))
+		if (isset($config['cutlen'])) {
 			$this->cutlen = intval($config['cutlen']);
-		if (isset($config['weight']) && $this->type != self::TYPE_BODY)
-			$this->weight = intval($config['weight']) & self::MAX_WDF;
-		if (isset($config['phrase']))
-		{
-			if (!strcasecmp($config['phrase'], 'yes'))
-				$this->flag |= self::FLAG_WITH_POSITION;
-			else if (!strcasecmp($config['phrase'], 'no'))
-				$this->flag &= ~ self::FLAG_WITH_POSITION;
 		}
-		if (isset($config['non_bool']))
-		{
-			if (!strcasecmp($config['non_bool'], 'yes'))
+		if (isset($config['weight']) && $this->type != self::TYPE_BODY) {
+			$this->weight = intval($config['weight']) & self::MAX_WDF;
+		}
+		if (isset($config['phrase'])) {
+			if (!strcasecmp($config['phrase'], 'yes')) {
+				$this->flag |= self::FLAG_WITH_POSITION;
+			} elseif (!strcasecmp($config['phrase'], 'no')) {
+				$this->flag &= ~ self::FLAG_WITH_POSITION;
+			}
+		}
+		if (isset($config['non_bool'])) {
+			if (!strcasecmp($config['non_bool'], 'yes')) {
 				$this->flag |= self::FLAG_NON_BOOL;
-			else if (!strcasecmp($config['non_bool'], 'no'))
+			} elseif (!strcasecmp($config['non_bool'], 'no')) {
 				$this->flag &= ~ self::FLAG_NON_BOOL;
+			}
 		}
 		if (isset($config['tokenizer']) && $this->type != self::TYPE_ID
-			&& $config['tokenizer'] != 'default')
-		{
+				&& $config['tokenizer'] != 'default') {
 			$this->tokenizer = $config['tokenizer'];
 		}
 	}

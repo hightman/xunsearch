@@ -22,6 +22,7 @@
 class PinyinCommand extends CConsoleCommand
 {
 	const MAX_WORD_LEN = 12;
+
 	private $inputPath, $dictFile;
 
 	public function __construct($name, $runner)
@@ -61,14 +62,11 @@ EOF;
 
 		$input = $args[0];
 		require_once Yii::getPathOfAlias('application.vendors.PinYin') . '.class.php';
-		if (preg_match('/[\x80-\xff]/', $input))
-		{
+		if (preg_match('/[\x80-\xff]/', $input)) {
 			echo "拼音转换结果：$input\n";
 			$py = new PinYin($this->dictFile);
 			print_r($py->convert($input));
-		}
-		else
-		{
+		} else {
 			echo "拼音分割结果：$input\n";
 			print_r(PinYin::segment($input));
 		}
@@ -91,8 +89,7 @@ EOF;
 
 		require_once Yii::getPathOfAlias('application.vendors.xdb') . '.class.php';
 		$xdb = new XTreeDB;
-		if (!$xdb->Open($output, 'w'))
-		{
+		if (!$xdb->Open($output, 'w')) {
 			fclose($fd);
 			$this->usageError('无法以写入方式打开输出文件，请使用 --output=... 指定路径！');
 		}
@@ -103,23 +100,19 @@ EOF;
 
 		$znum = 0;
 		$mchars = $words = array();
-		while ($line = fgets($fd, 256))
-		{
+		while ($line = fgets($fd, 256)) {
 			$line = trim($line);
 			if (substr($line, 0, 1) === '#' || $line === '')
 				continue;
 			list($key, $value) = explode(' ', $line, 2);
 			$value = trim($value);
-			if (strlen($key) > 3)
-			{
+			if (strlen($key) > 3) {
 				if (($pos = strpos($value, ' ')) !== false)
 					$value = substr($value, 0, $pos);
 				$words[$key] = $value;
 			}
-			else
-			{
-				if (strpos($value, ' ') !== false)
-				{
+			else {
+				if (strpos($value, ' ') !== false) {
 					$values = array_unique(preg_split('/\s+/', $value));
 					if (count($values) > 1)
 						$mchars[$key] = implode(' ', $values);
@@ -134,22 +127,18 @@ EOF;
 		echo "开始分析包含多音字的词组 ... ";
 
 		$add_num = $skip_num = $max_len = 0;
-		foreach ($words as $word => $value)
-		{
+		foreach ($words as $word => $value) {
 			$save = false;
-			for ($off = 0; $off < strlen($word); $off += 3)
-			{
+			for ($off = 0; $off < strlen($word); $off += 3) {
 				$char = substr($word, $off, 3);
-				if (isset($mchars[$char]))
-				{
+				if (isset($mchars[$char])) {
 					$save = true;
 					break;
 				}
 			}
 			if (!$save || strlen($word) > self::MAX_WORD_LEN)
 				$skip_num++;
-			else
-			{
+			else {
 				$add_num++;
 				$xdb->Put($word, $value);
 				if (strlen($word) > $max_len)
@@ -158,13 +147,11 @@ EOF;
 		}
 		echo "完成，共添加 $add_num 个，跳过 $skip_num 个，最大长词为 $max_len 字节。\n";
 
-		if (file_exists($yj))
-		{
+		if (file_exists($yj)) {
 			echo "开始加载音节数据 ... ";
 			$lines = file($yj);
 			$yinjie = array();
-			foreach ($lines as $line)
-			{
+			foreach ($lines as $line) {
 				$line = trim($line);
 				if ($line === '')
 					continue;
@@ -172,8 +159,7 @@ EOF;
 					$yinjie[$line] |= 0x01;
 				else
 					$yinjie[$line] = 0x01;
-				for ($i = 1; $i < strlen($line); $i++)
-				{
+				for ($i = 1; $i < strlen($line); $i++) {
 					$part = substr($line, 0, $i);
 					if (isset($yinjie[$part]))
 						$yinjie[$part] |= 0x02;
@@ -181,8 +167,7 @@ EOF;
 						$yinjie[$part] = 0x02;
 				}
 			}
-			foreach ($yinjie as $key => $value)
-			{
+			foreach ($yinjie as $key => $value) {
 				$xdb->Put($key, $value);
 			}
 			echo "完成，共计 " . count($lines) . " 个拼音，合计 " . count($yinjie) . " 条记录。\n";

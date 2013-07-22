@@ -24,19 +24,19 @@ int flock_exec(int fd, int type, off_t offset, int whence, off_t len, int nonblo
 	int rc;
 	struct flock fl;
 
-	if (fd < 0) return 0;
+	if (fd < 0) {
+		return 0;
+	}
 	fl.l_type = type;
 	fl.l_start = offset;
 	fl.l_whence = whence;
 	fl.l_len = len;
 	fl.l_pid = 0;
-	do
-	{
+	do {
 		rc = fcntl(fd, nonblock ? F_SETLK : F_SETLKW, &fl);
-	}
-	while (rc < 0 && errno == EINTR);
+	} while (rc < 0 && errno == EINTR);
 
-	return(rc == 0);
+	return (rc == 0);
 }
 
 /**
@@ -48,22 +48,20 @@ int flock_exec(int fd, int type, off_t offset, int whence, off_t len, int nonblo
 int flock_init(flock_t *fl, const char *fpath)
 {
 	// initilized?
-	if (fl->flag & 0x01)
+	if (fl->flag & 0x01) {
 		flock_destroy(fl);
+	}
 
-	if (fpath == NULL)
-	{
+	if (fpath == NULL) {
 		char mypath[] = "/tmp/flk.XXXXXX";
 		fl->fd = mkstemp(mypath);
 		if (fl->fd >= 0)
 			unlink(mypath);
-	}
-	else
-	{
+	} else {
 		fl->fd = open(fpath, O_CREAT | O_RDWR, 0600);
 	}
 	fl->flag = 0x01;
-	return(fl->fd >= 0);
+	return (fl->fd >= 0);
 }
 
 /**
@@ -73,8 +71,7 @@ int flock_init(flock_t *fl, const char *fpath)
  */
 int flock_set_thread_safe(flock_t *fl)
 {
-	if (pthread_rwlock_init(&fl->plock, NULL) == 0)
-	{
+	if (pthread_rwlock_init(&fl->plock, NULL) == 0) {
 		fl->flag |= 0x02;
 		return 1;
 	}
@@ -89,8 +86,9 @@ int flock_set_thread_safe(flock_t *fl)
 
 int flock_wrlock(flock_t *fl)
 {
-	if (!(fl->flag & 0x02) || pthread_rwlock_wrlock(&fl->plock) == 0)
+	if (!(fl->flag & 0x02) || pthread_rwlock_wrlock(&fl->plock) == 0) {
 		return FLOCK_WR(fl->fd);
+	}
 	return 0;
 }
 
@@ -101,8 +99,9 @@ int flock_wrlock(flock_t *fl)
  */
 int flock_rdlock(flock_t *fl)
 {
-	if (!(fl->flag & 0x02) || pthread_rwlock_rdlock(&fl->plock) == 0)
+	if (!(fl->flag & 0x02) || pthread_rwlock_rdlock(&fl->plock) == 0) {
 		return FLOCK_RD(fl->fd);
+	}
 	return 0;
 }
 
@@ -113,8 +112,9 @@ int flock_rdlock(flock_t *fl)
  */
 int flock_unlock(flock_t *fl)
 {
-	if (FLOCK_UN(fl->fd) && (!(fl->flag & 0x02) || pthread_rwlock_unlock(&fl->plock) == 0))
+	if (FLOCK_UN(fl->fd) && (!(fl->flag & 0x02) || pthread_rwlock_unlock(&fl->plock) == 0)) {
 		return 1;
+	}
 	return 0;
 }
 
@@ -124,8 +124,9 @@ int flock_unlock(flock_t *fl)
  */
 void flock_destroy(flock_t *fl)
 {
-	if (fl->flag & 0x02)
+	if (fl->flag & 0x02) {
 		pthread_rwlock_destroy(&fl->plock);
+	}
 	close(fl->fd);
 	fl->fd = -1;
 	fl->flag = 0;

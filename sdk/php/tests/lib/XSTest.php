@@ -36,8 +36,7 @@ class XSTest extends PHPUnit_Framework_TestCase
 	public static function setUpBeforeClass()
 	{
 		global $fixIniData;
-		foreach ($fixIniData as $key => $value)
-		{
+		foreach ($fixIniData as $key => $value) {
 			file_put_contents($key, $value);
 		}
 	}
@@ -45,8 +44,7 @@ class XSTest extends PHPUnit_Framework_TestCase
 	public static function tearDownAfterClass()
 	{
 		global $fixIniData;
-		foreach ($fixIniData as $key => $value)
-		{
+		foreach ($fixIniData as $key => $value) {
 			unlink($key);
 		}
 	}
@@ -61,22 +59,16 @@ class XSTest extends PHPUnit_Framework_TestCase
 
 	public function testSetScheme()
 	{
-		try
-		{
+		try {
 			// check null
 			$this->xs2->scheme = null;
-		}
-		catch (XSErrorException $e)
-		{
+		} catch (XSErrorException $e) {
 			$this->assertRegExp('/instance of XSFieldScheme, null given/', $e->getMessage());
-			try
-			{
+			try {
 				// check invalid scheme
 				$scheme = new XSFieldScheme;
 				$this->xs2->setScheme($scheme);
-			}
-			catch (XSException $e)
-			{
+			} catch (XSException $e) {
 				$this->assertEquals('Missing field of type ID', $e->getMessage());
 				$this->assertEquals(0, $e->getCode());
 			}

@@ -687,11 +687,11 @@ struct xs_import_hdr
 
 static inline void vno_to_prefix(int vno, char *p)
 {
-	if (vno != XS_DATA_VNO)
-	{
+	if (vno != XS_DATA_VNO) {
 		*p++ = (vno & 0x0f) + PREFIX_CHAR_START;
-		if (vno & 0xf0)
+		if (vno & 0xf0) {
 			*p++ = ((vno >> 4)&0x0f) + PREFIX_CHAR_START;
+		}
 	}
 	*p = '\0';
 }
@@ -701,11 +701,11 @@ static inline int prefix_to_vno(char *p)
 	int vno = XS_DATA_VNO;
 
 	while (*p == PREFIX_CHAR_ZZZ) p++;
-	if (p[0] >= PREFIX_CHAR_START && p[0] <= PREFIX_CHAR_END)
-	{
+	if (p[0] >= PREFIX_CHAR_START && p[0] <= PREFIX_CHAR_END) {
 		vno = (p[0] - PREFIX_CHAR_START);
-		if (p[1] >= PREFIX_CHAR_START && p[1] <= PREFIX_CHAR_END)
+		if (p[1] >= PREFIX_CHAR_START && p[1] <= PREFIX_CHAR_END) {
 			vno |= ((p[1] - PREFIX_CHAR_START) << 4);
+		}
 	}
 	return (vno & 0xff);
 }

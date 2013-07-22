@@ -45,8 +45,9 @@ abstract class XSDataSource
 	{
 		$type2 = ($pos = strpos($type, ':')) ? 'database' : $type;
 		$class = 'XS' . ucfirst(strtolower($type2)) . 'DataSource';
-		if (!class_exists($class))
+		if (!class_exists($class)) {
 			throw new XSException("Undefined data source type: `$type2'");
+		}
 		return new $class($type, $arg);
 	}
 
@@ -63,12 +64,10 @@ abstract class XSDataSource
 	 */
 	final public function getData()
 	{
-		if ($this->dataPos === null || $this->dataPos === count($this->dataList))
-		{
+		if ($this->dataPos === null || $this->dataPos === count($this->dataList)) {
 			$this->dataPos = 0;
 			$this->dataList = $this->getDataList();
-			if (!is_array($this->dataList) || count($this->dataList) === 0)
-			{
+			if (!is_array($this->dataList) || count($this->dataList) === 0) {
 				$this->deinit();
 				$this->dataList = $this->dataPos = null;
 				return false;
@@ -138,36 +137,34 @@ class XSDatabaseDataSource extends XSDataSource
 	 */
 	public function getCharset()
 	{
-		if ($this->db->setUtf8())
+		if ($this->db->setUtf8()) {
 			return 'UTF-8';
+		}
 		return parent::getCharset();
 	}
 
 	protected function init()
 	{
-		if (strstr($this->type, 'sqlite'))
-		{
+		if (strstr($this->type, 'sqlite')) {
 			$pos = strpos($this->type, ':');
 			$param = array('scheme' => substr($this->type, 0, $pos));
 			$param['path'] = substr($this->type, $pos + (substr($this->type, $pos + 1, 2) === '//' ? 3 : 1));
-		}
-		else if (!($param = parse_url($this->type)))
-		{
+		} elseif (!($param = parse_url($this->type))) {
 			throw new XSException('Wrong format of DB connection parameter');
-		}
-		else
-		{
-			if (isset($param['user']))
+		} else {
+			if (isset($param['user'])) {
 				$param['user'] = urldecode($param['user']);
-			if (isset($param['pass']))
+			}
+			if (isset($param['pass'])) {
 				$param['pass'] = urldecode($param['pass']);
+			}
 			$param['path'] = isset($param['path']) ? trim($param['path'], '/') : '';
-			if (empty($param['path']))
+			if (empty($param['path'])) {
 				throw new XSException('Not contain dbname of DB connection parameter');
-			if (($pos = strpos($param['path'], '/')) === false)
+			}
+			if (($pos = strpos($param['path'], '/')) === false) {
 				$param['dbname'] = $param['path'];
-			else
-			{
+			} else {
 				$param['dbname'] = substr($param['path'], 0, $pos);
 				$param['table'] = substr($param['path'], $pos + 1);
 			}
@@ -176,42 +173,35 @@ class XSDatabaseDataSource extends XSDataSource
 		// get driver
 		$driver = self::getDriverName($param['scheme']);
 		$class = 'XSDatabase' . ucfirst($driver);
-		if (!class_exists($class))
+		if (!class_exists($class)) {
 			throw new XSException("Undefined database driver: '$driver'");
+		}
 		$this->db = new $class;
 		$this->db->connect($param);
 
 		// set SQL & parse limit/offset
 		$this->limit = $this->offset = 0;
 		$sql = $this->arg;
-		if (empty($sql))
-		{
-			if (!isset($param['table']))
+		if (empty($sql)) {
+			if (!isset($param['table'])) {
 				throw new XSException('Not specified any query SQL or db table');
+			}
 			$sql = 'SELECT * FROM ' . $param['table'];
-		}
-		else if (preg_match('/ limit\s+(\d+)(?:\s*,\s*(\d+)|\s+offset\s+(\d+))?\s*$/i', $sql, $match))
-		{
-			if (isset($match[3]))  // LIMIT xxx OFFSET yyy
-			{
+		} elseif (preg_match('/ limit\s+(\d+)(?:\s*,\s*(\d+)|\s+offset\s+(\d+))?\s*$/i', $sql, $match)) {
+			if (isset($match[3])) {  // LIMIT xxx OFFSET yyy
 				$this->offset = intval($match[3]);
 				$this->limit = intval($match[1]);
-			}
-			else if (isset($match[2])) // LIMIT yyy, xxx
-			{
+			} elseif (isset($match[2])) { // LIMIT yyy, xxx
 				$this->offset = intval($match[1]);
 				$this->limit = intval($match[2]);
-			}
-			else // lIMIT xxx
-			{
+			} else { // lIMIT xxx
 				$this->limit = intval($match[1]);
 			}
 			$sql = substr($sql, 0, strlen($sql) - strlen($match[0]));
 		}
 
 		$this->sql = $sql;
-		if ($this->limit == 0)
-		{
+		if ($this->limit == 0) {
 			$sql = preg_replace('/SELECT\s+.+?FROM\s/i', 'SELECT COUNT(*) AS count FROM ', $sql);
 			$res = $this->db->query1($sql);
 			$this->limit = $res['count'] - $this->offset;
@@ -229,8 +219,9 @@ class XSDatabaseDataSource extends XSDataSource
 	 */
 	protected function getDataList()
 	{
-		if ($this->limit <= 0)
+		if ($this->limit <= 0) {
 			return false;
+		}
 		$sql = $this->sql . ' LIMIT ' . min(self::PLIMIT, $this->limit) . ' OFFSET ' . $this->offset;
 		$this->limit -= self::PLIMIT;
 		$this->offset += self::PLIMIT;
@@ -243,24 +234,26 @@ class XSDatabaseDataSource extends XSDataSource
 	private static function getDriverName($scheme)
 	{
 		$name = strtr(strtolower($scheme), '.-', '__');
-		if ($name == 'mysql' && !function_exists('mysql_connect'))
-		{
-			if (class_exists('mysqli'))
+		if ($name == 'mysql' && !function_exists('mysql_connect')) {
+			if (class_exists('mysqli')) {
 				$name = 'mysqli';
-			else if (extension_loaded('pdo_mysql'))
+			} elseif (extension_loaded('pdo_mysql')) {
 				$name = 'pdo_mysql';
+			}
 		}
-		if ($name == 'sqlite' && !function_exists('sqlite_open'))
-		{
-			if (class_exists('sqlite3'))
+		if ($name == 'sqlite' && !function_exists('sqlite_open')) {
+			if (class_exists('sqlite3')) {
 				$name = 'sqlite3';
-			else if (extension_loaded('pdo_sqlite'))
+			} elseif (extension_loaded('pdo_sqlite')) {
 				$name = 'pdo_sqlite';
+			}
 		}
-		if ($name == 'sqlite3' && !class_exists('sqlite3') && extension_loaded('pdo_sqlite'))
+		if ($name == 'sqlite3' && !class_exists('sqlite3') && extension_loaded('pdo_sqlite')) {
 			$name = 'pdo_sqlite';
-		if (substr($name, 0, 4) != 'pdo_' && extension_loaded('pdo_' . $name))
+		}
+		if (substr($name, 0, 4) != 'pdo_' && extension_loaded('pdo_' . $name)) {
 			$name = 'pdo_' . $name;
+		}
 		return $name;
 	}
 }
@@ -281,20 +274,19 @@ class XSJsonDataSource extends XSDataSource
 	protected function init()
 	{
 		$file = $this->arg;
-		if (empty($file) && $this->inCli)
-		{
+		if (empty($file) && $this->inCli) {
 			echo "WARNING: input file not specified, read data from <STDIN>\n";
 			$file = 'php://stdin';
 		}
-		if (!($this->fd = fopen($file, 'r')))
+		if (!($this->fd = fopen($file, 'r'))) {
 			throw new XSException("Can not open input file: '$file'");
+		}
 		$this->line = 0;
 	}
 
 	protected function deinit()
 	{
-		if ($this->fd)
-		{
+		if ($this->fd) {
 			fclose($this->fd);
 			$this->fd = null;
 		}
@@ -304,40 +296,39 @@ class XSJsonDataSource extends XSDataSource
 	{
 		// read line (check to timeout?)
 		$line = '';
-		while (true)
-		{
+		while (true) {
 			$buf = fgets($this->fd, 8192);
-			if ($buf === false || strlen($buf) === 0)
+			if ($buf === false || strlen($buf) === 0) {
 				break;
+			}
 			$line .= $buf;
-			if (strlen($buf) < 8191 || substr($buf, - 1, 1) === "\n")
+			if (strlen($buf) < 8191 || substr($buf, - 1, 1) === "\n") {
 				break;
+			}
 		}
 
 		// empty line (end of file)
-		if (empty($line))
-		{
-			if ($this->inCli)
+		if (empty($line)) {
+			if ($this->inCli) {
 				echo "INFO: reach end of the file, total lines: " . $this->line . "\n";
+			}
 			return false;
 		}
 
 		// try to decode the line
 		$this->line++;
 		$line = rtrim($line, "\r\n");
-		if (strlen($line) === 0)
-		{
-			if ($this->inCli)
+		if (strlen($line) === 0) {
+			if ($this->inCli) {
 				echo "WARNING: empty line #" . $this->line . "\n";
+			}
 			$this->invalidLines++;
 			return $this->getDataList();
 		}
 
 		$item = json_decode($line, true);
-		if (!is_array($item) || count($item) === 0)
-		{
-			switch (json_last_error())
-			{
+		if (!is_array($item) || count($item) === 0) {
+			switch (json_last_error()) {
 				case JSON_ERROR_DEPTH:
 					$error = ' - Maximum stack depth exceeded';
 					break;
@@ -351,8 +342,9 @@ class XSJsonDataSource extends XSDataSource
 					$error = (count($item) === 0 ? ' - Empty array' : '');
 					break;
 			}
-			if ($this->inCli)
+			if ($this->inCli) {
 				echo "WARNING: invalid line #" . $this->line . $error . "\n";
+			}
 			$this->invalidLines++;
 			return $this->getDataList();
 		}
@@ -376,22 +368,22 @@ class XSCsvDataSource extends XSDataSource
 	protected function init()
 	{
 		$file = $this->arg;
-		if (empty($file) && $this->inCli)
-		{
+		if (empty($file) && $this->inCli) {
 			echo "WARNING: input file not specified, read data from <STDIN>\n";
 			$file = 'php://stdin';
 		}
-		if (!($this->fd = fopen($file, 'r')))
+		if (!($this->fd = fopen($file, 'r'))) {
 			throw new XSException("Can not open input file: '$file'");
+		}
 		$this->line = 0;
-		if (isset($_SERVER['XS_CSV_DELIMITER']))
+		if (isset($_SERVER['XS_CSV_DELIMITER'])) {
 			$this->delim = $_SERVER['XS_CSV_DELIMITER'];
+		}
 	}
 
 	protected function deinit()
 	{
-		if ($this->fd)
-		{
+		if ($this->fd) {
 			fclose($this->fd);
 			$this->fd = null;
 		}
@@ -399,18 +391,18 @@ class XSCsvDataSource extends XSDataSource
 
 	protected function getDataList()
 	{
-		if (($item = fgetcsv($this->fd, 0, $this->delim)) === false)
-		{
-			if ($this->inCli)
+		if (($item = fgetcsv($this->fd, 0, $this->delim)) === false) {
+			if ($this->inCli) {
 				echo "INFO: reach end of file or error occured, total lines: " . $this->line . "\n";
+			}
 			return false;
 		}
 
 		$this->line++;
-		if (count($item) === 1 && is_null($item[0]))
-		{
-			if ($this->inCli)
+		if (count($item) === 1 && is_null($item[0])) {
+			if ($this->inCli) {
 				echo "WARNING: invalid csv line #" . $this->line . "\n";
+			}
 			$this->invalidLines++;
 			return $this->getDataList();
 		}
@@ -490,10 +482,10 @@ class XSDatabaseMySQL extends XSDatabase
 		$host .= (isset($param['port']) && $param['port'] != 3306) ? ':' . $param['port'] : '';
 		$user = isset($param['user']) ? $param['user'] : ini_get('mysql.default_user');
 		$pass = isset($param['pass']) ? $param['pass'] : ini_get('mysql.default_pw');
-		if (($this->link = mysql_connect($host, $user, $pass)) === false)
+		if (($this->link = mysql_connect($host, $user, $pass)) === false) {
 			throw new XSException("Can not connect to mysql server: '$user@$host'");
-		if (!mysql_select_db($param['dbname'], $this->link))
-		{
+		}
+		if (!mysql_select_db($param['dbname'], $this->link)) {
 			$this->close();
 			throw new XSException("Can not switch to database name: '{$param['dbname']}'");
 		}
@@ -505,8 +497,7 @@ class XSDatabaseMySQL extends XSDatabase
 	 */
 	public function close()
 	{
-		if ($this->link)
-		{
+		if ($this->link) {
 			mysql_close($this->link);
 			$this->link = null;
 		}
@@ -521,15 +512,14 @@ class XSDatabaseMySQL extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = mysql_query($sql, $this->link);
-		if ($res === false)
+		if ($res === false) {
 			throw new XSException('MySQL ERROR(#' . mysql_errno($this->link) . '): ' . mysql_error($this->link));
-		if (!is_resource($res))
+		}
+		if (!is_resource($res)) {
 			$ret = $res;
-		else
-		{
+		} else {
 			$ret = array();
-			while ($tmp = mysql_fetch_assoc($res))
-			{
+			while ($tmp = mysql_fetch_assoc($res)) {
 				$ret[] = $tmp;
 			}
 			mysql_free_result($res);
@@ -543,8 +533,9 @@ class XSDatabaseMySQL extends XSDatabase
 	 */
 	public function setUtf8()
 	{
-		if (version_compare(mysql_get_server_info($this->link), '4.1.0', '>='))
+		if (version_compare(mysql_get_server_info($this->link), '4.1.0', '>=')) {
 			return @mysql_query("SET NAMES utf8", $this->link);
+		}
 		return false;
 	}
 }
@@ -565,8 +556,7 @@ class XSDatabasePgSQL extends XSDatabase
 		$dsn = "host={$param['host']} ";
 		$dsn .= isset($param['port']) ? "port={$param['port']} " : '';
 		$dsn .= "dbname={$param['dbname']} user={$param['user']} password={$param['pass']}";
-		if (!($this->link = @pg_connect($dsn)))
-		{
+		if (!($this->link = @pg_connect($dsn))) {
 			throw new XSException('Error connecting to PGSQL database:' . $param['dbname'] . '.');
 			pg_set_error_verbosity($this->link, PGSQL_ERRORS_DEFAULT);
 			pg_query('SET standard_conforming_strings=off');
@@ -578,8 +568,7 @@ class XSDatabasePgSQL extends XSDatabase
 	 */
 	public function close()
 	{
-		if (is_resource($this->link))
-		{
+		if (is_resource($this->link)) {
 			pg_close($this->link);
 			$this->link = null;
 		}
@@ -594,11 +583,11 @@ class XSDatabasePgSQL extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = pg_query($this->link, $query);
-		if ($res === false)
+		if ($res === false) {
 			throw new XSException('PgSQL ERROR: ' . pg_last_error($this->link));
+		}
 		$ret = array();
-		while ($tmp = pg_fetch_assoc($res))
-		{
+		while ($tmp = pg_fetch_assoc($res)) {
 			$ret[] = $tmp;
 		}
 		pg_free_result($res);
@@ -636,10 +625,10 @@ class XSDatabaseMySQLI extends XSDatabase
 		$pass = isset($param['pass']) ? $param['pass'] : ini_get('mysqli.default_pw');
 		$port = isset($param['port']) ? $param['port'] : ini_get('mysqli.default_port');
 		$this->obj = new mysqli($host, $user, $pass, '', $port);
-		if ($this->obj->connect_error)
+		if ($this->obj->connect_error) {
 			throw new XSException("Can not connect to mysql server: '$user@$host'");
-		if (!$this->obj->select_db($param['dbname']))
-		{
+		}
+		if (!$this->obj->select_db($param['dbname'])) {
 			$this->close();
 			throw new XSException("Can not switch to database name: '{$param['dbname']}'");
 		}
@@ -651,8 +640,7 @@ class XSDatabaseMySQLI extends XSDatabase
 	 */
 	public function close()
 	{
-		if ($this->obj)
-		{
+		if ($this->obj) {
 			$this->obj->close();
 			$this->obj = null;
 		}
@@ -667,15 +655,14 @@ class XSDatabaseMySQLI extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = $this->obj->query($sql);
-		if ($res === false)
+		if ($res === false) {
 			throw new XSException('MySQL ERROR(#' . $this->obj->error . '): ' . $this->obj->errno);
-		if (!is_object($res))
+		}
+		if (!is_object($res)) {
 			$ret = $res;
-		else
-		{
+		} else {
 			$ret = array();
-			while ($tmp = $res->fetch_assoc())
-			{
+			while ($tmp = $res->fetch_assoc()) {
 				$ret[] = $tmp;
 			}
 			$res->free();
@@ -711,8 +698,9 @@ class XSDatabaseSQLite extends XSDatabase
 	 */
 	public function connect($param)
 	{
-		if (($this->link = sqlite_open($param['path'])) === false)
+		if (($this->link = sqlite_open($param['path'])) === false) {
 			throw new XSException("Can not open sqlite file: '{$param['path']}'");
+		}
 	}
 
 	/**
@@ -720,8 +708,7 @@ class XSDatabaseSQLite extends XSDatabase
 	 */
 	public function close()
 	{
-		if ($this->link)
-		{
+		if ($this->link) {
 			sqlite_close($this->link);
 			$this->link = null;
 		}
@@ -736,15 +723,14 @@ class XSDatabaseSQLite extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = sqlite_query($this->link, $sql);
-		if ($res === false)
+		if ($res === false) {
 			throw new XSException('SQLITE ERROR: ' . sqlite_error_string($this->link));
-		if (!is_resource($res))
+		}
+		if (!is_resource($res)) {
 			$ret = $res;
-		else
-		{
+		} else {
 			$ret = array();
-			while ($tmp = sqlite_fetch_array($res, SQLITE_ASSOC))
-			{
+			while ($tmp = sqlite_fetch_array($res, SQLITE_ASSOC)) {
 				$ret[] = $tmp;
 			}
 		}
@@ -769,12 +755,9 @@ class XSDatabaseSQLite3 extends XSDatabase
 	 */
 	public function connect($param)
 	{
-		try
-		{
+		try {
 			$this->obj = new SQLite3($param['path'], SQLITE3_OPEN_READONLY);
-		}
-		catch (Exception $e)
-		{
+		} catch (Exception $e) {
 			throw new XSException($e->getMessage());
 		}
 	}
@@ -784,8 +767,7 @@ class XSDatabaseSQLite3 extends XSDatabase
 	 */
 	public function close()
 	{
-		if ($this->obj)
-		{
+		if ($this->obj) {
 			$this->obj->close();
 			$this->obj = null;
 		}
@@ -800,15 +782,14 @@ class XSDatabaseSQLite3 extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = $this->obj->query($sql);
-		if ($res === false)
+		if ($res === false) {
 			throw new XSException('SQLITE3 ERROR(#' . $this->obj->lastErrorCode() . '): ' . $this->obj->lastErrorMsg());
-		if (!is_object($res))
+		}
+		if (!is_object($res)) {
 			$ret = $res;
-		else
-		{
+		} else {
 			$ret = array();
-			while ($tmp = $res->fetchArray(SQLITE3_ASSOC))
-			{
+			while ($tmp = $res->fetchArray(SQLITE3_ASSOC)) {
 				$ret[] = $tmp;
 			}
 			$res->finalize();
@@ -839,12 +820,9 @@ abstract class XSDatabasePDO extends XSDatabase
 		$dsn = $this->makeDsn($param);
 		$user = isset($param['user']) ? $param['user'] : 'root';
 		$pass = isset($param['pass']) ? $param['pass'] : '';
-		try
-		{
+		try {
 			$this->obj = new PDO($dsn, $user, $pass);
-		}
-		catch (PDOException $e)
-		{
+		} catch (PDOException $e) {
 			throw new XSException($e->getMessage());
 		}
 	}
@@ -866,8 +844,7 @@ abstract class XSDatabasePDO extends XSDatabase
 	{
 		//echo "[DEBUG] SQL: $sql\n";
 		$res = $this->obj->query($sql);
-		if ($res === false)
-		{
+		if ($res === false) {
 			$info = $this->obj->errorInfo();
 			throw new XSException('SQLSTATE[' . $info[0] . '] [' . $info[1] . '] ' . $info[2]);
 		}
@@ -900,8 +877,9 @@ class XSDatabasePDO_MySQL extends XSDatabasePDO
 	protected function makeDsn($param)
 	{
 		$dsn = 'mysql:host=' . (isset($param['host']) ? $param['host'] : 'localhost');
-		if (isset($param['port']) && $param['port'] != 3306)
+		if (isset($param['port']) && $param['port'] !== 3306) {
 			$dsn .= ';port=' . $param['port'];
+		}
 		$dsn .= ';dbname=' . $param['dbname'];
 		return $dsn;
 	}

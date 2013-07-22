@@ -80,36 +80,33 @@ class XSException extends Exception
 	{
 		$from = getcwd();
 		$file = realpath($file);
-		if (is_dir($file))
-		{
+		if (is_dir($file)) {
 			$pos = false;
 			$to = $file;
-		}
-		else
-		{
+		} else {
 			$pos = strrpos($file, '/');
 			$to = substr($file, 0, $pos);
 		}
-		for ($rel = '';; $rel .= '../')
-		{
-			if ($from === $to)
+		for ($rel = '';; $rel .= '../') {
+			if ($from === $to) {
 				break;
-			if ($from === dirname($from))
-			{
+			}
+			if ($from === dirname($from)) {
 				$rel .= substr($to, 1);
 				break;
 			}
-			if (!strncmp($from . '/', $to, strlen($from) + 1))
-			{
+			if (!strncmp($from . '/', $to, strlen($from) + 1)) {
 				$rel .= substr($to, strlen($from) + 1);
 				break;
 			}
 			$from = dirname($from);
 		}
-		if (substr($rel, -1, 1) === '/')
+		if (substr($rel, -1, 1) === '/') {
 			$rel = substr($rel, 0, -1);
-		if ($pos !== false)
+		}
+		if ($pos !== false) {
 			$rel .= substr($file, $pos);
+		}
 		return $rel;
 	}
 }
@@ -138,10 +135,11 @@ class XSErrorException extends XSException
 	{
 		$this->_file = $file;
 		$this->_line = $line;
-		if (version_compare(PHP_VERSION, '5.3.0', '>='))
+		if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
 			parent::__construct($message, $code, $previous);
-		else
+		} else {
 			parent::__construct($message, $code);
+		}
 	}
 
 	/**
@@ -184,8 +182,9 @@ class XSComponent
 	public function __get($name)
 	{
 		$getter = 'get' . $name;
-		if (method_exists($this, $getter))
+		if (method_exists($this, $getter)) {
 			return $this->$getter();
+		}
 
 		// throw exception
 		$msg = method_exists($this, 'set' . $name) ? 'Write-only' : 'Undefined';
@@ -203,8 +202,9 @@ class XSComponent
 	public function __set($name, $value)
 	{
 		$setter = 'set' . $name;
-		if (method_exists($this, $setter))
+		if (method_exists($this, $setter)) {
 			return $this->$setter($value);
+		}
 
 		// throw exception
 		$msg = method_exists($this, 'get' . $name) ? 'Read-only' : 'Undefined';
@@ -283,11 +283,11 @@ class XS extends XSComponent
 	 */
 	public function __construct($file)
 	{
-		if (strlen($file) < 255 && !is_file($file))
-		{
+		if (strlen($file) < 255 && !is_file($file)) {
 			$file2 = XS_LIB_ROOT . '/../app/' . $file . '.ini';
-			if (is_file($file2))
+			if (is_file($file2)) {
 				$file = $file2;
+			}
 		}
 		$this->loadIniFile($file);
 		self::$_lastXS = $this;
@@ -331,8 +331,9 @@ class XS extends XSComponent
 	{
 		$fs->checkValid(true);
 		$this->_scheme = $fs;
-		if ($this->_search !== null)
+		if ($this->_search !== null) {
 			$this->_search->markResetScheme();
+		}
 	}
 
 	/**
@@ -340,11 +341,11 @@ class XS extends XSComponent
 	 */
 	public function restoreScheme()
 	{
-		if ($this->_scheme !== $this->_bindScheme)
-		{
+		if ($this->_scheme !== $this->_bindScheme) {
 			$this->_scheme = $this->_bindScheme;
-			if ($this->_search !== null)
+			if ($this->_search !== null) {
 				$this->_search->markResetScheme(true);
+			}
 		}
 	}
 
@@ -382,7 +383,7 @@ class XS extends XSComponent
 	public function getDefaultCharset()
 	{
 		return isset($this->_config['project.default_charset']) ?
-			strtoupper($this->_config['project.default_charset']) : 'UTF-8';
+				strtoupper($this->_config['project.default_charset']) : 'UTF-8';
 	}
 
 	/**
@@ -400,22 +401,20 @@ class XS extends XSComponent
 	 */
 	public function getIndex()
 	{
-		if ($this->_index === null)
-		{
+		if ($this->_index === null) {
 			$adds = array();
 			$conn = isset($this->_config['server.index']) ? $this->_config['server.index'] : 8383;
-			if (($pos = strpos($conn, ';')) !== false)
-			{
+			if (($pos = strpos($conn, ';')) !== false) {
 				$adds = explode(';', substr($conn, $pos + 1));
 				$conn = substr($conn, 0, $pos);
 			}
 			$this->_index = new XSIndex($conn, $this);
 			$this->_index->setTimeout(0);
-			foreach ($adds as $conn)
-			{
+			foreach ($adds as $conn) {
 				$conn = trim($conn);
-				if ($conn !== '')
+				if ($conn !== '') {
 					$this->_index->addServer($conn)->setTimeout(0);
+				}
 			}
 		}
 		return $this->_index;
@@ -427,34 +426,30 @@ class XS extends XSComponent
 	 */
 	public function getSearch()
 	{
-		if ($this->_search === null)
-		{
+		if ($this->_search === null) {
 			$conns = array();
 			if (!isset($this->_config['server.search']))
 				$conns[] = 8384;
-			else
-			{
-				foreach (explode(';', $this->_config['server.search']) as $conn)
-				{
+			else {
+				foreach (explode(';', $this->_config['server.search']) as $conn) {
 					$conn = trim($conn);
-					if ($conn !== '')
+					if ($conn !== '') {
 						$conns[] = $conn;
+					}
 				}
 			}
-			if (count($conns) > 1)
+			if (count($conns) > 1) {
 				shuffle($conns);
-			for ($i = 0; $i < count($conns); $i++)
-			{
-				try
-				{
+			}
+			for ($i = 0; $i < count($conns); $i++) {
+				try {
 					$this->_search = new XSSearch($conns[$i], $this);
 					$this->_search->setCharset($this->getDefaultCharset());
 					return $this->_search;
-				}
-				catch (XSException $e)
-				{
-					if (($i + 1) === count($conns))
+				} catch (XSException $e) {
+					if (($i + 1) === count($conns)) {
 						throw $e;
+					}
 				}
 			}
 		}
@@ -467,8 +462,7 @@ class XS extends XSComponent
 	 */
 	public function getScwsServer()
 	{
-		if ($this->_scws === null)
-		{
+		if ($this->_scws === null) {
 			$conn = isset($this->_config['server.search']) ? $this->_config['server.search'] : 8384;
 			$this->_scws = new XSServer($conn, $this);
 		}
@@ -535,8 +529,9 @@ class XS extends XSComponent
 	public static function autoload($name)
 	{
 		$file = XS_LIB_ROOT . '/' . $name . '.class.php';
-		if (file_exists($file))
+		if (file_exists($file)) {
 			require_once $file;
+		}
 	}
 
 	/**
@@ -551,27 +546,26 @@ class XS extends XSComponent
 	public static function convert($data, $to, $from)
 	{
 		// need not convert
-		if ($to == $from)
+		if ($to == $from) {
 			return $data;
+		}
 		// array traverse
-		if (is_array($data))
-		{
-			foreach ($data as $key => $value)
-			{
+		if (is_array($data)) {
+			foreach ($data as $key => $value) {
 				$data[$key] = self::convert($value, $to, $from);
 			}
 			return $data;
 		}
 		// string contain 8bit characters
-		if (is_string($data) && preg_match('/[\x81-\xfe]/', $data))
-		{
+		if (is_string($data) && preg_match('/[\x81-\xfe]/', $data)) {
 			// mbstring, iconv, throw ...
-			if (function_exists('mb_convert_encoding'))
+			if (function_exists('mb_convert_encoding')) {
 				return mb_convert_encoding($data, $to, $from);
-			else if (function_exists('iconv'))
+			} elseif (function_exists('iconv')) {
 				return iconv($from, $to . '//TRANSLIT', $data);
-			else
+			} else {
 				throw new XSException('Cann\'t find the mbstring or iconv extension to convert encoding');
+			}
 		}
 		return $data;
 	}
@@ -587,22 +581,23 @@ class XS extends XSComponent
 		$ret = array();
 		$cur = &$ret;
 		$lines = explode("\n", $data);
-		foreach ($lines as $line)
-		{
-			if ($line === '' || $line[0] == ';' || $line[0] == '#')
+		foreach ($lines as $line) {
+			if ($line === '' || $line[0] == ';' || $line[0] == '#') {
 				continue;
+			}
 			$line = trim($line);
-			if ($line === '')
+			if ($line === '') {
 				continue;
-			if ($line[0] === '[' && substr($line, -1, 1) === ']')
-			{
+			}
+			if ($line[0] === '[' && substr($line, -1, 1) === ']') {
 				$sec = substr($line, 1, -1);
 				$ret[$sec] = array();
 				$cur = &$ret[$sec];
 				continue;
 			}
-			if (($pos = strpos($line, '=')) === false)
+			if (($pos = strpos($line, '=')) === false) {
 				continue;
+			}
 			$key = trim(substr($line, 0, $pos));
 			$value = trim(substr($line, $pos + 1), " '\t\"");
 			$cur[$key] = $value;
@@ -621,35 +616,26 @@ class XS extends XSComponent
 		// check cache
 		$cache = false;
 		$cache_write = '';
-		if (strlen($file) < 255 && file_exists($file))
-		{
+		if (strlen($file) < 255 && file_exists($file)) {
 			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));
-			if (function_exists('apc_fetch'))
-			{
+			if (function_exists('apc_fetch')) {
 				$cache = apc_fetch($cache_key);
 				$cache_write = 'apc_store';
-			}
-			else if (function_exists('xcache_get') && php_sapi_name() !== 'cli')
-			{
+			} elseif (function_exists('xcache_get') && php_sapi_name() !== 'cli') {
 				$cache = xcache_get($cache_key);
 				$cache_write = 'xcache_set';
-			}
-			else if (function_exists('eaccelerator_get'))
-			{
+			} elseif (function_exists('eaccelerator_get')) {
 				$cache = eaccelerator_get($cache_key);
 				$cache_write = 'eaccelerator_put';
 			}
-			if ($cache && isset($cache['mtime']) && filemtime($file) <= $cache['mtime'])
-			{
+			if ($cache && isset($cache['mtime']) && filemtime($file) <= $cache['mtime']) {
 				// cache HIT
 				$this->_scheme = $this->_bindScheme = unserialize($cache['scheme']);
 				$this->_config = $cache['config'];
 				return;
 			}
 			$data = file_get_contents($file);
-		}
-		else
-		{
+		} else {
 			// parse ini string
 			$data = $file;
 			$file = substr(md5($file), 8, 8) . '.ini';
@@ -657,26 +643,27 @@ class XS extends XSComponent
 
 		// parse ini file
 		$this->_config = $this->parseIniData($data);
-		if ($this->_config === false)
+		if ($this->_config === false) {
 			throw new XSException('Failed to parse project config file/string: \'' . substr($file, 0, 10) . '...\'');
+		}
 
 		// create the scheme object
 		$scheme = new XSFieldScheme;
-		foreach ($this->_config as $key => $value)
-		{
-			if (is_array($value))
+		foreach ($this->_config as $key => $value) {
+			if (is_array($value)) {
 				$scheme->addField($key, $value);
+			}
 		}
 		$scheme->checkValid(true);
 
 		// load default config
-		if (!isset($this->_config['project.name']))
+		if (!isset($this->_config['project.name'])) {
 			$this->_config['project.name'] = basename($file, '.ini');
+		}
 
 		// save to cache
 		$this->_scheme = $this->_bindScheme = $scheme;
-		if ($cache_write != '')
-		{
+		if ($cache_write != '') {
 			$cache['mtime'] = filemtime($file);
 			$cache['scheme'] = serialize($this->_scheme);
 			$cache['config'] = $this->_config;
@@ -697,8 +684,9 @@ spl_autoload_register('XS::autoload', true, true);
  */
 function xs_error_handler($errno, $error, $file, $line)
 {
-	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT)))
+	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT))) {
 		throw new XSErrorException($errno, $error, $file, $line);
+	}
 	return false;
 }
 set_error_handler('xs_error_handler');

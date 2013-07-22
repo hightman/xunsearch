@@ -25,19 +25,18 @@ error_reporting(E_ALL ^ E_NOTICE);
 // variables
 $eu = '';
 $__ = array('q', 'm', 'f', 's', 'p', 'ie', 'oe', 'syn', 'xml');
-foreach ($__ as $_)
+foreach ($__ as $_) {
 	$$_ = isset($_GET[$_]) ? $_GET[$_] : '';
+}
 
 // input encoding
-if (!empty($ie) && !empty($q) && strcasecmp($ie, '@charset@'))
-{
+if (!empty($ie) && !empty($q) && strcasecmp($ie, '@charset@')) {
 	$q = XS::convert($q, $cs, $ie);
 	$eu .= '&ie=' . $ie;
 }
 
 // output encoding
-if (!empty($oe) && strcasecmp($oe, '@charset@'))
-{
+if (!empty($oe) && strcasecmp($oe, '@charset@')) {
 
 	function xs_output_encoding($buf)
 	{
@@ -45,9 +44,7 @@ if (!empty($oe) && strcasecmp($oe, '@charset@'))
 	}
 	ob_start('xs_output_encoding');
 	$eu .= '&oe=' . $oe;
-}
-else
-{
+} else {
 	$oe = '@charset@';
 }
 
@@ -69,19 +66,15 @@ $error = $pager = '';
 $total_begin = microtime(true);
 
 // perform the search
-try
-{
+try {
 	$xs = new XS('@project@');
 	$search = $xs->search;
 	$search->setCharset('@charset@');
 
-	if (empty($q))
-	{
+	if (empty($q)) {
 		// just show hot query
 		$hot = $search->getHotQuery();
-	}
-	else
-	{
+	} else {
 		// fuzzy search
 		$search->setFuzzy($m === 'yes');
 
@@ -89,18 +82,14 @@ try
 		$search->setAutoSynonyms($syn === 'yes');
 
 		// set query
-		if (!empty($f) && $f != '_all')
-		{
+		if (!empty($f) && $f != '_all') {
 			$search->setQuery($f . ':(' . $q . ')');
-		}
-		else
-		{
+		} else {
 			$search->setQuery($q);
 		}
 
 		// set sort
-		if (($pos = strrpos($s, '_')) !== false)
-		{
+		if (($pos = strrpos($s, '_')) !== false) {
 			$sf = substr($s, 0, $pos);
 			$st = substr($s, $pos + 1);
 			$search->setSort($sf, $st === 'ASC');
@@ -120,31 +109,26 @@ try
 		$count = $search->getLastCount();
 		$total = $search->getDbTotal();
 
-		if ($xml !== 'yes')
-		{
+		if ($xml !== 'yes') {
 			// try to corrected, if resul too few
-			if ($count < 1 || $count < ceil(0.001 * $total))
+			if ($count < 1 || $count < ceil(0.001 * $total)) {
 				$corrected = $search->getCorrectedQuery();
+			}
 			// get related query
 			$related = $search->getRelatedQuery();
 		}
 
 		// gen pager
-		if ($count > $n)
-		{
+		if ($count > $n) {
 			$pb = max($p - 5, 1);
 			$pe = min($pb + 10, ceil($count / $n) + 1);
 			$pager = '';
-			do
-			{
+			do {
 				$pager .= ($pb == $p) ? '<li class="disabled"><a>' . $p . '</a></li>' : '<li><a href="' . $bu . '&p=' . $pb . '">' . $pb . '</a></li>';
-			}
-			while (++$pb < $pe);
+			} while (++$pb < $pe);
 		}
 	}
-}
-catch (XSException $e)
-{
+} catch (XSException $e) {
 	$error = strval($e);
 }
 
@@ -152,24 +136,18 @@ catch (XSException $e)
 $total_cost = microtime(true) - $total_begin;
 
 // XML OUPUT
-if ($xml === 'yes' && !empty($q))
-{
+if ($xml === 'yes' && !empty($q)) {
 	header("Content-Type: text/xml; charset=$oe");
 	echo "<?xml version=\"1.0\" encoding=\"$oe\" ?>\n";
 	echo "<xs:result count=\"$count\" total=\"$total\" cost=\"$total_cost\" xmlns:xs=\"http://www.xunsearch.com\">\n";
-	if ($error !== '')
+	if ($error !== '') {
 		echo "  <error><![CDATA[" . $error . "]]></error>\n";
-
-	foreach ($docs as $doc)
-	{
+	}
+	foreach ($docs as $doc) {
 		echo "  <doc index=\"" . $doc->rank() . "\" percent=\"" . $doc->percent() . "%\">\n";
-		foreach ($doc as $k => $v)
-		{
+		foreach ($doc as $k => $v) {
 			echo "    <$k>";
-			if (is_numeric($v))
-				echo $v;
-			else
-				echo "\n      <![CDATA[" . $v . "]]>\n    ";
+			echo is_numeric($v) ? $v : "\n      <![CDATA[" . $v . "]]>\n    ";
 			echo "</$k>\n";
 		}
 		echo "  </doc>\n";

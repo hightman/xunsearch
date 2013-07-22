@@ -12,6 +12,7 @@ class XSTokenizerNoneTest extends PHPUnit_Framework_TestCase
 	 * @var XSTokenizerNone
 	 */
 	protected $object;
+
 	/** 	 
 	 * @var XSDocument
 	 */

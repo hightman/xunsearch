@@ -35,10 +35,9 @@ static const char *_log_level[] = {
  */
 const char *log_ident(const char *ident)
 {
-	if (ident != NULL)
-	{
-		memset(lid, 0, sizeof(lid));
-		strncpy(lid, ident, sizeof(lid) - 1);
+	if (ident != NULL) {
+		memset(lid, 0, sizeof (lid));
+		strncpy(lid, ident, sizeof (lid) - 1);
 	}
 	return lid;
 }
@@ -48,8 +47,9 @@ const char *log_ident(const char *ident)
  */
 int log_level(int level)
 {
-	if (level >= 0 && level <= 7)
+	if (level >= 0 && level <= 7) {
 		lvl = level;
+	}
 	return lvl;
 }
 
@@ -58,8 +58,7 @@ int log_level(int level)
  */
 void log_close()
 {
-	if (lfd >= 0)
-	{
+	if (lfd >= 0) {
 		close(lfd);
 		lfd = -1;
 	}
@@ -82,8 +81,7 @@ int log_open(const char *file, const char *ident, int level)
  */
 void _log_printf(int level, const char *fmt, ...)
 {
-	if (lfd >= 0 && (level <= lvl || level == LOG_PRINTF))
-	{
+	if (lfd >= 0 && (level <= lvl || level == LOG_PRINTF)) {
 		int sz;
 		time_t now;
 		struct tm tm;
@@ -93,8 +91,8 @@ void _log_printf(int level, const char *fmt, ...)
 		time(&now);
 		localtime_r(&now, &tm);
 		sprintf(buf, "%d-%02d-%02d %02d:%02d:%02d %s[%d] %s ",
-			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-			tm.tm_hour, tm.tm_min, tm.tm_sec, lid, getpid(), _log_level[level]);
+				tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+				tm.tm_hour, tm.tm_min, tm.tm_sec, lid, getpid(), _log_level[level]);
 
 		sz = strlen(buf);
 		va_start(ap, fmt);
@@ -115,6 +113,7 @@ void _log_printf(int level, const char *fmt, ...)
  */
 void log_dup2(int fd)
 {
-	if (lfd >= 0)
+	if (lfd >= 0) {
 		dup2(lfd, fd);
+	}
 }

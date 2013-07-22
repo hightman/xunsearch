@@ -78,14 +78,16 @@ class XSTokenizerSplit implements XSTokenizer
 
 	public function __construct($arg = null)
 	{
-		if ($arg !== null && $arg !== '')
+		if ($arg !== null && $arg !== '') {
 			$this->arg = $arg;
+		}
 	}
 
 	public function getTokens($value, XSDocument $doc = null)
 	{
-		if (strlen($this->arg) > 2 && substr($this->arg, 0, 1) == '/' && substr($this->arg, -1, 1) == '/')
+		if (strlen($this->arg) > 2 && substr($this->arg, 0, 1) == '/' && substr($this->arg, -1, 1) == '/') {
 			return preg_split($this->arg, $value);
+		}
 		return explode($this->arg, $value);
 	}
 }
@@ -103,19 +105,18 @@ class XSTokenizerXlen implements XSTokenizer
 
 	public function __construct($arg = null)
 	{
-		if ($arg !== null && $arg !== '')
-		{
+		if ($arg !== null && $arg !== '') {
 			$this->arg = intval($arg);
-			if ($this->arg < 1 || $this->arg > 255)
+			if ($this->arg < 1 || $this->arg > 255) {
 				throw new XSException('Invalid argument for ' . __CLASS__ . ': ' . $arg);
+			}
 		}
 	}
 
 	public function getTokens($value, XSDocument $doc = null)
 	{
 		$terms = array();
-		for ($i = 0; $i < strlen($value); $i += $this->arg)
-		{
+		for ($i = 0; $i < strlen($value); $i += $this->arg) {
 			$terms[] = substr($value, $i, $this->arg);
 		}
 		return $terms;
@@ -135,11 +136,11 @@ class XSTokenizerXstep implements XSTokenizer
 
 	public function __construct($arg = null)
 	{
-		if ($arg !== null && $arg !== '')
-		{
+		if ($arg !== null && $arg !== '') {
 			$this->arg = intval($arg);
-			if ($this->arg < 1 || $this->arg > 255)
+			if ($this->arg < 1 || $this->arg > 255) {
 				throw new XSException('Invalid argument for ' . __CLASS__ . ': ' . $arg);
+			}
 		}
 	}
 
@@ -147,11 +148,11 @@ class XSTokenizerXstep implements XSTokenizer
 	{
 		$terms = array();
 		$i = $this->arg;
-		while (true)
-		{
+		while (true) {
 			$terms[] = substr($value, 0, $i);
-			if ($i >= strlen($value))
+			if ($i >= strlen($value)) {
 				break;
+			}
 			$i += $this->arg;
 		}
 		return $terms;
@@ -185,17 +186,16 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function __construct()
 	{
-		if (self::$_server === null)
-		{
+		if (self::$_server === null) {
 			$xs = XS::getLastXS();
-			if ($xs === null)
+			if ($xs === null) {
 				throw new XSException('An XS instance should be created before using ' . __CLASS__);
+			}
 			self::$_server = $xs->getScwsServer();
 			self::$_server->setTimeout(0);
 			self::$_charset = $xs->getDefaultCharset();
 			// constants
-			if (!defined('SCWS_MULTI_NONE'))
-			{
+			if (!defined('SCWS_MULTI_NONE')) {
 				define('SCWS_MULTI_NONE', 0);
 				define('SCWS_MULTI_SHORT', 1);
 				define('SCWS_MULTI_DUALITY', 2);
@@ -216,8 +216,7 @@ class XSTokenizerScws implements XSTokenizer
 		$_charset = self::$_charset;
 		self::$_charset = 'UTF-8';
 		$words = $this->getResult($value);
-		foreach ($words as $word)
-		{
+		foreach ($words as $word) {
 			$tokens[] = $word['word'];
 		}
 		// restore charset
@@ -234,8 +233,9 @@ class XSTokenizerScws implements XSTokenizer
 	public function setCharset($charset)
 	{
 		self::$_charset = strtoupper($charset);
-		if (self::$_charset == 'UTF8')
+		if (self::$_charset == 'UTF8') {
 			self::$_charset = 'UTF-8';
+		}
 		return $this;
 	}
 
@@ -246,7 +246,8 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setIgnore($yes = true)
 	{
-		$this->_setting['ignore'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_IGNORE, $yes === false ? 0 : 1);
+		$this->_setting['ignore'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_IGNORE,
+				$yes === false ? 0 : 1);
 		return $this;
 	}
 
@@ -271,7 +272,8 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setDuality($yes = true)
 	{
-		$this->_setting['duality'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DUALITY, $yes === false ? 0 : 1);
+		$this->_setting['duality'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DUALITY,
+				$yes === false ? 0 : 1);
 		return $this;
 	}
 
@@ -297,8 +299,7 @@ class XSTokenizerScws implements XSTokenizer
 		$text = $this->applySetting($text);
 		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_GET_RESULT, 0, $text);
 		$res = self::$_server->execCommand($cmd, CMD_OK_SCWS_RESULT);
-		while ($res->buf !== '')
-		{
+		while ($res->buf !== '') {
 			$tmp = unpack('Ioff/a4attr/a*word', $res->buf);
 			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
 			$words[] = $tmp;
@@ -320,8 +321,7 @@ class XSTokenizerScws implements XSTokenizer
 		$text = $this->applySetting($text);
 		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_GET_TOPS, $limit, $text, $xattr);
 		$res = self::$_server->execCommand($cmd, CMD_OK_SCWS_TOPS);
-		while ($res->buf !== '')
-		{
+		while ($res->buf !== '') {
 			$tmp = unpack('Itimes/a4attr/a*word', $res->buf);
 			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
 			$words[] = $tmp;
@@ -347,8 +347,7 @@ class XSTokenizerScws implements XSTokenizer
 	private function applySetting($text)
 	{
 		self::$_server->reopen();
-		foreach ($this->_setting as $key => $cmd)
-		{
+		foreach ($this->_setting as $key => $cmd) {
 			self::$_server->execCommand($cmd);
 		}
 		return XS::convert($text, 'UTF-8', self::$_charset);

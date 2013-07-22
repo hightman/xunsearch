@@ -12,6 +12,7 @@ class XSTokenizerXstepTest extends PHPUnit_Framework_TestCase
 	 * @var XSTokenizerXstep
 	 */
 	protected $object;
+
 	/** 	 
 	 * @var XSDocument
 	 */

@@ -23,21 +23,21 @@ XSUtil::setCharset($charset);
 
 // long options
 $params = array('import', 'del', 'put', 'flush', 'hot', 'clean', 'limit');
-foreach ($params as $_)
-{
+foreach ($params as $_) {
 	$k = strtr($_, '-', '_');
 	$$k = XSUtil::getOpt(null, $_);
 }
 
-if ($query === null && $put === null && $del === null && $flush === null && $import === null && $hot === null
-	&& $clean === null)
+if ($query === null && $put === null && $del === null
+		&& $flush === null && $import === null
+		&& $hot === null && $clean === null) {
 	$hot = 'total';
+}
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| ($import !== null && !is_string($import)) || ($query !== null && !is_string($query))
-	|| ($put !== null && !is_string($put)) || ($del !== null && !is_string($del)))
-{
+		|| ($import !== null && !is_string($import)) || ($query !== null && !is_string($query))
+		|| ($put !== null && !is_string($put)) || ($del !== null && !is_string($del))) {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
 Logger - 搜索日志管理工具 ($version)
@@ -83,96 +83,78 @@ EOF;
 
 // create xs project
 $ini = file_exists($project) ? $project : dirname(__FILE__) . '/../app/' . $project . '.ini';
-if (!file_exists($ini))
-{
+if (!file_exists($ini)) {
 	echo "错误：无效的项目名称 ($project)，不存在相应的配置文件。\n";
 	exit(-1);
 }
 
-try
-{
+try {
 	$db = XSSearch::LOG_DB;
 	$log_ready = false;
 	$xs = new XS($ini);
 	$xs->setScheme(XSFieldScheme::logger());
 
 	$search = $xs->search;
-	try
-	{
+	try {
 		// NOTE: use setQuery to call preQueryString for preparing fieldset		
 		$search->setDb($db)->setQuery('dummy');
-		$search->setTimeout(0);	// sometimes user may import lots of terms
+		$search->setTimeout(0); // sometimes user may import lots of terms
 		$log_ready = true;
-	}
-	catch (Exception $e)
-	{
+	} catch (Exception $e) {
 		
 	}
 
 	// hot, query ==> read-only
-	if ($hot !== null)
-	{
+	if ($hot !== null) {
 		$limit = $limit === null ? 10 : intval($limit);
 		$type = $hot === 'cur' ? 'currnum' : ($hot === 'last' ? 'lastnum' : 'total');
 		$result = $search->getHotQuery($limit, $type);
-		if (count($result) === 0)
+		if (count($result) === 0) {
 			echo "暂无相关热门搜索记录。\n";
-		else
-		{
+		} else {
 			$i = 1;
-			printf("序  %s %s\n%s\n", XSUtil::fixWidth('搜索热门关键词(' . $type . ')', 40), XSUtil::fixWidth('次数', 10), XSUtil::fixWidth('', 56, '-'));
-			foreach ($result as $word => $freq)
-			{
+			printf("序  %s %s\n%s\n", XSUtil::fixWidth('搜索热门关键词(' . $type . ')', 40),
+					XSUtil::fixWidth('次数', 10), XSUtil::fixWidth('', 56, '-'));
+			foreach ($result as $word => $freq) {
 				printf("%2d. %s %d\n", $i, XSUtil::fixWidth($word, 40), $freq);
 				$i++;
 			}
 		}
-	}
-	else if ($query !== null)
-	{
+	} elseif ($query !== null) {
 		$query = XSUtil::convertIn($query);
 		$limit = $limit === null ? 6 : intval($limit);
 		$result = $log_ready ? $search->setFuzzy()->setLimit($limit)->search($query) : array();
-		if (count($result) === 0)
+		if (count($result) === 0) {
 			echo "目前还没有与 \033[7m" . $query . "\033[m 相关的搜索词。\n";
-		else
-		{
-			printf("序 %s %s\n%s\n", XSUtil::fixWidth("相关搜索词($query)", 41), XSUtil::fixWidth('次数', 10), XSUtil::fixWidth('', 50, '-'));
-			for ($i = 0, $total = count($result); $i < $total; $i++)
-			{
+		} else {
+			printf("序 %s %s\n%s\n", XSUtil::fixWidth("相关搜索词($query)", 41), XSUtil::fixWidth('次数', 10),
+					XSUtil::fixWidth('', 50, '-'));
+			for ($i = 0, $total = count($result); $i < $total; $i++) {
 				printf("%2d. %s %s\n", $i + 1, XSUtil::fixWidth($result[$i]->body, 40), $result[$i]->total);
 			}
 		}
-	}
-	else
-	{
+	} else {
 		// check clean
-		if ($clean !== null)
-		{
+		if ($clean !== null) {
 			echo "清空已有搜索日志数据 ...\n";
 			$xs->index->setDb($db)->clean();
 		}
 
 		// import from file
-		if ($import !== null)
-		{
-			if (!file_exists($import) || !($fd = @fopen($import, "r")))
+		if ($import !== null) {
+			if (!file_exists($import) || !($fd = @fopen($import, "r"))) {
 				echo "要导入的文件 [$import] 不存在或无法读取！\n";
-			else
-			{
+			} else {
 				$search->setTimeout(0);
 				echo "开始导入搜索日志文件 ...\n";
-				while (($line = fgets($fd, 1024)) !== false)
-				{
-					if ($line[0] === '#' || $line[0] === ';')
+				while (($line = fgets($fd, 1024)) !== false) {
+					if ($line[0] === '#' || $line[0] === ';') {
 						continue;
-					if (($pos = strpos($line, "\t")) !== false)
-					{
+					}
+					if (($pos = strpos($line, "\t")) !== false) {
 						$word = trim(substr($line, 0, $pos));
 						$wdf = intval(substr($line, $pos + 1));
-					}
-					else
-					{
+					} else {
 						$word = trim($line);
 						$wdf = 1;
 					}
@@ -183,20 +165,17 @@ try
 		}
 
 		// delete word
-		if ($del !== null)
-		{
+		if ($del !== null) {
 			$limit = $limit === null ? 3 : intval($limit);
 			$del = XSUtil::convertIn($del);
-			foreach (explode(",", $del) as $word)
-			{
+			foreach (explode(",", $del) as $word) {
 				$word = trim($word);
-				if ($word === '')
+				if ($word === '') {
 					continue;
-				if ($log_ready)
-				{
+				}
+				if ($log_ready) {
 					$search->setQuery(null)->addQueryTerm('id', $word);
-					if ($search->count() === 1)
-					{
+					if ($search->count() === 1) {
 						$xs->index->setDb($db)->del($word);
 						echo "成功删除 \033[7m$word\033[m！\n";
 						continue;
@@ -205,33 +184,25 @@ try
 
 				echo "不存在 \033[7m$word\033[m，";
 				$docs = $log_ready ? $search->setFuzzy()->setLimit($limit)->search($word) : array();
-				if (count($docs) === 0)
+				if (count($docs) === 0) {
 					echo "并且没有相关的搜索词。";
-				else
-				{
+				} else {
 					echo "相关词：";
-					foreach ($docs as $doc)
-					{
+					foreach ($docs as $doc) {
 						echo "\033[7m" . $doc->body . "\033[m  ";
 					}
 				}
 				echo "\n";
 			}
-		}
-		else if ($put !== null)
-		{
+		} elseif ($put !== null) {
 			echo "开始增加/更新搜索词 ... \n";
 			$put = XSUtil::convertIn($put);
 
-			foreach (explode(',', $put) as $tmp)
-			{
-				if (($pos = strpos($tmp, ':')) !== false)
-				{
+			foreach (explode(',', $put) as $tmp) {
+				if (($pos = strpos($tmp, ':')) !== false) {
 					$word = trim(substr($tmp, 0, $pos));
 					$wdf = intval(substr($tmp, $pos + 1));
-				}
-				else
-				{
+				} else {
 					$word = trim($tmp);
 					$wdf = 1;
 				}
@@ -240,28 +211,23 @@ try
 		}
 
 		// check flush
-		if ($flush !== null || $del !== null)
-		{
+		if ($flush !== null || $del !== null) {
 			echo "刷新已提交的日志索引 ...";
 			$res = $xs->index->setDb($db)->flushIndex();
-			for ($i = 0; $i < 3 && $flush !== null; $i++)
-			{
+			for ($i = 0; $i < 3 && $flush !== null; $i++) {
 				echo ".";
 				XSUtil::flush();
 				sleep(1);
 			}
 			echo $res ? " 成功\n" : " 失败\n";
 		}
-		if ($flush !== null || $import !== null || $put !== null)
-		{
+		if ($flush !== null || $import !== null || $put !== null) {
 			echo "强制刷新未处理的日志记录 ... ";
 			echo $xs->index->flushLogging() ? "成功" : "失败";
 			echo "\n注意：后台更新需要一些时间，并不是实时完成！\n";
 		}
 	}
-}
-catch (XSException $e)
-{
+} catch (XSException $e) {
 	// Exception
 	$start = dirname(dirname(__FILE__));
 	$relative = XSException::getRelPath($start);
@@ -277,21 +243,17 @@ function add_search_log($word, $wdf)
 	global $search, $log_ready;
 	static $record = array();
 
-	if ($word !== '' && $wdf > 0)
-	{
-		if (!isset($record[$word]) && $log_ready)
-		{
+	if ($word !== '' && $wdf > 0) {
+		if (!isset($record[$word]) && $log_ready) {
 			$docs = $search->setQuery(null)->addQueryTerm('id', $word)->search();
-			if (isset($docs[0]))
+			if (isset($docs[0])) {
 				$record[$word] = $docs[0]->total;
+			}
 		}
-		if (isset($record[$word]))
-		{
+		if (isset($record[$word])) {
 			echo "更新 \033[7m$word\033[m 的次数：" . $record[$word] . " + " . $wdf . "\n";
 			$record[$word] += $wdf;
-		}
-		else
-		{
+		} else {
 			echo "新增 \033[7m$word\033[m 次数：$wdf\n";
 			$record[$word] = $wdf;
 		}

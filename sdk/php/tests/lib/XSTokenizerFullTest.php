@@ -12,6 +12,7 @@ class XSTokenizerFullTest extends PHPUnit_Framework_TestCase
 	 * @var XSTokenizerFull
 	 */
 	protected $object;
+
 	/** 	 
 	 * @var XSDocument
 	 */

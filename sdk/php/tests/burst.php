@@ -11,15 +11,16 @@ XSUtil::parseOpt(array('i', 'c', 't'));
 $test_con = XSUtil::getOpt('c', null, true);
 $test_type = XSUtil::getOpt('t');
 $test_index = XSUtil::getOpt('i');
-if ($test_type !== 'search')
+if ($test_type !== 'search') {
 	$test_type = 'index';
-if ($test_index === null && $test_con === null)
+}
+if ($test_index === null && $test_con === null) {
 	$test_con = 100;
+}
 
 // show help
 if (XSUtil::getOpt('h', 'help') !== null
-	|| ($test_con == null && $test_index == null))
-{
+		|| ($test_con == null && $test_index == null)) {
 	echo <<<EOF
 Burst - XS 服务端并发测试工具
 
@@ -39,16 +40,13 @@ EOF;
 // --------------------------------------------
 // master process
 // --------------------------------------------
-if ($test_con !== null)
-{
+if ($test_con !== null) {
 	// open child process
 	$total = intval($test_con);
 	$pipes = array();
-	for ($i = 1; $i <= $total; $i++)
-	{
+	for ($i = 1; $i <= $total; $i++) {
 		$cmd = 'php ' . $_SERVER['argv'][0] . ' -t' . $test_type . ' -i' . $i;
-		if (!($fd = @popen($cmd, 'r')))
-		{
+		if (!($fd = @popen($cmd, 'r'))) {
 			printf("[%s-%d] run failed\n", $test_type, $i);
 			continue;
 		}
@@ -56,23 +54,17 @@ if ($test_con !== null)
 		$pipes[$i] = $fd;
 	}
 	// loop to read them
-	while (count($pipes) > 0)
-	{
+	while (count($pipes) > 0) {
 		$rfds = array_values($pipes);
 		$wfds = $xfds = NULL;
 		$cc = stream_select($rfds, $wfds, $xfds, NULL);
-		if ($cc === false)
-		{
+		if ($cc === false) {
 			echo "[---] stream_select() failed\n";
 			break;
-		}
-		else if ($cc > 0)
-		{
-			foreach ($rfds as $fd)
-			{
+		} else if ($cc > 0) {
+			foreach ($rfds as $fd) {
 				$buf = fread($fd, 8192);
-				if ($buf === false || strlen($buf) === 0)
-				{
+				if ($buf === false || strlen($buf) === 0) {
 					$i = array_search($fd, $pipes);
 					//printf("[%s-%d] quit\n", $test_type, $i);
 					pclose($fd);
@@ -96,17 +88,14 @@ $ini = file_get_contents(dirname(__FILE__) . '/../app/demo.ini');
 $ini = str_replace('name = demo', 'name = xs_test', $ini);
 $line = sprintf("[%s-%d] ", $test_type, $test_index);
 
-try
-{
+try {
 	$xs = new XS($ini);
-	if ($test_type == 'index')
-	{
+	if ($test_type == 'index') {
 		$data = array('pid' => intval($test_index), 'subject' => 'Hello world', 'chrono' => time());
 		$data['message'] = '您好世界';
 
 		$index = $xs->index;
-		for ($i = 0; $i < 10; $i++)
-		{
+		for ($i = 0; $i < 10; $i++) {
 			$data2 = $data;
 			$data2['pid'] = $data['pid'] + ($i << 16);
 			$data2['subject'] .= rand(1, 999);
@@ -115,20 +104,15 @@ try
 			$line .= " .";
 		}
 		$line .= " OK";
-	}
-	else
-	{
+	} else {
 		$search = $xs->search;
 		$query = rand(0, 3) == 0 ? 'subject:world' : '世界';
-		for ($i = 0; $i < 10; $i++)
-		{
+		for ($i = 0; $i < 10; $i++) {
 			$search->setQuery($query . ' ' . rand(1, 9999))->search();
 			$line .= ' ' . $search->count();
 		}
 	}
-}
-catch (XSException $e)
-{
+} catch (XSException $e) {
 	$line .= " ERROR: " . $e;
 }
 echo $line . "\n";

@@ -28,8 +28,7 @@ $params[] = 'add-synonym';
 $params[] = 'del-synonym';
 $params[] = 'stop-rebuild';
 $params[] = 'custom-dict';
-foreach ($params as $_)
-{
+foreach ($params as $_) {
 	$k = strtr($_, '-', '_');
 	$$k = XSUtil::getOpt(null, $_);
 }
@@ -41,9 +40,8 @@ $scws_multi = XSUtil::getOpt(null, 'scws-multi');
 
 // help message
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-	|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log
-	&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym && !$scws_multi))
-{
+		|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log
+		&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym && !$scws_multi)) {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
 Indexer - 索引批量管理、导入工具 ($version)
@@ -97,22 +95,18 @@ EOF;
 
 // create xs project
 $ini = file_exists($project) ? $project : dirname(__FILE__) . '/../app/' . $project . '.ini';
-if (!file_exists($ini))
-{
+if (!file_exists($ini)) {
 	echo "错误：无效的项目名称 ($project)，不存在相应的配置文件。\n";
 	exit(-1);
 }
 
 // csv delimiter saved in super global variable: _SERVER
-if (is_string($csv_delimiter) && $source == 'csv')
-{
-	if (substr($csv_delimiter, 0, 1) !== '\\')
+if (is_string($csv_delimiter) && $source == 'csv') {
+	if (substr($csv_delimiter, 0, 1) !== '\\') {
 		$csv_delimiter = substr($csv_delimiter, 0, 1);
-	else
-	{
+	} else {
 		$char = substr($csv_delimiter, 1, 1);
-		switch ($char)
-		{
+		switch ($char) {
 			case '\\':
 				$csv_delimiter = '\\';
 				break;
@@ -132,49 +126,45 @@ if (is_string($csv_delimiter) && $source == 'csv')
 }
 
 // filter
-if ($filter !== null && is_string($filter))
-{
+if ($filter !== null && is_string($filter)) {
 	$original = $filter;
 	$class = 'XS' . ucfirst(strtolower($filter)) . 'Filter';
-	if (class_exists($class))
+	if (class_exists($class)) {
 		$filter = new $class;
-	else
-	{
-		if (file_exists($filter . '.php'))
-		{
+	} else {
+		if (file_exists($filter . '.php')) {
 			$class = basename($filter);
 			require_once $filter . '.php';
-			if (class_exists($class))
+			if (class_exists($class)) {
 				$filter = new $class;
+			}
 		}
 	}
-	if (!is_object($filter) || !($filter instanceof XSDataFilter))
-	{
+	if (!is_object($filter) || !($filter instanceof XSDataFilter)) {
 		$filter = null;
 		echo "注意：自动忽略无效的过滤器 [" . $original . "]\n";
 	}
 }
 
 // execute the indexer
-try
-{
+try {
 	// create xs object
 	$xs = new XS($ini);
 	$index = $xs->index;
-	if ($db !== null)
+	if ($db !== null) {
 		$index->setDb($db);
+	}
 
 	// scws multi
-	if ($scws_multi !== null && $scws_multi !== true)
-	{
+	if ($scws_multi !== null && $scws_multi !== true) {
 		$index->setScwsMulti($scws_multi);
-		if (!empty($source))
+		if (!empty($source)) {
 			$scws_multi = null;
+		}
 	}
 
 	// special actions
-	if ($info !== null)
-	{
+	if ($info !== null) {
 		echo "---------- SERVER INFO BEGIN ----------\n";
 		$res = $index->execCommand(CMD_DEBUG);
 		echo $res->buf;
@@ -184,83 +174,67 @@ try
 		echo "数据库名：" . sprintf('%s[0x%04x]', $res->name, $res->flag) . "\n";
 		echo "队列数据：" . $res->count . "条\n";
 		echo "导入进程：" . ($res->pid > 0 ? '#' . $res->pid : '无') . "\n";
-	}
-	else if ($flush_log !== null)
-	{
+	} elseif ($flush_log !== null) {
 		echo "刷新搜索日志 ... \n";
-		if (($res = $index->flushLogging()) === false)
+		if (($res = $index->flushLogging()) === false) {
 			echo "失败\n";
-		else
+		} else {
 			echo "成功，注意：后台更新需要一些时间，并不是真正立即完成。\n";
-	}
-	else if ($flush !== null)
-	{
+		}
+	} elseif ($flush !== null) {
 		echo "刷新索引缓冲 ... \n";
-		if (($res = $index->flushIndex()) === false)
+		if (($res = $index->flushIndex()) === false) {
 			echo "失败\n";
-		else
+		} else {
 			echo "成功，注意：后台更新需要一些时间，并不是真正立即完成。\n";
-	}
-	else if ($custom_dict !== null)
-	{
-		if ($file === null)
-		{
+		}
+	} elseif ($custom_dict !== null) {
+		if ($file === null) {
 			$content = $index->getCustomDict();
-			if ($content === '')
+			if ($content === '') {
 				echo "注意：该项目无自定义词库或内容为空！";
-			else
-			{
-				if (substr($content, 0, 1) !== '#')
+			} else {
+				if (substr($content, 0, 1) !== '#') {
 					echo "# WORD\tTF\tIDF\tATTR\n";
+				}
 				echo $content;
 			}
 			echo "\n";
-		}
-		else
-		{
-			if ($file === true || !file_exists($file))
+		} else {
+			if ($file === true || !file_exists($file)) {
 				echo "错误：请正确指定要替换的自定义词库文件路径 (" . strval($file) . ")\n";
-			else
-			{
+			} else {
 				$content = file_get_contents($file);
 				echo "正在提交自定义词库 (" . number_format(strlen($content)) . " bytes) ... ";
 				$index->setCustomDict($content);
 				echo "OK\n";
 			}
 		}
-	}
-	else if ($scws_multi !== null)
-	{
+	} elseif ($scws_multi !== null) {
 		$level = $index->getScwsMulti();
 		echo "当前索引库的 scws 复合分词等级为：$level\n";
-	}
-	else
-	{
+	} else {
 		// clean
-		if ($clean !== null)
-		{
+		if ($clean !== null) {
 			echo "清空现有索引数据 ...\n";
 			$index->clean();
 		}
 
 		// stop rebuild
-		if ($stop_rebuild !== null)
-		{
+		if ($stop_rebuild !== null) {
 			echo "中止索引重建 ...\n";
 			$index->stopRebuild();
 		}
 
 		// begin rebuild
-		if ($rebuild !== null)
-		{
+		if ($rebuild !== null) {
 			echo "开始重建索引 ...\n";
 			$index->beginRebuild();
 		}
 
 		// import data from source	
 		$fid = $xs->getFieldId();
-		if (!empty($source))
-		{
+		if (!empty($source)) {
 			echo "初始化数据源 ... $source \n";
 			$total = $total_ok = $total_failed = 0;
 			$src = XSDataSource::instance($source, strpos($source, ':') ? $sql : $file);
@@ -272,117 +246,109 @@ try
 			XSUtil::flush();
 			$index->setTimeout(0);
 			$index->openBuffer();
-			while ($data = $src->getData())
-			{
+			while ($data = $src->getData()) {
 				$doc = new XSDocument($dcs);
-				if ($source == 'csv')
-				{
+				if ($source == 'csv') {
 					$data = csv_transform($data);
-					if (is_null($data))
+					if (is_null($data)) {
 						continue;
+					}
 				}
 
 				$pk = $data[$fid->name];
-				if ($filter !== null && ($data = $filter->process($data, $dcs)) === false)
-				{
+				if ($filter !== null && ($data = $filter->process($data, $dcs)) === false) {
 					$total++;
 					echo "警告：过滤器忽略了第 $total 条数据， 主键为：" . $pk . "\n";
 					continue;
 				}
 
 				$doc->setFields($data);
-				try
-				{
-					if ($filter !== null && method_exists($filter, 'processDoc'))
+				try {
+					if ($filter !== null && method_exists($filter, 'processDoc')) {
 						$filter->processDoc($doc);
+					}
 					$total++;
 					$index->update($doc);
 					$total_ok++;
-				}
-				catch (XSException $e)
-				{
+				} catch (XSException $e) {
 					echo "警告：添加第 $total 条数据失败 - " . $e->getMessage() . "\n";
 					echo $e->getTraceAsString();
 					$total_failed++;
 				}
-				if (($total % 10000) == 0)
+				if (($total % 10000) == 0) {
 					echo "报告：累计已处理数据 $total 条 ...\n";
+				}
 			}
 			$index->closeBuffer();
 			echo "完成索引导入：成功 $total_ok 条，失败 $total_failed 条\n";
 		}
 
 		// add synonyms
-		if (is_string($add_synonym))
-		{
+		if (is_string($add_synonym)) {
 			$rec = array();
-			foreach (explode(",", $add_synonym) as $tmp)
-			{
-				if (strpos($tmp, ':') === false)
+			foreach (explode(",", $add_synonym) as $tmp) {
+				if (strpos($tmp, ':') === false) {
 					continue;
+				}
 				list($raw, $syn) = explode(':', $tmp, 2);
 				$raw = trim($raw);
 				$syn = trim($syn);
-				if ($raw !== '' && $syn !== '')
+				if ($raw !== '' && $syn !== '') {
 					$rec[] = array($raw, $syn);
+				}
 			}
 
 			echo "报告：开始添加同义词记录 " . count($rec) . "　条...\n";
-			if (count($rec) > 1)
+			if (count($rec) > 1) {
 				$index->openBuffer();
-			foreach ($rec as $tmp)
-			{
+			}
+			foreach ($rec as $tmp) {
 				$index->addSynonym($tmp[0], $tmp[1]);
 			}
-			if (count($rec) > 1)
+			if (count($rec) > 1) {
 				$index->closeBuffer();
+			}
 		}
 
 		// del synonyms
-		if (is_string($del_synonym))
-		{
+		if (is_string($del_synonym)) {
 			$rec = array();
-			foreach (explode(",", $del_synonym) as $tmp)
-			{
+			foreach (explode(",", $del_synonym) as $tmp) {
 				$syn = '';
-				if (strpos($tmp, ':') === false)
+				if (strpos($tmp, ':') === false) {
 					$raw = trim($tmp);
-				else
-				{
+				} else {
 					list($raw, $syn) = explode(':', $tmp, 2);
 					$raw = trim($raw);
 					$syn = trim($syn);
 				}
-				if ($raw !== '')
+				if ($raw !== '') {
 					$rec[] = array($raw, $syn);
+				}
 			}
 
 			echo "报告：开始删除同义词记录 " . count($rec) . "　条...\n";
-			if (count($rec) > 1)
+			if (count($rec) > 1) {
 				$index->openBuffer();
-			foreach ($rec as $tmp)
-			{
+			}
+			foreach ($rec as $tmp) {
 				$index->delSynonym($tmp[0], $tmp[1]);
 			}
-			if (count($rec) > 1)
+			if (count($rec) > 1) {
 				$index->closeBuffer();
+			}
 		}
 
 		// end rebuild
-		if ($rebuild !== null)
-		{
+		if ($rebuild !== null) {
 			echo "完成重建索引 ...\n";
 			$index->endRebuild();
-		}
-		else
-		{
+		} else {
 			echo "刷新索引提交 ...\n";
 			$index->flushIndex();
 		}
 	}
-}
-catch (XSException $e)
-{
+} catch (XSException $e) {
 	// Exception
 	$start = dirname(dirname(__FILE__));
 	$relative = XSException::getRelPath($start);
@@ -399,23 +365,19 @@ function csv_transform($data)
 	global $xs; /* @var $xs XS */
 
 	// init field set
-	if (is_null($fields))
-	{
+	if (is_null($fields)) {
 		// load default fields
 		$fields = array_keys($xs->getScheme()->getAllFields());
 
 		// check data is fieldset or not
 		$is_header = true;
-		foreach ($data as $tmp)
-		{
-			if (!in_array($tmp, $fields))
-			{
+		foreach ($data as $tmp) {
+			if (!in_array($tmp, $fields)) {
 				$is_header = false;
 				break;
 			}
 		}
-		if ($is_header)
-		{
+		if ($is_header) {
 			$fields = $data;
 			echo "注意：CSV 数据字段被指定为：" . implode(',', $data) . "\n";
 			return null;
@@ -424,11 +386,11 @@ function csv_transform($data)
 
 	// transform
 	$ret = array();
-	foreach ($fields as $key)
-	{
+	foreach ($fields as $key) {
 		$index = count($ret);
-		if (!isset($data[$index]))
+		if (!isset($data[$index])) {
 			break;
+		}
 		$ret[$key] = $data[$index];
 	}
 	return $ret;

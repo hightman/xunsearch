@@ -12,6 +12,7 @@ class XSFieldMetaTest extends PHPUnit_Framework_TestCase
 	 * @var XS
 	 */
 	protected $xs;
+
 	/**
 	 * @var XSFieldScheme
 	 */

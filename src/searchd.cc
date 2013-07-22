@@ -117,8 +117,7 @@ static tpool_t thr_pool;
  */
 static int worker_zcmd_exec(XS_CONN *conn)
 {
-	switch (conn->zcmd->cmd)
-	{
+	switch (conn->zcmd->cmd) {
 		case CMD_SEARCH_DB_TOTAL:
 		case CMD_SEARCH_GET_TOTAL:
 		case CMD_SEARCH_GET_RESULT:
@@ -158,10 +157,11 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_SEARCH_FINISH:
 			return CONN_RES_ERR(WRONGPLACE);
 		case CMD_SEARCH_KEEPALIVE:
-			if (conn->zcmd->arg1 == 0)
+			if (conn->zcmd->arg1 == 0) {
 				main_flag &= ~FLAG_KEEPALIVE;
-			else
+			} else {
 				main_flag |= FLAG_KEEPALIVE;
+			}
 			return CMD_RES_CONT;
 		case CMD_SEARCH_DRAW_TPOOL:
 		{
@@ -182,13 +182,10 @@ static int worker_zcmd_exec(XS_CONN *conn)
  */
 static void worker_submit_task(XS_CONN *conn)
 {
-	if (main_flag & FLAG_ON_EXIT)
-	{
+	if (main_flag & FLAG_ON_EXIT) {
 		log_notice("ignore task on terminating");
 		CONN_QUIT(STOPPED);
-	}
-	else
-	{
+	} else {
 		TPOOL_LOG_STATUS();
 		TPOOL_ADD_TASK();
 	}
@@ -199,8 +196,7 @@ static void worker_submit_task(XS_CONN *conn)
  */
 static void worker_server_timeout()
 {
-	if (!(main_flag & FLAG_KEEPALIVE))
-	{
+	if (!(main_flag & FLAG_KEEPALIVE)) {
 		int num = TPOOL_KILL_TIMEOUT();
 		log_debug("check to kill timed out threads (NUM:%d)", num);
 	}
@@ -212,8 +208,7 @@ static void worker_server_timeout()
 static void worker_cleanup()
 {
 	// wait tpool end without error
-	if (main_flag & FLAG_NO_ERROR)
-	{
+	if (main_flag & FLAG_NO_ERROR) {
 		log_info("cancel and wait thread pool");
 		TPOOL_CANCEL();
 	}
@@ -296,33 +291,30 @@ static void show_usage()
 static inline void main_cleanup()
 {
 	// add exit flag for other signal handler (child)
-	if (main_flag & FLAG_ON_EXIT)
+	if (main_flag & FLAG_ON_EXIT) {
 		return;
+	}
 	main_flag |= FLAG_ON_EXIT;
 	conn_server_shutdown();
 
-	if (IS_MASTER())
-	{
+	if (IS_MASTER()) {
 		// master
-		if (worker_pids != NULL)
+		if (worker_pids != NULL) {
 			free(worker_pids);
+		}
 #ifdef HAVE_MEMORY_CACHE
-		if (mc != NULL)
-		{
+		if (mc != NULL) {
 			log_debug("deinit memory cache");
 			mc_destroy(mc);
 		}
 #endif
-		if (main_flag & FLAG_G_INITED)
-		{
+		if (main_flag & FLAG_G_INITED) {
 			log_debug("deinit global states");
 			xs_user_deinit();
 			G_VAR_FREE(user_base);
 			G_DEINIT();
 		}
-	}
-	else
-	{
+	} else {
 		// worker
 		worker_cleanup();
 	}
@@ -350,16 +342,14 @@ extern "C" {
 int signal_term(int sig)
 {
 	log_alert("caught %ssignal[%d], terminate immediately",
-		(sig == SIGTERM ? "" : "exceptional "), sig);
-	if (IS_MASTER())
-	{
+			(sig == SIGTERM ? "" : "exceptional "), sig);
+	if (IS_MASTER()) {
 		main_flag |= (sig == SIGTERM ? FLAG_SIG_EXIT_NORMAL : FLAG_SIG_EXIT_EXCEPTION);
 		return SIGNAL_TERM_LATER;
-	}
-	else
-	{
-		if (sig == SIGTERM)
+	} else {
+		if (sig == SIGTERM) {
 			main_cleanup();
+		}
 		return main_flag & FLAG_NO_ERROR ? 0 : -1;
 	}
 }
@@ -369,24 +359,19 @@ int signal_term(int sig)
  */
 void signal_child(pid_t pid, int status)
 {
-	if (!IS_MASTER())
-	{
+	if (!IS_MASTER()) {
 		log_notice("unknown child process exit (PID:%d, STATUS:%d)", pid, status);
-	}
-	else
-	{
+	} else {
 		int i;
-		for (i = 1; i <= worker_num; i++)
-		{
-			if (worker_pids[i].pid == pid)
-			{
+		for (i = 1; i <= worker_num; i++) {
+			if (worker_pids[i].pid == pid) {
 				worker_pids[i].pid = 0;
 				break;
 			}
 		}
 		main_flag |= FLAG_SIG_CHILD;
 		log_alert("child process worker[%d] exit (PID:%d, STATUS:%d)",
-			i > worker_num ? -1 : i, pid, status);
+				i > worker_num ? -1 : i, pid, status);
 	}
 }
 
@@ -396,12 +381,9 @@ void signal_child(pid_t pid, int status)
 void signal_int()
 {
 	log_alert("caught SIGINT, shutdown gracefully");
-	if (IS_MASTER())
-	{
+	if (IS_MASTER()) {
 		main_flag |= FLAG_SIG_EXIT_GRACEFUL;
-	}
-	else
-	{
+	} else {
 		// FIXME: signal received before conn server become ready
 		worker_shutdown();
 	}
@@ -412,21 +394,18 @@ void signal_int()
  */
 void signal_reload(int sig)
 {
-	if (sig == SIGHUP)
-	{
+	if (sig == SIGHUP) {
 		log_notice("caught reload SIGHUP, but nothing to do");
 	}
-	if (IS_MASTER())
-	{
-		if (sig == SIGTSTP)
+	if (IS_MASTER()) {
+		if (sig == SIGTSTP) {
 			main_flag |= FLAG_SIG_TSTP;
-		else if (sig == SIGALRM)
+		} else if (sig == SIGALRM) {
 			main_flag |= FLAG_SIG_ALARM;
-		else
+		} else {
 			main_flag |= FLAG_SIG_RELOAD;
-	}
-	else if (sig == SIGTSTP)
-	{
+		}
+	} else if (sig == SIGTSTP) {
 		log_printf("accepted requests (NUM:%d)", conn_server_get_num_accept());
 	}
 }
@@ -477,17 +456,12 @@ static void spawn_worker(int idx, sigset_t *sigmask)
 {
 	pid_t pid = fork();
 
-	if (pid < 0)
-	{
+	if (pid < 0) {
 		log_error("failed to spawn worker[%d] (ERROR:%s)", idx, strerror(errno));
-	}
-	else if (pid == 0)
-	{
+	} else if (pid == 0) {
 		// child worker
 		become_worker(idx, sigmask);
-	}
-	else
-	{
+	} else {
 		// parent master
 		worker_pids[idx].pid = pid;
 		time(&worker_pids[idx].chrono);
@@ -526,10 +500,8 @@ int main(int argc, char *argv[])
 
 	log_debug("parse arguments");
 	// parse arguments, NOTE: optarg maybe changed by setproctitle()
-	while ((cc = getopt(argc, argv, "FvhH:L:b:l:m:n:s:t:k:?")) != -1)
-	{
-		switch (cc)
-		{
+	while ((cc = getopt(argc, argv, "FvhH:L:b:l:m:n:s:t:k:?")) != -1) {
+		switch (cc) {
 			case 'F': main_flag |= FLAG_FOREGROUND;
 				break;
 			case 'H': home = optarg;
@@ -541,43 +513,47 @@ int main(int argc, char *argv[])
 			case 'k': ctrl = optarg;
 				break;
 			case 'l':
-				if (log_open(optarg, NULL, -1) < 0)
+				if (log_open(optarg, NULL, -1) < 0) {
 					fprintf(stderr, "WARNING: failed to open log file (FILE:%s)\n", optarg);
+				}
 				break;
 			case 'm':
 				msize = atoi(optarg);
-				if (msize < 1 || msize > 128)
-				{
+				if (msize < 1 || msize > 128) {
 					fprintf(stderr, "ERROR: invalid global shared memory size (VALID:1~128)\n");
 					goto main_end;
 				}
 				break;
 			case 'n':
 				worker_num = atoi(optarg);
-				if (worker_num < 1)
+				if (worker_num < 1) {
 					worker_num = DEFAULT_WORKER_NUM;
+				}
 				break;
 			case 's':
 			{
 				FILE *fp = fopen(optarg, "r");
-				if (fp == NULL)
-				{
+				if (fp == NULL) {
 					fprintf(stderr, "WARNING: stopwords file not found (FILE:%s)\n", optarg);
-				}
-				else
-				{
+				} else {
 					char buf[64], *ptr;
-					buf[sizeof(buf) - 1] = '\0';
-					while (fgets(buf, sizeof(buf) - 1, fp) != NULL)
-					{
-						if (buf[0] == ';' || buf[0] == '#' || buf[0] == '\r' || buf[0] == '\n')
+					buf[sizeof (buf) - 1] = '\0';
+					while (fgets(buf, sizeof (buf) - 1, fp) != NULL) {
+						if (buf[0] == ';' || buf[0] == '#' || buf[0] == '\r' || buf[0] == '\n') {
 							continue;
+						}
 						ptr = buf + strlen(buf) - 1;
-						while (ptr > buf && (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n')) ptr--;
+						while (ptr > buf && (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n')) {
+							ptr--;
+						}
 						ptr[1] = '\0';
 						ptr = buf;
-						if (*ptr == '\0') continue;
-						while (*ptr == ' ' || *ptr == '\t') ptr++;
+						if (*ptr == '\0') {
+							continue;
+						}
+						while (*ptr == ' ' || *ptr == '\t') {
+							ptr++;
+						}
 						stopper.add(ptr);
 					}
 					fclose(fp);
@@ -585,12 +561,9 @@ int main(int argc, char *argv[])
 			}
 				break;
 			case 't':
-				try
-				{
+				try {
 					stemmer = Xapian::Stem(optarg);
-				}
-				catch (...)
-				{
+				} catch (...) {
 					fprintf(stderr, "ERROR: invalid stemmer language (LANG:%s)\n", optarg);
 					goto main_end;
 				}
@@ -609,22 +582,21 @@ int main(int argc, char *argv[])
 	}
 
 	// check home directory
-	if (chdir(home) < 0)
-	{
+	if (chdir(home) < 0) {
 		fprintf(stderr, "ERROR: failed to change work directory (DIR:%s, ERROR:%s)\n",
-			home, strerror(errno));
+				home, strerror(errno));
 		goto main_end;
 	}
 	// Check the temporary directory: tmp/ (writable required)
-	if (access(DEFAULT_TEMP_DIR, W_OK) < 0)
-	{
+	if (access(DEFAULT_TEMP_DIR, W_OK) < 0) {
 		fprintf(stderr, "ERROR: temp directory not exists or not writable (DIR:" DEFAULT_TEMP_DIR ")\n");
 		goto main_end;
 	}
 
 	// Just run the control signal `-k'
-	if (ctrl != NULL)
+	if (ctrl != NULL) {
 		pcntl_kill(bind, ctrl, prog_name);
+	}
 
 	// basic setup: mask, signal, log_id
 	umask(022);
@@ -632,24 +604,19 @@ int main(int argc, char *argv[])
 
 	// become daemon or not?
 	log_debug("main start (FLAG: 0x%04x)", main_flag);
-	if (!(main_flag & FLAG_FOREGROUND))
+	if (!(main_flag & FLAG_FOREGROUND)) {
 		pcntl_daemon();
-	else
-	{
+	} else {
 		log_open("stderr", NULL, -1);
 		fprintf(stderr, "WARNING: run on foreground, logs are redirected to <stderr>\n");
 	}
 
 	// check running & save the pid
 	log_debug("check running and save pid");
-	if ((cc = pcntl_running(bind, 1)) != 0)
-	{
-		if (cc > 0)
-		{
+	if ((cc = pcntl_running(bind, 1)) != 0) {
+		if (cc > 0) {
 			log_error("server is running (BIND:%s, PID:%d)", bind, cc);
-		}
-		else
-		{
+		} else {
 			log_error("failed to save the pid (ERROR:%s)", strerror(errno));
 		}
 		goto main_end;
@@ -662,7 +629,7 @@ int main(int argc, char *argv[])
 	// init global variables
 	// TODO: check malloc return value & mm_global?
 	log_debug("init global states");
-	cc = sizeof(worker_t) * (worker_num + 1);
+	cc = sizeof (worker_t) * (worker_num + 1);
 	worker_pids = (worker_t *) malloc(cc);
 	memset(worker_pids, 0, cc);
 
@@ -682,8 +649,7 @@ int main(int argc, char *argv[])
 	// init the memory cache
 #ifdef HAVE_MEMORY_CACHE
 	log_debug("init memory cache");
-	if ((mc = mc_create(mm_global)) == NULL)
-	{
+	if ((mc = mc_create(mm_global)) == NULL) {
 		log_error("failed to create memory cache");
 		goto main_end;
 	}
@@ -694,8 +660,7 @@ int main(int argc, char *argv[])
 #endif	/* HAVE_MEMORY_CACHE */
 
 	// create tcp server & listen (should before setproctitle)
-	if ((listen_sock = conn_server_listen(bind)) < 0)
-	{
+	if ((listen_sock = conn_server_listen(bind)) < 0) {
 		log_error("socket server listen/bind failure");
 		goto main_end;
 	}
@@ -706,15 +671,13 @@ int main(int argc, char *argv[])
 	sigprocmask(SIG_BLOCK, &tmpmask, &oldmask);
 
 	// special foreground mode
-	if (main_flag & FLAG_FOREGROUND)
-	{
+	if (main_flag & FLAG_FOREGROUND) {
 		log_alert("works as foregound worker mode");
 		become_worker(1, &oldmask);
 	}
 
 	// spawn the childs
-	for (cc = 1; cc <= worker_num; cc++)
-	{
+	for (cc = 1; cc <= worker_num; cc++) {
 		spawn_worker(cc, &oldmask);
 	}
 
@@ -729,57 +692,45 @@ int main(int argc, char *argv[])
 
 	// loop to wait signals
 	alarm(300); // first alarm timer
-	while (1)
-	{
+	while (1) {
 		RESET_FLAG_SIG();
 		sigsuspend(&oldmask);
 
 		// check signal flag
-		if (CHECK_FLAG_SIG(CHILD))
-		{
+		if (CHECK_FLAG_SIG(CHILD)) {
 			// respawn dead worker
-			for (cc = 1; cc <= worker_num; cc++)
-			{
-				if (worker_pids[cc].pid == 0)
+			for (cc = 1; cc <= worker_num; cc++) {
+				if (worker_pids[cc].pid == 0) {
 					spawn_worker(cc, &oldmask);
+				}
 			}
-		}
-		else if (CHECK_FLAG_SIG(TSTP))
-		{
+		} else if (CHECK_FLAG_SIG(TSTP)) {
 			// log worker info
 #if defined(MAX_WORKER_LIFE) && MAX_WORKER_LIFE > 0
-			for (cc = 1; cc <= worker_num; cc++)
-			{
-				if (worker_pids[cc].pid == 0)
+			for (cc = 1; cc <= worker_num; cc++) {
+				if (worker_pids[cc].pid == 0) {
 					msize = 0;
-				else
-				{
+				} else {
 					msize = MAX_WORKER_LIFE - (int) (time(NULL) - worker_pids[cc].chrono);
 					kill(worker_pids[cc].pid, SIGTSTP);
 				}
 				log_printf("worker[%d] info (PID:%d, LIFE:%d'%d\")",
-					cc, worker_pids[cc].pid, msize / 60, msize % 60);
+						cc, worker_pids[cc].pid, msize / 60, msize % 60);
 			}
 #endif
-		}
-		else if (CHECK_FLAG_SIG(ALARM))
-		{
+		} else if (CHECK_FLAG_SIG(ALARM)) {
 			// kill some workers
 #if defined(MAX_WORKER_LIFE) && MAX_WORKER_LIFE > 0
-			for (cc = 1; cc <= worker_num; cc++)
-			{
-				if (worker_pids[cc].pid == 0)
+			for (cc = 1; cc <= worker_num; cc++) {
+				if (worker_pids[cc].pid == 0) {
 					continue;
-				if (worker_pids[cc].chrono == 0)
-				{
+				}
+				if (worker_pids[cc].chrono == 0) {
 					kill(worker_pids[cc].pid, SIGKILL);
 					log_notice("worker[%d] early reach the maximum lifetime, force to kill", cc);
-				}
-				else
-				{
+				} else {
 					msize = (int) (time(NULL) - worker_pids[cc].chrono);
-					if (msize > MAX_WORKER_LIFE)
-					{
+					if (msize > MAX_WORKER_LIFE) {
 						kill(worker_pids[cc].pid, SIGINT);
 						worker_pids[cc].chrono = 0;
 						log_notice("worker[%d] reach the maximum lifetime, notify to shutdown", cc);
@@ -789,38 +740,32 @@ int main(int argc, char *argv[])
 			// set next timer
 			alarm(300);
 #endif
-		}
-		else if (CHECK_FLAG_SIG(EXIT))
-		{
+		} else if (CHECK_FLAG_SIG(EXIT)) {
 			// exit by signal
 			int sig = (CHECK_FLAG_SIG(EXIT_GRACEFUL)) ? SIGINT : SIGTERM;
 
 			// now should allow child reaper signal (blocked when sigsuspend() return)
 			sigprocmask(SIG_UNBLOCK, &tmpmask, NULL);
 			log_notice("send exit signal[%d] to all worker", sig);
-			for (cc = 1; cc <= worker_num; cc++)
-			{
-				if (worker_pids[cc].pid <= 0)
+			for (cc = 1; cc <= worker_num; cc++) {
+				if (worker_pids[cc].pid <= 0) {
 					continue;
-				if (kill(worker_pids[cc].pid, sig) == 0)
+				}
+				if (kill(worker_pids[cc].pid, sig) == 0) {
 					main_flag |= FLAG_HAS_CHILD;
-				else
-				{
+				} else {
 					worker_pids[cc].pid = 0;
 					log_error("failed send signal[%d] to worker[%d] (ERROR:%s)",
-						sig, cc, strerror(errno));
+							sig, cc, strerror(errno));
 				}
 			}
 
 			// wait for all child processes to exit (30seconds)
-			for (msize = 0; msize < 15 && (main_flag & FLAG_HAS_CHILD); msize++)
-			{
+			for (msize = 0; msize < 15 && (main_flag & FLAG_HAS_CHILD); msize++) {
 				sleep(2);
 				main_flag ^= FLAG_HAS_CHILD;
-				for (cc = 1; cc <= worker_num; cc++)
-				{
-					if (worker_pids[cc].pid > 0)
-					{
+				for (cc = 1; cc <= worker_num; cc++) {
+					if (worker_pids[cc].pid > 0) {
 						main_flag |= FLAG_HAS_CHILD;
 						break;
 					}
@@ -828,13 +773,12 @@ int main(int argc, char *argv[])
 			}
 
 			// waiting timeout, re-check
-			if (main_flag & FLAG_HAS_CHILD)
-			{
+			if (main_flag & FLAG_HAS_CHILD) {
 				log_warning("timeout to wait, send SIGKILL to lived workers");
-				for (cc = 1; cc <= worker_num; cc++)
-				{
-					if (worker_pids[cc].pid > 0)
+				for (cc = 1; cc <= worker_num; cc++) {
+					if (worker_pids[cc].pid > 0) {
 						kill(worker_pids[cc].pid, SIGKILL);
+					}
 				}
 			}
 
@@ -845,8 +789,9 @@ int main(int argc, char *argv[])
 	}
 
 	// exit normally or gracefully
-	if (!CHECK_FLAG_SIG(EXIT_EXCEPTION))
+	if (!CHECK_FLAG_SIG(EXIT_EXCEPTION)) {
 		main_flag |= FLAG_NO_ERROR;
+	}
 
 main_end:
 	log_debug("main end");

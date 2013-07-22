@@ -53,13 +53,13 @@ EOF;
 		$vfile = $this->root . '/../../VERSION';
 		$this->version = file_exists($vfile) ? trim(file_get_contents($vfile)) : PACKAGE_VERSION;
 
-		if (isset($args[1]))
+		if (isset($args[1])) {
 			$output = $args[1];
-		else
-		{
+		} else {
 			$output = $this->root . '/doc';
-			if (!$this->online)
+			if (!$this->online) {
 				$output .= '/html';
+			}
 		}
 
 		// create output dir
@@ -80,29 +80,25 @@ EOF;
 
 		echo "分析类对象文档 ... ";
 		$model = $this->buildModel($this->root . '/lib', array(
-				'fileTypes' => array('php'),
-				'exclude' => array('/XS.php'))
+			'fileTypes' => array('php'),
+			'exclude' => array('/XS.php'))
 		);
 		$this->classes = $model->classes;
 		$this->packages = $model->packages;
 		echo "共 " . count($this->packages) . " 个包，" . count($this->classes) . " 个类对象\n";
 
 		echo "生成 HTML 页面 ... ";
-		if ($this->online)
-		{
+		if ($this->online) {
 			$this->buildOnlinePages($output . '/api', $themePath);
 			$this->buildKeywords($output);
 			$this->buildPackages($output);
-		}
-		else
-		{
+		} else {
 			$this->buildOfflinePages($output . '/api', $themePath);
 		}
 		echo "完成\n\n";
 
 		// 2. 离线方式，增加 guide 文档
-		if ($this->online === false)
-		{
+		if ($this->online === false) {
 			$data = array('guides' => array(), 'others' => array());
 			echo "生成权威指南 ...\n";
 			$this->themePath = $themePath;
@@ -110,10 +106,8 @@ EOF;
 			@mkdir($this->output . '/guide');
 			$this->buildGuidePage('toc');
 			$guides = $this->loadGuideList();
-			for ($i = $j = 0; $i < count($guides); $i++)
-			{
-				if (!isset($guides[$i]['name']))
-				{
+			for ($i = $j = 0; $i < count($guides); $i++) {
+				if (!isset($guides[$i]['name'])) {
 					$data['guides'][] = array('label' => $guides[$i]['label'], 'items' => array());
 					continue;
 				}
@@ -122,11 +116,10 @@ EOF;
 				$options = array();
 				if ($j !== 0)
 					$options['prev'] = $guides[$j];
-				if (isset($guides[$i + 1]))
-				{
+				if (isset($guides[$i + 1])) {
 					if (isset($guides[$i + 1]['name']))
 						$options['next'] = $guides[$i + 1];
-					else if (isset($guides[$i + 2]))
+					elseif (isset($guides[$i + 2]))
 						$options['next'] = $guides[$i + 2];
 				}
 				$this->buildGuidePage($guides[$i]['name'], $options);
@@ -137,8 +130,7 @@ EOF;
 			echo "生成其它相关文档 ...\n";
 			$this->buildGuidePage('README.md', array('name' => 'index'));
 			$others = array('ABOUT', 'FEATURE', 'ARCHITECTURE', 'DOWNLOAD', 'SUPPORT', 'LICENSE');
-			foreach ($others as $name)
-			{
+			foreach ($others as $name) {
 				$this->buildGuidePage($name);
 				$data['others'][$name] = $this->pageTitle;
 			}
@@ -171,8 +163,7 @@ EOF;
 			$html = $this->renderPartial($view, $data, true);
 		else
 			$html = parent::render($view, $data, true, $layout);
-		if ($this->online === false)
-		{
+		if ($this->online === false) {
 			$html = mb_convert_encoding($html, 'GBK', 'UTF-8');
 			$html = str_replace('; charset=utf-8"', '; charset=gbk"', $html);
 		}
@@ -200,8 +191,7 @@ EOF;
 
 	protected function fixOnlineLink($matches)
 	{
-		if (($pos = strpos($matches[1], '::')) !== false)
-		{
+		if (($pos = strpos($matches[1], '::')) !== false) {
 			$className = substr($matches[1], 0, $pos);
 			$method = substr($matches[1], $pos + 2);
 			if ($className === 'index')
@@ -209,8 +199,7 @@ EOF;
 			else
 				return "<a href=\"/doc/php/api/{$className}#{$method}\">{$matches[2]}</a>";
 		}
-		else
-		{
+		else {
 			if ($matches[1] === 'index')
 				return "<a href=\"/doc/php/api/\">{$matches[2]}</a>";
 			else
@@ -223,13 +212,11 @@ EOF;
 		// dot flag: *, -
 		$list = array();
 		$lines = file($this->root . '/doc/guide/toc.txt');
-		foreach ($lines as $line)
-		{
+		foreach ($lines as $line) {
 			$line = trim($line);
 			if ($line[0] === '*')
 				$list[] = array('label' => substr($line, 2));
-			else if ($line[0] === '-')
-			{
+			elseif ($line[0] === '-') {
 				list ($label, $name) = explode('](', substr($line, 3, -1), 2);
 				$list[] = array('label' => $label, 'name' => $name);
 			}
@@ -243,13 +230,10 @@ EOF;
 		$name2 = isset($options['name']) ? $options['name'] : $name;
 		$input = $this->root . '/doc/';
 		$output = $this->output . '/';
-		if ($ord >= 65 && $ord <= 90)
-		{
+		if ($ord >= 65 && $ord <= 90) {
 			$input .= $name;
 			$output .= $name2 . '.html';
-		}
-		else
-		{
+		} else {
 			$input .= 'guide/' . $name . '.txt';
 			$output .= 'guide/' . $name2 . '.html';
 		}
@@ -266,8 +250,7 @@ EOF;
 
 	protected function formatMarkdown($data)
 	{
-		if (self::$_parser === null)
-		{
+		if (self::$_parser === null) {
 			Yii::import('application.vendors.Markdown', true);
 			self::$_parser = new Markdown;
 		}

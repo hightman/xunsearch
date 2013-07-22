@@ -9,11 +9,11 @@ require_once dirname(__FILE__) . '/../../lib/XSFieldScheme.class.php';
 class XSDocumentTest extends PHPUnit_Framework_TestCase
 {
 	protected static $data, $data_gbk;
+
 	/** 	
 	 * @var XSDocument
 	 */
 	protected $doc1, $doc2, $doc3, $doc4;
-
 
 	public static function setUpBeforeClass()
 	{
@@ -194,15 +194,13 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 	public function testGetIterator()
 	{
 		$temp = array();
-		foreach ($this->doc1 as $key => $value)
-		{
+		foreach ($this->doc1 as $key => $value) {
 			$temp[$key] = $value;
 		}
 		$this->assertEquals(self::$data, $temp);
 
 		$temp = array();
-		foreach ($this->doc2 as $key => $value)
-		{
+		foreach ($this->doc2 as $key => $value) {
 			$temp[$key] = $value;
 		}
 		$this->assertEquals(self::$data, $temp);

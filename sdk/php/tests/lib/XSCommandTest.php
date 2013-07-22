@@ -43,10 +43,10 @@ class XSCommandTest extends PHPUnit_Framework_TestCase
 	{
 		$this->object->arg2 = 5;
 		$this->object->arg1 = 2;
-		$arg = ((2 << 8) | 5);		
+		$arg = ((2 << 8) | 5);
 		$this->assertEquals($arg, $this->object->arg);
 		$this->assertEquals($this->object->arg, $this->object->getArg());
-		
+
 		$cmd2 = new XSCommand(array('arg1' => 2, 'arg2' => 5));
 		$this->assertEquals($arg, $cmd2->arg);
 	}

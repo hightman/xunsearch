@@ -43,14 +43,17 @@ int pcntl_running(const char *bind, int save)
 
 	// get pid file
 	ptr = (char *) bind;
-	if (!strncmp(DEFAULT_TEMP_DIR, ptr, sizeof(DEFAULT_TEMP_DIR) - 1))
-		ptr += sizeof(DEFAULT_TEMP_DIR) - 1;
+	if (!strncmp(DEFAULT_TEMP_DIR, ptr, sizeof (DEFAULT_TEMP_DIR) - 1)) {
+		ptr += sizeof (DEFAULT_TEMP_DIR) - 1;
+	}
 	strcpy(pid_file, DEFAULT_TEMP_DIR "pid.");
 	fd = strlen(pid_file);
-	while (*ptr && (fd < sizeof(pid_file) - 1))
-	{
-		if (*ptr == '.' || *ptr == ':' || *ptr == '/') pid_file[fd] = '_';
-		else pid_file[fd] = *ptr;
+	while (*ptr && (fd < sizeof (pid_file) - 1)) {
+		if (*ptr == '.' || *ptr == ':' || *ptr == '/') {
+			pid_file[fd] = '_';
+		} else {
+			pid_file[fd] = *ptr;
+		}
 		ptr++;
 		fd++;
 	}
@@ -58,21 +61,21 @@ int pcntl_running(const char *bind, int save)
 
 	// get exists pid
 	fd = save ? open(pid_file, O_RDWR | O_CREAT, 0600) : open(pid_file, O_RDONLY);
-	if (fd < 0)
+	if (fd < 0) {
 		return -1;
+	}
 
 	// read exists pid
-	memset(pid_file, 0, sizeof(pid_file));
-	if (read(fd, pid_file, sizeof(pid_file) - 1) > 0)
-	{
+	memset(pid_file, 0, sizeof (pid_file));
+	if (read(fd, pid_file, sizeof (pid_file) - 1) > 0) {
 		pid = atoi(pid_file);
-		if (kill(pid, 0) != 0)
+		if (kill(pid, 0) != 0) {
 			pid = 0;
+		}
 	}
 
 	// save new pid
-	if (save && pid == 0)
-	{
+	if (save && pid == 0) {
 		ftruncate(fd, 0);
 		lseek(fd, 0, SEEK_SET);
 		sprintf(pid_file, "%d", getpid());
@@ -99,81 +102,66 @@ void pcntl_kill(const char *bind, char *op, char *name)
 	int pid = pcntl_running(bind, 0);
 
 	// get real operator
-	if (!strncasecmp(op, "fast", 4))
-	{
+	if (!strncasecmp(op, "fast", 4)) {
 		flag |= PCNTL_FLAG_FAST;
 		op += 4;
 	}
 
 	// start
-	if (!strcasecmp(op, "start"))
-	{
-		if (pid > 0)
+	if (!strcasecmp(op, "start")) {
+		if (pid > 0) {
 			printf("WARNING: server[%s] is running (BIND:%s, PID:%d)\n", name, bind, pid);
-		else
-		{
+		} else {
 			printf("INFO: starting server[%s] ... (BIND:%s)\n", name, bind);
 			flag |= PCNTL_FLAG_CONTINUE;
 		}
-	}
-	else if (!strcasecmp(op, "restart") || !strcasecmp(op, "stop"))
-	{
-		if (pid <= 0)
+	} else if (!strcasecmp(op, "restart") || !strcasecmp(op, "stop")) {
+		if (pid <= 0) {
 			printf("WARNING: no server[%s] is running (BIND:%s)\n", name, bind);
-		else if (kill(pid, (flag & PCNTL_FLAG_FAST) ? SIGTERM : SIGINT) != 0)
-		{
+		} else if (kill(pid, (flag & PCNTL_FLAG_FAST) ? SIGTERM : SIGINT) != 0) {
 			printf("ERROR: failed to send termination signal to the running server[%s] (PID:%d, ERROR:%s)\n",
-				name, pid, strerror(errno));
+					name, pid, strerror(errno));
 			flag |= PCNTL_FLAG_ERROR;
-		}
-		else
-		{
+		} else {
 			int sec = 30;
 
 			// wait the pid close in 30 seconds
 			flag |= PCNTL_FLAG_ERROR;
 			printf("INFO: stopping server[%s] (BIND:%s) ...", name, bind);
-			while (sec--)
-			{
+			while (sec--) {
 				printf(".");
 				fflush(stdout);
 				sleep(1);
-				if (kill(pid, 0) != 0)
-				{
+				if (kill(pid, 0) != 0) {
 					flag ^= PCNTL_FLAG_ERROR;
 					break;
 				}
 			}
 			printf(" [%s]\n", (flag & PCNTL_FLAG_ERROR) ? "FAILED" : "OK");
 		}
-		if (!strcasecmp(op, "restart") && !(flag & PCNTL_FLAG_ERROR))
-		{
+		if (!strcasecmp(op, "restart") && !(flag & PCNTL_FLAG_ERROR)) {
 			printf("INFO: re-starting server[%s] ... (BIND:%s)\n", name, bind);
 			flag |= PCNTL_FLAG_CONTINUE;
 		}
-	}
-	else if (!strcasecmp(op, "reload"))
-	{
-		if (pid <= 0)
+	} else if (!strcasecmp(op, "reload")) {
+		if (pid <= 0) {
 			printf("WARNING: no server[%s] is running (BIND:%s)\n", name, bind);
-		else if (kill(pid, SIGHUP) == 0)
+		} else if (kill(pid, SIGHUP) == 0) {
 			printf("INFO: reload signal has been sent to the running server[%s] (BIND:%s)\n", name, bind);
-		else
-		{
+		} else {
 			printf("ERROR: failed to send reload signal to the running server[%s] (PID:%d, ERROR:%s)\n",
-				name, pid, strerror(errno));
+					name, pid, strerror(errno));
 			flag |= PCNTL_FLAG_ERROR;
 		}
-	}
-	else
-	{
+	} else {
 		printf("ERROR: unknown operator: %s\n", op);
 		flag |= PCNTL_FLAG_ERROR;
 	}
 
 	// result, exit when status is not: 0x100
-	if (!(flag & PCNTL_FLAG_CONTINUE))
+	if (!(flag & PCNTL_FLAG_CONTINUE)) {
 		exit(flag & PCNTL_FLAG_ERROR ? -1 : 0);
+	}
 }
 
 /**
@@ -184,9 +172,13 @@ void pcntl_daemon()
 	close(2); // STDERR_FILENO
 	close(1); // STDOUT_FILENO
 	close(0); // STDIN_FILENO
-	if (fork()) exit(0);
+	if (fork()) {
+		exit(0);
+	}
 	setsid();
-	if (fork()) exit(0);
+	if (fork()) {
+		exit(0);
+	}
 }
 
 /*
@@ -221,16 +213,16 @@ static void _sig_term(int sig)
 #ifdef DEBUG
 	// NOTE: generate core file in DEBUG mode
 	if ((sig == SIGFPE || sig == SIGILL || sig == SIGBUS || sig == SIGSEGV || sig == SIGABRT)
-		&& signal(sig, SIG_DFL) != SIG_ERR)
-	{
+			&& signal(sig, SIG_DFL) != SIG_ERR) {
 		raise(sig);
 		return;
 	}
 #endif
 
 	// exit or not
-	if (rc != SIGNAL_TERM_LATER)
+	if (rc != SIGNAL_TERM_LATER) {
 		_exit(rc);
+	}
 }
 
 #ifndef WIFCONTINUED
@@ -242,11 +234,11 @@ static void _sig_child()
 	pid_t pid;
 	int status, errno_save = errno;
 
-	while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
-	{
+	while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
 		// just ignore stop/continue signal
-		if (WIFSTOPPED(status) || WIFCONTINUED(status))
+		if (WIFSTOPPED(status) || WIFCONTINUED(status)) {
 			continue;
+		}
 		// called only when child process exit() normal, -2 : signal
 		status = WIFEXITED(status) ? (char) WEXITSTATUS(status) : -2;
 		signal_child(pid, status);
@@ -333,32 +325,32 @@ void pcntl_server_usage(const char *fpath)
 	struct rusage ru;
 	FILE *fp;
 
-	if ((fp = fopen(fpath, "a")) == NULL)
+	if ((fp = fopen(fpath, "a")) == NULL) {
 		return;
+	}
 
-	if (!getrusage(RUSAGE_CHILDREN, &ru))
-	{
+	if (!getrusage(RUSAGE_CHILDREN, &ru)) {
 		fprintf(fp, "\n[Server Usage] pid = %d \n\n"
-			"user time: %.6f\n"
-			"system time: %.6f\n"
-			"maximum resident set size: %lu P\n"
-			"integral resident set size: %lu\n"
-			"page faults not requiring physical I/O: %ld\n"
-			"page faults requiring physical I/O: %ld\n"
-			"swaps: %ld\n"
-			"block input operations: %ld\n"
-			"block output operations: %ld\n"
-			"messages sent: %ld\n"
-			"messages received: %ld\n"
-			"signals received: %ld\n"
-			"voluntary context switches: %ld\n"
-			"involuntary context switches: %ld\n\n",
-			getpid(),
-			(double) ru.ru_utime.tv_sec + (double) ru.ru_utime.tv_usec / 1000000.0,
-			(double) ru.ru_stime.tv_sec + (double) ru.ru_stime.tv_usec / 1000000.0,
-			ru.ru_maxrss, ru.ru_idrss, ru.ru_minflt, ru.ru_majflt, ru.ru_nswap,
-			ru.ru_inblock, ru.ru_oublock, ru.ru_msgsnd, ru.ru_msgrcv,
-			ru.ru_nsignals, ru.ru_nvcsw, ru.ru_nivcsw);
+				"user time: %.6f\n"
+				"system time: %.6f\n"
+				"maximum resident set size: %lu P\n"
+				"integral resident set size: %lu\n"
+				"page faults not requiring physical I/O: %ld\n"
+				"page faults requiring physical I/O: %ld\n"
+				"swaps: %ld\n"
+				"block input operations: %ld\n"
+				"block output operations: %ld\n"
+				"messages sent: %ld\n"
+				"messages received: %ld\n"
+				"signals received: %ld\n"
+				"voluntary context switches: %ld\n"
+				"involuntary context switches: %ld\n\n",
+				getpid(),
+				(double) ru.ru_utime.tv_sec + (double) ru.ru_utime.tv_usec / 1000000.0,
+				(double) ru.ru_stime.tv_sec + (double) ru.ru_stime.tv_usec / 1000000.0,
+				ru.ru_maxrss, ru.ru_idrss, ru.ru_minflt, ru.ru_majflt, ru.ru_nswap,
+				ru.ru_inblock, ru.ru_oublock, ru.ru_msgsnd, ru.ru_msgrcv,
+				ru.ru_nsignals, ru.ru_nvcsw, ru.ru_nivcsw);
 	}
 	fclose(fp);
 }
@@ -390,17 +382,23 @@ void setproctitle(const char *fmt, ...)
 {
 	int len;
 
-	if (procttl_maxlen == 0 && orig_argc > 0)
-	{
+	if (procttl_maxlen == 0 && orig_argc > 0) {
 		char *eoa;
 
 		eoa = orig_argv[orig_argc - 1] + strlen(orig_argv[orig_argc - 1]);
 		procttl_maxlen = eoa - orig_argv[0];
-		if (procttl_maxlen > sizeof(procttl_buf)) procttl_maxlen = sizeof(procttl_buf);
-		if ((eoa = strrchr(orig_argv[0], '/')) == NULL) eoa = orig_argv[0];
-		else eoa++;
+		if (procttl_maxlen > sizeof (procttl_buf)) {
+			procttl_maxlen = sizeof (procttl_buf);
+		}
+		if ((eoa = strrchr(orig_argv[0], '/')) == NULL) {
+			eoa = orig_argv[0];
+		} else {
+			eoa++;
+		}
 		len = strlen(eoa);
-		if (len > 32) len = 32;
+		if (len > 32) {
+			len = 32;
+		}
 
 		memcpy(procttl_buf, eoa, len);
 		procttl_buf[len++] = ':';
@@ -409,8 +407,7 @@ void setproctitle(const char *fmt, ...)
 		procttl_addlen = procttl_maxlen - len - 1;
 	}
 
-	if (procttl_addlen > 0)
-	{
+	if (procttl_addlen > 0) {
 		va_list ap;
 
 		memset(procttl_add, 0, procttl_addlen + 1);

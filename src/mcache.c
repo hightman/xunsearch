@@ -119,10 +119,9 @@ static void *_mc_malloc(MC *mc, int size)
 {
 	if (size <= 0) return NULL;
 	mc->mem_used += size;
-	if (mc->mm == NULL)
+	if (mc->mm == NULL) {
 		return malloc(size);
-	else
-	{
+	} else {
 		return mm_malloc(mc->mm, size);
 	}
 }
@@ -132,13 +131,14 @@ static void *_mc_malloc(MC *mc, int size)
  */
 static void _mc_free(MC *mc, void *p, int size)
 {
-	if (size <= 0) return;
+	if (size <= 0) {
+		return;
+	}
 
 	mc->mem_used -= size;
-	if (mc->mm == NULL)
+	if (mc->mm == NULL) {
 		free(p);
-	else
-	{
+	} else {
 		mm_free(mc->mm, p);
 	}
 }
@@ -150,13 +150,12 @@ static int _get_hasher(const char *s, int size)
 {
 	unsigned int h = 0xf422f;
 	int l = strlen(s);
-	while (l--)
-	{
+	while (l--) {
 		h += (h << 5);
 		h ^= (unsigned char) s[l];
 		h &= 0x7fffffff;
 	}
-	return(h % size);
+	return (h % size);
 }
 
 /**
@@ -168,11 +167,11 @@ static mc_node *_chain_fetch(mc_node **root, const char *key)
 	for (node = *root; node != NULL && strcmp(node->key, key); node = node->dash_next);
 
 	/* move it to first? */
-	if (node != NULL && node->dash_prev != NULL)
-	{
+	if (node != NULL && node->dash_prev != NULL) {
 		node->dash_prev->dash_next = node->dash_next;
-		if (node->dash_next != NULL)
+		if (node->dash_next != NULL) {
 			node->dash_next->dash_prev = node->dash_prev;
+		}
 
 		(*root)->dash_prev = node;
 		node->dash_next = *root;
@@ -188,8 +187,9 @@ static mc_node *_chain_fetch(mc_node **root, const char *key)
 static void _chain_insert(mc_node **root, mc_node *node)
 {
 	node->dash_prev = NULL;
-	if (*root != NULL)
+	if (*root != NULL) {
 		(*root)->dash_prev = node;
+	}
 	node->dash_next = *root;
 	*root = node;
 }
@@ -199,30 +199,32 @@ static void _chain_insert(mc_node **root, mc_node *node)
  */
 static void _chain_remove(mc_node **root, mc_node *node)
 {
-	if (node->dash_prev != NULL)
+	if (node->dash_prev != NULL) {
 		node->dash_prev->dash_next = node->dash_next;
-	else
-	{
+	} else {
 		*root = node->dash_next;
-		if ((*root) != NULL)
+		if ((*root) != NULL) {
 			(*root)->dash_prev = NULL;
+		}
 	}
 
-	if (node->dash_next != NULL)
+	if (node->dash_next != NULL) {
 		node->dash_next->dash_prev = node->dash_prev;
+	}
 }
 
 #if 0	/* buggy rbtree begin */
+
 /**
  * Collision scheme of red-black tree
  */
 static mc_node *_rb_sibling(mc_node *node)
 {
-	return(node == node->dash_up->dash_left ? node->dash_up->dash_right : node->dash_up->dash_left);
+	return (node == node->dash_up->dash_left ? node->dash_up->dash_right : node->dash_up->dash_left);
 }
 
-#define	_rb_is_right(n)		((n)->dash_up->dash_right == n)
-#define	_rb_is_left(n)		((n)->dash_up->dash_left == n)
+#    define	_rb_is_right(n)		((n)->dash_up->dash_right == n)
+#    define	_rb_is_left(n)		((n)->dash_up->dash_left == n)
 
 /**         left rotate
  *
@@ -238,11 +240,16 @@ static void _rb_left_rotate(mc_node **root, mc_node *p)
 	mc_node *q = p->dash_right;
 	mc_node **sup;
 
-	if (p->dash_up) sup = _rb_is_left(p) ? &(p->dash_up->dash_left) : &(p->dash_up->dash_right);
-	else sup = root;
+	if (p->dash_up) {
+		sup = _rb_is_left(p) ? &(p->dash_up->dash_left) : &(p->dash_up->dash_right);
+	} else {
+		sup = root;
+	}
 
 	p->dash_right = q->dash_left;
-	if (p->dash_right) p->dash_right->dash_up = p;
+	if (p->dash_right) {
+		p->dash_right->dash_up = p;
+	}
 	q->dash_left = p;
 	q->dash_up = p->dash_up;
 	p->dash_up = q;
@@ -263,11 +270,16 @@ static void _rb_right_rotate(mc_node **root, mc_node *p)
 	mc_node *q = p->dash_left;
 	mc_node **sup;
 
-	if (p->dash_up) sup = _rb_is_left(p) ? &(p->dash_up->dash_left) : &(p->dash_up->dash_right);
-	else sup = root;
+	if (p->dash_up) {
+		sup = _rb_is_left(p) ? &(p->dash_up->dash_left) : &(p->dash_up->dash_right);
+	} else {
+		sup = root;
+	}
 
 	p->dash_left = q->dash_right;
-	if (p->dash_left) p->dash_left->dash_up = p;
+	if (p->dash_left) {
+		p->dash_left->dash_up = p;
+	}
 	q->dash_right = p;
 	q->dash_up = p->dash_up;
 	p->dash_up = q;
@@ -283,25 +295,18 @@ static void _rb_rebalance(mc_node **root, mc_node *node)
 	mc_node *up = node->dash_up;
 
 	if (up == NULL || up->dash_color == MC_RB_BLACK) return;
-	if (_rb_sibling(up) && _rb_sibling(up)->dash_color == MC_RB_RED)
-	{
+	if (_rb_sibling(up) && _rb_sibling(up)->dash_color == MC_RB_RED) {
 		up->dash_color = MC_RB_BLACK;
 		_rb_sibling(up)->dash_color = MC_RB_BLACK;
-		if (up->dash_up->dash_up)
-		{
+		if (up->dash_up->dash_up) {
 			up->dash_up->dash_color = MC_RB_RED;
 			_rb_rebalance(root, up->dash_up);
 		}
-	}
-	else
-	{
-		if (_rb_is_left(node) && _rb_is_right(up))
-		{
+	} else {
+		if (_rb_is_left(node) && _rb_is_right(up)) {
 			_rb_right_rotate(root, up);
 			node = node->dash_right;
-		}
-		else if (_rb_is_right(node) && _rb_is_left(up))
-		{
+		} else if (_rb_is_right(node) && _rb_is_left(up)) {
 			_rb_left_rotate(root, up);
 			node = node->dash_left;
 		}
@@ -309,10 +314,11 @@ static void _rb_rebalance(mc_node **root, mc_node *node)
 		node->dash_up->dash_color = MC_RB_BLACK;
 		node->dash_up->dash_up->dash_color = MC_RB_RED;
 
-		if (_rb_is_left(node)) // && _rb_is_left(node->dash_up)
+		if (_rb_is_left(node)) { // && _rb_is_left(node->dash_up)
 			_rb_right_rotate(root, node->dash_up->dash_up);
-		else
+		} else {
 			_rb_left_rotate(root, node->dash_up->dash_up);
+		}
 	}
 }
 
@@ -324,11 +330,11 @@ static mc_node *_rbtree_fetch(mc_node **root, const char *key)
 	int cmp;
 	mc_node *node = *root;
 
-	while (node != NULL)
-	{
+	while (node != NULL) {
 		cmp = strcmp(node->key, key);
-		if (cmp == 0)
+		if (cmp == 0) {
 			break;
+		}
 		node = (cmp > 0 ? node->dash_left : node->dash_right);
 	}
 
@@ -340,34 +346,28 @@ static mc_node *_rbtree_fetch(mc_node **root, const char *key)
  */
 static void _rbtree_insert(mc_node **root, mc_node *node)
 {
-	if (*root == NULL)
-	{
+	if (*root == NULL) {
 		node->dash_color = MC_RB_BLACK;
 		*root = node;
-	}
-	else
-	{
+	} else {
 		int cmp;
 		mc_node **curr = root;
 		mc_node *prev = NULL;
 
-		while (*curr != NULL)
-		{
+		while (*curr != NULL) {
 			prev = *curr;
 			cmp = strcmp(prev->key, node->key);
-			if (cmp < 0)
+			if (cmp < 0) {
 				curr = &prev->dash_right;
-			else if (cmp > 0)
+			} else if (cmp > 0) {
 				curr = &prev->dash_left;
-			else /* Can this happenn?? -> memory leak!! */
-			{
+			} else { /* Can this happenn?? -> memory leak!! */
 				*curr = node;
 				break;
 			}
 		}
 
-		if (*curr == NULL)
-		{
+		if (*curr == NULL) {
 			node->dash_up = prev;
 			*curr = node;
 			_rb_rebalance(root, node);
@@ -401,31 +401,30 @@ static void _rb_swap_node_content(mc_node *a, mc_node *b)
  */
 static void _rb_unlink(mc_node **root, mc_node *node)
 {
-	if (node->dash_left)
-	{
+	if (node->dash_left) {
 		node->dash_left->dash_up = node->dash_up;
-		if (node->dash_up)
-		{
-			if (_rb_is_left(node))
+		if (node->dash_up) {
+			if (_rb_is_left(node)) {
 				node->dash_up->dash_left = node->dash_left;
-			else
+			} else {
 				node->dash_up->dash_right = node->dash_left;
-		}
-		else
+			}
+		} else {
 			*root = node->dash_left;
-	}
-	else
-	{
-		if (node->dash_right) node->dash_right->dash_up = node->dash_up;
-		if (node->dash_up)
-		{
-			if (_rb_is_left(node))
-				node->dash_up->dash_left = node->dash_right;
-			else
-				node->dash_up->dash_right = node->dash_right;
 		}
-		else
+	} else {
+		if (node->dash_right) {
+			node->dash_right->dash_up = node->dash_up;
+		}
+		if (node->dash_up) {
+			if (_rb_is_left(node)) {
+				node->dash_up->dash_left = node->dash_right;
+			} else {
+				node->dash_up->dash_right = node->dash_right;
+			}
+		} else {
 			*root = node->dash_right;
+		}
 	}
 }
 
@@ -434,59 +433,53 @@ static void _rb_unlink(mc_node **root, mc_node *node)
  */
 static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 {
-	if (n->dash_up)
-	{
+	if (n->dash_up) {
 		mc_node *sibl = _rb_sibling(n);
 
-		if (!sibl) return;
-		if (sibl->dash_color == MC_RB_RED)
-		{
+		if (!sibl) {
+			return;
+		}
+		if (sibl->dash_color == MC_RB_RED) {
 			n->dash_up->dash_color = MC_RB_RED;
 			sibl->dash_color = MC_RB_BLACK;
-			if (_rb_is_left(n))
+			if (_rb_is_left(n)) {
 				_rb_left_rotate(root, n->dash_up);
-			else
+			} else {
 				_rb_right_rotate(root, n->dash_up);
+			}
 			sibl = _rb_sibling(n);
 		}
 
-		if (!sibl) return;
-		if (n->dash_up->dash_color == MC_RB_BLACK &&
-			sibl->dash_color == MC_RB_BLACK &&
-			(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK) &&
-			(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK))
-		{
-			sibl->dash_color = MC_RB_RED;
-			_rb_delete_rebalance(root, n->dash_up);
+		if (!sibl) {
+			return;
 		}
-		else
-		{
-			if (n->dash_up->dash_color == MC_RB_RED &&
+		if (n->dash_up->dash_color == MC_RB_BLACK &&
 				sibl->dash_color == MC_RB_BLACK &&
 				(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK) &&
-				(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK))
-			{
+				(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK)) {
+			sibl->dash_color = MC_RB_RED;
+			_rb_delete_rebalance(root, n->dash_up);
+		} else {
+			if (n->dash_up->dash_color == MC_RB_RED &&
+					sibl->dash_color == MC_RB_BLACK &&
+					(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK) &&
+					(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK)) {
 				sibl->dash_color = MC_RB_RED;
 				n->dash_up->dash_color = MC_RB_BLACK;
-			}
-			else
-			{
+			} else {
 				if (_rb_is_left(n) &&
-					sibl->dash_color == MC_RB_BLACK &&
-					sibl->dash_left && sibl->dash_left->dash_color == MC_RB_RED &&
-					(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK))
-				{
+						sibl->dash_color == MC_RB_BLACK &&
+						sibl->dash_left && sibl->dash_left->dash_color == MC_RB_RED &&
+						(sibl->dash_right == NULL || sibl->dash_right->dash_color == MC_RB_BLACK)) {
 					sibl->dash_color = MC_RB_RED;
 					sibl->dash_left->dash_color = MC_RB_BLACK;
 					_rb_right_rotate(root, sibl);
 
 					sibl = _rb_sibling(n);
-				}
-				else if (_rb_is_right(n) &&
-					sibl->dash_color == MC_RB_BLACK &&
-					sibl->dash_right && sibl->dash_right->dash_color == MC_RB_RED &&
-					(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK))
-				{
+				} else if (_rb_is_right(n) &&
+						sibl->dash_color == MC_RB_BLACK &&
+						sibl->dash_right && sibl->dash_right->dash_color == MC_RB_RED &&
+						(sibl->dash_left == NULL || sibl->dash_left->dash_color == MC_RB_BLACK)) {
 					sibl->dash_color = MC_RB_RED;
 					sibl->dash_right->dash_color = MC_RB_BLACK;
 					_rb_left_rotate(root, sibl);
@@ -494,16 +487,15 @@ static void _rb_delete_rebalance(mc_node **root, mc_node *n)
 					sibl = _rb_sibling(n);
 				}
 
-				if (!sibl) return;
+				if (!sibl) {
+					return;
+				}
 				sibl->dash_color = n->dash_up->dash_color;
 				n->dash_up->dash_color = MC_RB_BLACK;
-				if (_rb_is_left(n))
-				{
+				if (_rb_is_left(n)) {
 					sibl->dash_right->dash_color = MC_RB_BLACK;
 					_rb_left_rotate(root, n->dash_up);
-				}
-				else
-				{
+				} else {
 					sibl->dash_left->dash_color = MC_RB_BLACK;
 					_rb_right_rotate(root, n->dash_up);
 				}
@@ -519,8 +511,7 @@ static void _rbtree_remove(mc_node **root, mc_node *node)
 {
 	mc_node *child;
 
-	if (node->dash_right && node->dash_left)
-	{
+	if (node->dash_right && node->dash_left) {
 		mc_node *surrogate = node;
 		node = node->dash_right;
 		while (node->dash_left) node = node->dash_left;
@@ -529,18 +520,17 @@ static void _rbtree_remove(mc_node **root, mc_node *node)
 	child = node->dash_right ? node->dash_right : node->dash_left;
 
 	/* if the node was red - no rebalancing required */
-	if (node->dash_color == MC_RB_BLACK)
-	{
-		if (child)
-		{
+	if (node->dash_color == MC_RB_BLACK) {
+		if (child) {
 			/* single red child - paint it black */
-			if (child->dash_color == MC_RB_RED)
+			if (child->dash_color == MC_RB_RED) {
 				child->dash_color = MC_RB_BLACK; /* and the balance is restored */
-			else
+			} else {
 				_rb_delete_rebalance(root, child);
-		}
-		else
+			}
+		} else {
 			_rb_delete_rebalance(root, node);
+		}
 	}
 
 	_rb_unlink(root, node);
@@ -558,11 +548,13 @@ static void _mc_remove_node(MC *mc, mc_node *node)
 	mc->remove(&mc->nodes[i], node);
 
 	/* free the memory */
-	if (mc->flag & MC_FLAG_COPY_KEY)
+	if (mc->flag & MC_FLAG_COPY_KEY) {
 		_mc_free(mc, node->key, strlen(node->key) + 1);
-	if (mc->flag & MC_FLAG_COPY_VALUE)
+	}
+	if (mc->flag & MC_FLAG_COPY_VALUE) {
 		_mc_free(mc, node->value, node->vlen);
-	_mc_free(mc, node, sizeof(mc_node));
+	}
+	_mc_free(mc, node, sizeof (mc_node));
 }
 
 /**
@@ -572,20 +564,20 @@ static void _mc_lru_purge(MC *mc)
 {
 	int num, i = 0;
 
-	if (mc->count <= 0) return;
+	if (mc->count <= 0) {
+		return;
+	}
 	num = mc->count / 10;
-	if (num < 1) num = 1;
+	if (num < 1) {
+		num = 1;
+	}
 
-	while (i < num && mc->tail != NULL)
-	{
-		if (mc->tail->lru.prev == NULL)
-		{
+	while (i < num && mc->tail != NULL) {
+		if (mc->tail->lru.prev == NULL) {
 			// delete tail & set to NULL for head/tail
 			_mc_remove_node(mc, mc->tail);
 			mc->tail = mc->head = NULL;
-		}
-		else
-		{
+		} else {
 			mc->tail = mc->tail->lru.prev;
 			_mc_remove_node(mc, mc->tail->lru.next);
 			mc->tail->lru.next = NULL;
@@ -600,22 +592,22 @@ static void _mc_lru_purge(MC *mc)
  */
 static void _mc_lru_remove(MC *mc, mc_node *node)
 {
-	if (node->lru.prev != NULL)
+	if (node->lru.prev != NULL) {
 		node->lru.prev->lru.next = node->lru.next;
-	else
-	{
+	} else {
 		mc->head = node->lru.next;
-		if (mc->head != NULL)
+		if (mc->head != NULL) {
 			mc->head->lru.prev = NULL;
+		}
 	}
 
-	if (node->lru.next != NULL)
+	if (node->lru.next != NULL) {
 		node->lru.next->lru.prev = node->lru.prev;
-	else
-	{
+	} else {
 		mc->tail = node->lru.prev;
-		if (mc->tail != NULL)
+		if (mc->tail != NULL) {
 			mc->tail->lru.next = NULL;
+		}
 	}
 }
 
@@ -624,34 +616,36 @@ static void _mc_lru_remove(MC *mc, mc_node *node)
  */
 static void _mc_lru_adjust(MC *mc, mc_node *node)
 {
-	if (node->lru.prev == NULL)
+	if (node->lru.prev == NULL) {
 		return;
-	else
-	{
+	} else {
 #ifdef MOVE_ONE_STEP	/* move one step to prev */
 		mc_node *next, *prev;
 
 		next = node->lru.next;
 		prev = node->lru.prev;
 
-		if (prev->lru.prev == NULL)
+		if (prev->lru.prev == NULL) {
 			mc->head = node;
-		else
+		} else {
 			prev->lru.prev->lru.next = node;
+		}
 		node->lru.prev = prev->lru.prev;
 		node->lru.next = prev;
 		prev->lru.prev = node;
 		prev->lru.next = next;
-		if (next == NULL)
+		if (next == NULL) {
 			mc->tail = prev;
-		else
+		} else {
 			next->lru.prev = prev;
+		}
 #else					/* move to head */	
 		node->lru.prev->lru.next = node->lru.next;
-		if (node->lru.next != NULL)
+		if (node->lru.next != NULL) {
 			node->lru.next->lru.prev = node->lru.prev;
-		else
+		} else {
 			mc->tail = node->lru.prev;
+		}
 
 		mc->head->lru.prev = node;
 		node->lru.next = mc->head;
@@ -666,12 +660,9 @@ static void _mc_lru_adjust(MC *mc, mc_node *node)
  */
 static void _mc_lru_insert(MC *mc, mc_node *node)
 {
-	if (mc->head == NULL)
-	{
+	if (mc->head == NULL) {
 		mc->head = mc->tail = node;
-	}
-	else
-	{
+	} else {
 		mc->head->lru.prev = node;
 		node->lru.next = mc->head;
 		mc->head = node;
@@ -689,17 +680,21 @@ static void _mc_lru_insert(MC *mc, mc_node *node)
 MC *mc_create(MM *mm)
 {
 	MC *mc;
-	if (mm == NULL) mc = malloc(sizeof(MC));
-	else mc = mm_malloc(mm, sizeof(MC));
-	if (mc == NULL) return NULL;
+	if (mm == NULL) {
+		mc = malloc(sizeof (MC));
+	} else {
+		mc = mm_malloc(mm, sizeof (MC));
+	}
+	if (mc == NULL) {
+		return NULL;
+	}
 
-	memset(mc, 0, sizeof(MC));
-	mc->mem_used = sizeof(MC);
+	memset(mc, 0, sizeof (MC));
+	mc->mem_used = sizeof (MC);
 	mc->mem_max = 8 * 1024 * 1024;
 	mc->mm = mm;
 	if (mc_set_hash_size(mc, 0x800) != MC_OK
-		|| mc_set_dash_type(mc, MC_DASH_CHAIN) != MC_OK)
-	{
+			|| mc_set_dash_type(mc, MC_DASH_CHAIN) != MC_OK) {
 		mc_destroy(mc);
 		return NULL;
 	}
@@ -711,22 +706,22 @@ MC *mc_create(MM *mm)
  */
 void mc_destroy(MC *mc)
 {
-	if (mc->size != 0)
-	{
+	if (mc->size != 0) {
 		mc_node *node, *swap;
 
 		// free all nodes by LRU-chain
-		for (node = mc->head; node != NULL; node = swap)
-		{
+		for (node = mc->head; node != NULL; node = swap) {
 			swap = node->lru.next;
-			if (mc->flag & MC_FLAG_COPY_KEY)
+			if (mc->flag & MC_FLAG_COPY_KEY) {
 				_mc_free(mc, node->key, strlen(node->key) + 1);
-			if (mc->flag & MC_FLAG_COPY_VALUE)
+			}
+			if (mc->flag & MC_FLAG_COPY_VALUE) {
 				_mc_free(mc, node->value, node->vlen);
+			}
 
-			_mc_free(mc, node, sizeof(mc_node));
+			_mc_free(mc, node, sizeof (mc_node));
 		}
-		_mc_free(mc, mc->nodes, sizeof(mc_node *) * mc->size);
+		_mc_free(mc, mc->nodes, sizeof (mc_node *) * mc->size);
 	}
 	_mc_free(mc, mc, 0);
 }
@@ -736,26 +731,23 @@ void mc_destroy(MC *mc)
  */
 int mc_set_dash_type(MC *mc, int type)
 {
-	if (mc->head != NULL)
+	if (mc->head != NULL) {
 		return MC_EDISALLOW;
-	else if (type == MC_DASH_CHAIN)
-	{
+	} else if (type == MC_DASH_CHAIN) {
 		mc->fetch = _chain_fetch;
 		mc->insert = _chain_insert;
 		mc->remove = _chain_remove;
 		return MC_OK;
 	}
 #if 0	/* buggy rbtree */
-	else if (type == MC_DASH_RBTREE)
-	{
+	else if (type == MC_DASH_RBTREE) {
 		mc->fetch = _rbtree_fetch;
 		mc->insert = _rbtree_insert;
 		mc->remove = _rbtree_remove;
 		return MC_OK;
 	}
 #endif
-	else
-	{
+	else {
 		return MC_EINVALID;
 	}
 }
@@ -767,39 +759,39 @@ int mc_set_hash_size(MC *mc, int size)
 {
 	mc_node **nodes;
 	int cur = 0;
-	int max = sizeof(hash_sizes) / sizeof(int) - 1;
+	int max = sizeof (hash_sizes) / sizeof (int) - 1;
 
-	if (mc->head != NULL)
+	if (mc->head != NULL) {
 		return MC_EDISALLOW;
-
-	if (hash_sizes[max] < size)
-	{
-		for (cur = hash_sizes[max];
-			cur < size;
-			cur = ((cur << 1) | 1));
 	}
-	else
-	{
+
+	if (hash_sizes[max] < size) {
+		for (cur = hash_sizes[max];
+				cur < size;
+				cur = ((cur << 1) | 1));
+	} else {
 		int min;
 
-		for (cur = min = 0; max > min;)
-		{
+		for (cur = min = 0; max > min;) {
 			cur = (max + min) >> 1;
-			if (hash_sizes[cur] < size)
+			if (hash_sizes[cur] < size) {
 				min = cur + 1;
-			else
+			} else {
 				max = cur - 1;
+			}
 		}
 		cur = hash_sizes[max];
 	}
 
 
-	nodes = (mc_node **) _mc_malloc(mc, cur * sizeof(mc_node *));
-	if (nodes == NULL)
+	nodes = (mc_node **) _mc_malloc(mc, cur * sizeof (mc_node *));
+	if (nodes == NULL) {
 		return MC_EMEMORY;
+	}
 
-	if (mc->nodes != NULL)
-		_mc_free(mc, mc->nodes, sizeof(mc_node *) * mc->size);
+	if (mc->nodes != NULL) {
+		_mc_free(mc, mc->nodes, sizeof (mc_node *) * mc->size);
+	}
 
 	mc->nodes = nodes;
 	mc->size = cur;
@@ -811,11 +803,13 @@ int mc_set_hash_size(MC *mc, int size)
  */
 int mc_set_copy_flag(MC *mc, int flag)
 {
-	if (flag != 0 && !(flag & (MC_FLAG_COPY_KEY | MC_FLAG_COPY_VALUE)))
+	if (flag != 0 && !(flag & (MC_FLAG_COPY_KEY | MC_FLAG_COPY_VALUE))) {
 		return MC_EINVALID;
+	}
 
-	if (mc->head != NULL)
+	if (mc->head != NULL) {
 		return MC_EDISALLOW;
+	}
 
 	mc->flag &= ~(MC_FLAG_COPY_KEY | MC_FLAG_COPY_VALUE);
 	mc->flag |= flag;
@@ -841,8 +835,9 @@ void *mc_get(MC *mc, const char *key)
 	node = mc->fetch(&mc->nodes[i], key);
 
 	/* not found => return */
-	if (node == NULL)
+	if (node == NULL) {
 		return NULL;
+	}
 
 	/* ok => optimze LRU + return */
 	_mc_lru_adjust(mc, node);
@@ -857,54 +852,53 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 {
 	mc_node *node;
 	int i = _get_hasher(key, mc->size);
-	int sz = sizeof(mc_node) + 1024;
+	int sz = sizeof (mc_node) + 1024;
 
 	/* check memory used & size, keep 1kb */
 	if (mc->flag & MC_FLAG_COPY_KEY) sz = sz + strlen(key) + 1;
 	if (mc->flag & MC_FLAG_COPY_VALUE) sz += vlen;
-	if (sz > (mc->mem_max - mc->mem_used))
+	if (sz > (mc->mem_max - mc->mem_used)) {
 		_mc_lru_purge(mc);
+	}
 
 	/* real not-enough */
-	if (sz > (mc->mem_max - mc->mem_used))
+	if (sz > (mc->mem_max - mc->mem_used)) {
 		return MC_EMEMORY;
+	}
 
 	/* fetch node first to check it is exists or not! */
 	node = mc->fetch(&mc->nodes[i], key);
-	if (node == NULL)
-	{
+	if (node == NULL) {
 		/* not found? build it!! */
-		node = (mc_node *) _mc_malloc(mc, sizeof(mc_node));
-		if (node == NULL)
+		node = (mc_node *) _mc_malloc(mc, sizeof (mc_node));
+		if (node == NULL) {
 			return MC_EMEMORY;
+		}
 
-		memset(node, 0, sizeof(mc_node));
+		memset(node, 0, sizeof (mc_node));
 		node->vlen = vlen;
-		if (!(mc->flag & MC_FLAG_COPY_KEY))
+		if (!(mc->flag & MC_FLAG_COPY_KEY)) {
 			node->key = (char *) key;
-		else
-		{
+		} else {
 			int j = strlen(key) + 1;
 
 			node->key = (char *) _mc_malloc(mc, j);
-			if (node->key == NULL)
-			{
-				_mc_free(mc, node, sizeof(mc_node));
+			if (node->key == NULL) {
+				_mc_free(mc, node, sizeof (mc_node));
 				return MC_EMEMORY;
 			}
 			memcpy(node->key, key, j);
 		}
-		if (!(mc->flag & MC_FLAG_COPY_VALUE) || vlen <= 0)
+		if (!(mc->flag & MC_FLAG_COPY_VALUE) || vlen <= 0) {
 			node->value = value;
-		else
-		{
+		} else {
 			node->value = _mc_malloc(mc, vlen);
-			if (node->value == NULL)
-			{
-				if (mc->flag & MC_FLAG_COPY_KEY)
+			if (node->value == NULL) {
+				if (mc->flag & MC_FLAG_COPY_KEY) {
 					_mc_free(mc, node->key, strlen(node->key) + 1);
+				}
 
-				_mc_free(mc, node, sizeof(mc_node));
+				_mc_free(mc, node, sizeof (mc_node));
 				return MC_EMEMORY;
 			}
 			memcpy(node->value, value, vlen);
@@ -916,26 +910,20 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 
 		/* add to LRU-chain */
 		_mc_lru_insert(mc, node);
-	}
-	else
-	{
+	} else {
 		/* found, just update... */
-		if (!(mc->flag & MC_FLAG_COPY_VALUE))
+		if (!(mc->flag & MC_FLAG_COPY_VALUE)) {
 			node->value = value;
-		else
-		{
-			if (node->vlen == vlen && vlen != 0)
+		} else {
+			if (node->vlen == vlen && vlen != 0) {
 				memcpy(node->value, value, vlen);
-			else
-			{
+			} else {
 				_mc_free(mc, node->value, node->vlen);
-				if (vlen == 0)
+				if (vlen == 0) {
 					node->value = value;
-				else
-				{
+				} else {
 					node->value = _mc_malloc(mc, vlen);
-					if (node->value == NULL)
-					{
+					if (node->value == NULL) {
 						node->vlen = 0;
 						return MC_EMEMORY;
 					}
@@ -963,8 +951,9 @@ int mc_del(MC *mc, const char *key)
 
 	/* check found or not */
 	node = mc->fetch(&mc->nodes[i], key);
-	if (node == NULL)
+	if (node == NULL) {
 		return MC_EFOUND;
+	}
 
 	/* remove from dash-bucket */
 	mc->remove(&mc->nodes[i], node);
@@ -974,11 +963,13 @@ int mc_del(MC *mc, const char *key)
 	_mc_lru_remove(mc, node);
 
 	/* free the memory */
-	if (mc->flag & MC_FLAG_COPY_KEY)
+	if (mc->flag & MC_FLAG_COPY_KEY) {
 		_mc_free(mc, node->key, strlen(node->key) + 1);
-	if (mc->flag & MC_FLAG_COPY_VALUE)
+	}
+	if (mc->flag & MC_FLAG_COPY_VALUE) {
 		_mc_free(mc, node->value, node->vlen);
-	_mc_free(mc, node, sizeof(mc_node));
+	}
+	_mc_free(mc, node, sizeof (mc_node));
 
 	return MC_OK;
 }
@@ -988,8 +979,9 @@ int mc_del(MC *mc, const char *key)
  */
 const char *mc_strerror(int err)
 {
-	if (err < 0 || err > (sizeof(mc_errlist) / sizeof(char *)))
+	if (err < 0 || err > (sizeof (mc_errlist) / sizeof (char *))) {
 		return NULL;
+	}
 	return mc_errlist[err];
 }
 
@@ -1006,16 +998,22 @@ const char *mc_strerror(int err)
 void show_mc(MC *mc)
 {
 	printf("mc=%p, hash_size=%d, count=%d, mem_used=%d, mem_max=%d, type=%s\n",
-		mc, mc->size, mc->count, mc->mem_used, mc->mem_max, mc->fetch == _chain_fetch ? "CHAIN" : "RBTREE");
+			mc, mc->size, mc->count, mc->mem_used, mc->mem_max, mc->fetch == _chain_fetch ? "CHAIN" : "RBTREE");
 }
 
 void rbtree_print(mc_node *node, int level)
 {
 	int i;
-	if (node->dash_right) rbtree_print(node->dash_right, level + 1);
-	for (i = 0; i < level; i++) printf("  . ");
+	if (node->dash_right) {
+		rbtree_print(node->dash_right, level + 1);
+	}
+	for (i = 0; i < level; i++) {
+		printf("  . ");
+	}
 	printf("(%d) [%s]\n", node->dash_color, (char *) node->key);
-	if (node->dash_left) rbtree_print(node->dash_left, level + 1);
+	if (node->dash_left) {
+		rbtree_print(node->dash_left, level + 1);
+	}
 }
 
 void nodes_mc(MC *mc)
@@ -1024,34 +1022,28 @@ void nodes_mc(MC *mc)
 	mc_node *node;
 
 	// by chain
-	for (i = 0; i < mc->size; i++)
-	{
-		if (mc->fetch == _chain_fetch)
-		{
+	for (i = 0; i < mc->size; i++) {
+		if (mc->fetch == _chain_fetch) {
 			printf("NODES[%d]: ", i);
-			for (node = mc->nodes[i]; node != NULL; node = node->dash_next)
-			{
+			for (node = mc->nodes[i]; node != NULL; node = node->dash_next) {
 				printf("[%s]->", (char *) node->key);
 			}
 			printf("NULL\n");
-		}
-		else
-		{
+		} else {
 			printf("NODES[%d]: \n", i);
-			if (mc->nodes[i] != NULL)
+			if (mc->nodes[i] != NULL) {
 				rbtree_print(mc->nodes[i], 0);
+			}
 		}
 	}
 
 	printf("LRU1: HEAD");
-	for (node = mc->head; node != NULL; node = node->lru.next)
-	{
+	for (node = mc->head; node != NULL; node = node->lru.next) {
 		printf("->[%s]", (char *) node->key);
 	}
 	printf("->TAIL\n");
 	printf("LRU2: TAIL");
-	for (node = mc->tail; node != NULL; node = node->lru.prev)
-	{
+	for (node = mc->tail; node != NULL; node = node->lru.prev) {
 		printf("->[%s]", (char *) node->key);
 	}
 	printf("->HEAD\n");
@@ -1074,8 +1066,7 @@ int main(int argc, char *argv[])
 	show_mc(mc);
 	nodes_mc(mc);
 
-	if (fork() == 0)
-	{
+	if (fork() == 0) {
 		printf("[C] wait the parent pressure test\n");
 		sleep(1);
 
@@ -1110,41 +1101,36 @@ int main(int argc, char *argv[])
 		nodes_mc(mc);
 		mm_unlock1(mm);
 		printf("[C] child finished!\n");
-	}
-	else
-	{
+	} else {
 		int i, max = 99999;
 		char key[128], value[128];
 		int j = time(NULL) % 999;
-		
+
 		mm_lock1(mm);
 		printf("[P] testing put gg?? for %d times\n", max);
-		for (i = 0; i < max; i++)
-		{
+		for (i = 0; i < max; i++) {
 			sprintf(key, "gg%d", i);
 			sprintf(value, "hightman%d", i);
 			SAVE(key, value);
 		}
 		printf("[P] testing get gg?? for %d times\n", max);
-		for (i = 0; i < max; i++)
-		{
+		for (i = 0; i < max; i++) {
 			sprintf(key, "gg%d", i);
 			s = mc_get(mc, key);
-			if ((i % j) == 0)
+			if ((i % j) == 0) {
 				printf("[P] ... mc_get(%s) = %s\n", key, s);
+			}
 		}
 		printf("[P] testing del gg?? for %d times\n", max);
-		for (i = 0; i < max; i++)
-		{
-			if ((i % j) != 0)
-			{
+		for (i = 0; i < max; i++) {
+			if ((i % j) != 0) {
 				sprintf(key, "gg%d", i);
 				mc_del(mc, key);
 			}
 		}
 		printf("[P] testing end\n");
 		mm_unlock1(mm);
-		
+
 		printf("[P] begin to sleep(1) & wait child\n");
 		sleep(1);
 		mm_lock1(mm);

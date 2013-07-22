@@ -98,13 +98,10 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('Database()', $res->buf);
 
 		// read timeout		
-		try
-		{
+		try {
 			stream_set_timeout($this->object->socket, 2);
 			$this->object->getRespond();
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			
 		}
 		$this->assertInstanceOf('XSException', $e);
@@ -119,28 +116,22 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('Xapian::Query(Zhello:(pos=1))', $res->buf);
 
 		// test unimp cmd
-		try
-		{
+		try {
 			$e = null;
 			$this->object->execCommand(array('cmd' => CMD_INDEX_SUBMIT));
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			
 		}
 		$this->assertInstanceOf('XSException', $e);
 		$this->assertEquals('Command not implemented', $e->getMessage());
 
 		// test io closed
-		try
-		{
+		try {
 			$e = null;
 			$err = error_reporting(0);
 			fclose($this->object->socket);
 			$this->object->sendCommand(CMD_INDEX_SUBMIT);
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			
 		}
 		$this->assertInstanceOf('XSException', $e);

@@ -76,10 +76,9 @@ static scws_t load_user_scws(int multi, char *dbpath)
 	scws_t s;
 	char *ptr, fpath[256];
 
-	if ((ptr = strrchr(dbpath, '/')) == NULL)
+	if ((ptr = strrchr(dbpath, '/')) == NULL) {
 		ptr = (char *) CUSTOM_DICT_FILE;
-	else
-	{
+	} else {
 		sprintf(fpath, "%.*s/" CUSTOM_DICT_FILE, (int) (ptr - dbpath), dbpath);
 		ptr = fpath;
 	}
@@ -142,19 +141,14 @@ static void show_usage()
 static inline void fix_log_words(char *str)
 {
 	unsigned char *src, *dst = (unsigned char *) str;
-	for (src = dst; *src != '\0'; src++)
-	{
-		if (*src <= ' ')
-		{
+	for (src = dst; *src != '\0'; src++) {
+		if (*src <= ' ') {
 			if (dst > (unsigned char *) str
-				&& dst[-1] > ' ' && src[1] > ' '
-				&& !((dst[-1] & 0x80) ^ (src[1] & 0x80)))
-			{
+					&& dst[-1] > ' ' && src[1] > ' '
+					&& !((dst[-1] & 0x80) ^ (src[1] & 0x80))) {
 				*dst++ = ' ';
 			}
-		}
-		else
-		{
+		} else {
 			*dst++ = (*src >= 'A' && *src <= 'Z') ? (*src | 0x20) : *src;
 		}
 	}
@@ -168,10 +162,10 @@ static inline void fix_log_words(char *str)
 static inline bool has_8bit_char(const string &str)
 {
 	unsigned char *ptr = (unsigned char *) str.data();
-	while (*ptr)
-	{
-		if (*ptr & 0x80)
+	while (*ptr) {
+		if (*ptr & 0x80) {
 			return true;
+		}
 		ptr++;
 	}
 	return false;
@@ -185,16 +179,21 @@ static inline bool has_8bit_char(const string &str)
 static inline int utf8_char_size(const char *s)
 {
 	unsigned char c = (unsigned char) *s;
-	if ((c & 0xfc) == 0xfc)
+	if ((c & 0xfc) == 0xfc) {
 		return 6;
-	if ((c & 0xf8) == 0xf8)
+	}
+	if ((c & 0xf8) == 0xf8) {
 		return 5;
-	if ((c & 0xf0) == 0xf0)
+	}
+	if ((c & 0xf0) == 0xf0) {
 		return 4;
-	if ((c & 0xe0) == 0xe0)
+	}
+	if ((c & 0xe0) == 0xe0) {
 		return 3;
-	if ((c & 0xc0) == 0xc0)
+	}
+	if ((c & 0xc0) == 0xc0) {
 		return 2;
+	}
 	return 1;
 }
 
@@ -206,23 +205,23 @@ static bool valid_8bit_term(const string &term)
 {
 	word_t res;
 
-	if (term.size() <= 3)
+	if (term.size() <= 3) {
 		return false;
-	if (xdict == NULL)
-	{
+	}
+	if (xdict == NULL) {
 		char fpath[256];
 		sprintf(fpath, "%s/dict.utf8.xdb", SCWS_ETCDIR);
-		if (!(xdict = xdict_open(fpath, SCWS_XDICT_MEM)))
-		{
+		if (!(xdict = xdict_open(fpath, SCWS_XDICT_MEM))) {
 			log_error("failed to open xdict (FILE:%s)", fpath);
 			return true;
 		}
 	}
 
 	res = xdict_query(xdict, term.data(), term.size());
-	if (res == NULL)
+	if (res == NULL) {
 		return term.size() > 6;
-	return(res->attr[0] != 'u' && res->attr[0] != 'x' && res->attr[0] != 'y');
+	}
+	return (res->attr[0] != 'u' && res->attr[0] != 'x' && res->attr[0] != 'y');
 }
 
 /**
@@ -236,12 +235,9 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 	// NOTE: allocate enough buffer size first
 	plen = words.size() * 3; // abbr = 1*, raw = 2*
 	abbr = (char *) malloc(plen);
-	if (abbr == NULL)
-	{
+	if (abbr == NULL) {
 		log_error("failed to allocate memory for pinyin (SIZE:%d)", plen);
-	}
-	else
-	{
+	} else {
 		int rstart, bstart;
 		char *raw, *rptr, *bptr;
 		struct py_list *pl, *cur;
@@ -254,21 +250,19 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 
 		// get pinyin string
 		pl = py_convert(words.data(), words.size());
-		for (cur = pl; cur != NULL; cur = cur->next)
-		{
+		for (cur = pl; cur != NULL; cur = cur->next) {
 			// abbr
-			if (!PY_ILLEGAL(cur))
-			{
+			if (!PY_ILLEGAL(cur)) {
 				// abbr start from first !ILL
-				if (bstart < 0)
+				if (bstart < 0) {
 					bstart = bptr - abbr + 1;
+				}
 				// raw start from first chinese
-				if (rstart < 0 && PY_CHINESE(cur))
+				if (rstart < 0 && PY_CHINESE(cur)) {
 					rstart = rptr - raw;
+				}
 				*bptr++ = cur->py[0];
-			}
-			else
-			{
+			} else {
 				strcpy(bptr, cur->py);
 				bptr += strlen(cur->py);
 			}
@@ -277,16 +271,16 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 			rptr += strlen(cur->py);
 
 			// check next					
-			if (cur->next != NULL)
-			{
-				if (PY_ILLEGAL(cur) && PY_ILLEGAL(cur->next))
+			if (cur->next != NULL) {
+				if (PY_ILLEGAL(cur) && PY_ILLEGAL(cur->next)) {
 					*rptr++ = ' ';
+				}
 			}
 		}
 		py_list_free(pl);
 		*bptr = *rptr = '\0';
 		log_info("+add pinyin (PINYIN:%.*s[%s], ABBR:%.*s[%s])",
-			rstart, raw, raw + rstart, bstart, abbr, abbr + bstart);
+				rstart, raw, raw + rstart, bstart, abbr, abbr + bstart);
 
 		// completely pinyin/abbr
 		doc.add_term(raw, wdf);
@@ -294,27 +288,21 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
 		raw[0] = abbr[0] = 'C'; // partial prefix
 
 		// add parts for raw, from first chinese
-		if (rstart >= 0)
-		{
+		if (rstart >= 0) {
 			plen = rptr - raw;
-			do
-			{
+			do {
 				//log_info("+add partial pinyin (PY_PARTIAL: %.*s)", plen, raw);
 				doc.add_term(string(raw, plen), wdf);
-			}
-			while (--plen > rstart);
+			} while (--plen > rstart);
 		}
 
 		// add parts for abbr, from first normal pinyin
-		if (bstart >= 0)
-		{
+		if (bstart >= 0) {
 			plen = bptr - abbr;
-			do
-			{
+			do {
 				//log_info("+add partial abbr (ABBR_PARTIAL:%.*s)", plen, abbr);
 				doc.add_term(string(abbr, plen), wdf);
-			}
-			while (--plen > bstart);
+			} while (--plen > bstart);
 		}
 		// free memory
 		free(abbr);
@@ -332,22 +320,18 @@ static void add_pinyin_index(Xapian::Document &doc, const string &words, int wdf
  */
 static void add_log_words(const string &words, int wdf, bool db_term = false)
 {
-	try
-	{
+	try {
 		string tmp, key("A");
 		Xapian::Document doc;
 		Xapian::docid oid = 0;
 
 		// try to get exists doc
 		key += words;
-		if (db_term == false || !(flag & FLAG_CLEAN))
-		{
+		if (db_term == false || !(flag & FLAG_CLEAN)) {
 			const Xapian::PostingIterator &pi = database.postlist_begin(key);
-			if (pi != database.postlist_end(key))
-			{
+			if (pi != database.postlist_end(key)) {
 				double num;
-				if (db_term == true)
-				{
+				if (db_term == true) {
 					log_info("~skip exists db term (TERM:%s)", words.data());
 					return;
 				}
@@ -356,30 +340,24 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 				tmp = doc.get_value(VNO_CURRTAG);
 				num = Xapian::sortable_unserialise(doc.get_value(VNO_TOTAL));
 				log_info("!update term (TERM:%s, ID:%u, TAG:%s, LAST:%g, WDF:%g+%d)",
-					words.data(), oid, tmp.data(),
-					Xapian::sortable_unserialise(doc.get_value(VNO_LASTNUM)), num, wdf);
+						words.data(), oid, tmp.data(),
+						Xapian::sortable_unserialise(doc.get_value(VNO_LASTNUM)), num, wdf);
 
 				// update total num, check peroid tag
 				doc.add_value(VNO_TOTAL, Xapian::sortable_serialise(num + wdf));
-				if (!strcmp(tmp.data(), stat_tag))
-				{
+				if (!strcmp(tmp.data(), stat_tag)) {
 					// update curr_num only
 					num = Xapian::sortable_unserialise(doc.get_value(VNO_CURRNUM));
 					doc.add_value(VNO_CURRNUM, Xapian::sortable_serialise(num + wdf));
-				}
-				else
-				{
+				} else {
 					// update curr_num to last_num
 					tmp = doc.get_value(VNO_CURRNUM);
 					doc.add_value(VNO_LASTNUM, tmp);
 					doc.add_value(VNO_CURRNUM, Xapian::sortable_serialise((double) wdf));
-					try
-					{
+					try {
 						doc.remove_term("E1");
 						doc.remove_term("F1");
-					}
-					catch (...)
-					{
+					} catch (...) {
 					}
 					doc.add_term("E1", (int) Xapian::sortable_unserialise(tmp));
 				}
@@ -390,8 +368,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 
 		// generate the doc
 		doc.add_value(VNO_CURRTAG, stat_tag);
-		if (oid == 0)
-		{
+		if (oid == 0) {
 			// new item
 			const char *ptr;
 			int plen;
@@ -406,8 +383,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			// add index terms
 			indexer.set_document(doc);
 			doc.add_boolean_term(key);
-			if (db_term == false) // db term
-			{
+			if (db_term == false) { // db term
 				doc.add_term("D1", wdf);
 				doc.add_term("E1", wdf);
 				doc.add_term("F1", wdf);
@@ -417,30 +393,28 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			// add partial index
 			ptr = words.data();
 			plen = utf8_char_size(ptr);
-			while (plen < words.size() && plen <= MAX_EXPAND_LEN)
-			{
+			while (plen < words.size() && plen <= MAX_EXPAND_LEN) {
 				//log_info("+add partial term (TERM:C%.*s)", plen, ptr);
 				doc.add_term("C" + string(ptr, plen), wdf);
 				plen += utf8_char_size(ptr + plen);
 			}
 
 			// add pinyin index
-			if (has_8bit_char(words))
+			if (has_8bit_char(words)) {
 				add_pinyin_index(doc, words, wdf);
+			}
 
 			// submit to database
 			database.add_document(doc);
 			total_add++;
-		}
-		else
-		{
+		} else {
 			// old item (update freq of all terms)
 			Xapian::TermIterator ti = doc.termlist_begin();
-			while (ti != doc.termlist_end())
-			{
+			while (ti != doc.termlist_end()) {
 				//log_info("!update term freq (TERM:%s, WDF:%d)", (*ti).data(), ti.get_wdf());
-				if (*ti != "E1" && ti.get_wdf() > 0)
+				if (*ti != "E1" && ti.get_wdf() > 0) {
 					doc.add_term(*ti, wdf);
+				}
 				ti++;
 			}
 
@@ -448,15 +422,11 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			database.replace_document(oid, doc);
 			total_update++;
 		}
-	}
-	catch (const Xapian::Error &e)
-	{
+	} catch (const Xapian::Error &e) {
 		log_notice("xapian exception on adding log (ERROR:%s, WORDS:%s)",
-			e.get_msg().data(), words.data());
+				e.get_msg().data(), words.data());
 		total_fail++;
-	}
-	catch (...)
-	{
+	} catch (...) {
 		log_notice("unknown error on adding log (WORDS:%s)", words.data());
 		total_fail++;
 	}
@@ -471,8 +441,7 @@ static void load_db_terms(const char *home)
 	string dbpath(home);
 	dbpath += "/" DEFAULT_DB_NAME;
 
-	try
-	{
+	try {
 		Xapian::Database db;
 		Xapian::TermIterator ti;
 		Xapian::doccount freq, min_freq;
@@ -482,35 +451,26 @@ static void load_db_terms(const char *home)
 		db = Xapian::Database(dbpath);
 		ti = db.allterms_begin();
 		min_freq = (int) (0.001 * db.get_doccount());
-		while (ti != db.allterms_end())
-		{
+		while (ti != db.allterms_end()) {
 			term = *ti;
-			if (term[0] >= 'A' && term[0] <= 'Z')
-			{
+			if (term[0] >= 'A' && term[0] <= 'Z') {
 				log_info("skip all words beginning with capital letters (TERM:%s)", term.data());
 				ti.skip_to("a");
 				continue;
 			}
 			freq = ti.get_termfreq();
 			if (term.size() > 1 && freq >= min_freq
-				&& (!has_8bit_char(term) || valid_8bit_term(term)))
-			{
+					&& (!has_8bit_char(term) || valid_8bit_term(term))) {
 				add_log_words(term, freq, true);
-			}
-			else
-			{
+			} else {
 				log_info("~skip invalid db term (TERM:%s)", term.data());
 			}
 			ti++;
 		}
-	}
-	catch (const Xapian::Error &e)
-	{
+	} catch (const Xapian::Error &e) {
 		log_notice("xapian exception on loading db terms (ERROR:%s, DB:%s)",
-			e.get_msg().data(), dbpath.data());
-	}
-	catch (...)
-	{
+				e.get_msg().data(), dbpath.data());
+	} catch (...) {
 		log_notice("unknown error on loadding all terms (DB:%s)", dbpath.data());
 	}
 }
@@ -527,14 +487,15 @@ static void load_stat_tag(const char *tag)
 	// FIXME: %Y maybe wrong first week
 	time(&t);
 	localtime_r(&t, &tm);
-	if (!strcasecmp(tag, "year"))
+	if (!strcasecmp(tag, "year")) {
 		sprintf(stat_tag, "%04d", tm.tm_year + 1900);
-	else if (!strcasecmp(tag, "month"))
+	} else if (!strcasecmp(tag, "month")) {
 		sprintf(stat_tag, "%04d-%02d", tm.tm_year + 1900, tm.tm_mon + 1);
-	else if (!strcasecmp(tag, "day"))
+	} else if (!strcasecmp(tag, "day")) {
 		sprintf(stat_tag, "%04d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-	else // FIXME: %Y may be wrong for first week
-		strftime(stat_tag, sizeof(stat_tag), "%Y-W%W", &tm);
+	} else { // FIXME: %Y may be wrong for first week
+		strftime(stat_tag, sizeof (stat_tag), "%Y-W%W", &tm);
+	}
 }
 
 /**
@@ -557,13 +518,14 @@ int main(int argc, char *argv[])
 	log_open("stderr", "logging", -1);
 
 	// parse the arguments
-	if ((prog_name = strrchr(argv[0], '/')) != NULL) prog_name++;
-	else prog_name = argv[0];
+	if ((prog_name = strrchr(argv[0], '/')) != NULL) {
+		prog_name++;
+	} else {
+		prog_name = argv[0];
+	}
 
-	while ((cc = getopt(argc, argv, "vhCKQSTVd:f:p:t:s:")) != -1)
-	{
-		switch (cc)
-		{
+	while ((cc = getopt(argc, argv, "vhCKQSTVd:f:p:t:s:")) != -1) {
+		switch (cc) {
 			case 'C': flag |= (FLAG_CLEAN | FLAG_DBTERMS);
 				break;
 			case 'K': flag |= FLAG_KEEP_LOG;
@@ -581,10 +543,11 @@ int main(int argc, char *argv[])
 			case 'f': logfile = optarg;
 				break;
 			case 'p':
-				if (py_dict_load(optarg) < 0)
+				if (py_dict_load(optarg) < 0) {
 					log_notice("failed to load py dict (FILE:%s)", optarg);
-				else
+				} else {
 					flag |= FLAG_PY_LOADED;
+				}
 				break;
 			case 's': smin = atoi(optarg);
 				break;
@@ -604,44 +567,40 @@ int main(int argc, char *argv[])
 	}
 
 	// load default py dict
-	if (!(flag & FLAG_PY_LOADED) && py_dict_load(PREFIX "/etc/py.xdb") < 0)
-	{
+	if (!(flag & FLAG_PY_LOADED) && py_dict_load(PREFIX "/etc/py.xdb") < 0) {
 		log_error("failed to load default py dict");
 		goto main_end;
 	}
 
 	// other arguments [home]
-	if (argc > optind)
+	if (argc > optind) {
 		home = argv[optind];
+	}
 
 	// init tag & logger
 	load_stat_tag(tag);
 
 	// scan mode (home path required)
-	if (flag & FLAG_SCAN_MODE)
-	{
+	if (flag & FLAG_SCAN_MODE) {
 		pid_t pid;
 		char *_home;
 		struct stat st;
 		struct dirent *de;
 		DIR *dirp;
 
-		if (home == NULL)
-		{
+		if (home == NULL) {
 			log_error("home directory should be specified in scan mode");
 			goto main_end;
 		}
 		log_alert(">> running in scan mode (HOME:%s, STAT_TAG:%s)", home, stat_tag);
 
-		if (!(dirp = opendir(home)))
-		{
+		if (!(dirp = opendir(home))) {
 			log_error(">> failed to open home directory (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
 
 		_home = home + strlen(home);
-		while (_home > home && _home[-1] == '/')
-		{
+		while (_home > home && _home[-1] == '/') {
 			_home--;
 			*_home = '\0';
 		}
@@ -652,38 +611,31 @@ int main(int argc, char *argv[])
 		home = logfile + PATH_MAX;
 		flag |= FLAG_FREE_DBPATH;
 
-		while ((de = readdir(dirp)) != NULL)
-		{
-			if (!de->d_name[0] || de->d_name[0] == '.')
+		while ((de = readdir(dirp)) != NULL) {
+			if (!de->d_name[0] || de->d_name[0] == '.') {
 				continue;
+			}
 
 			sprintf(logfile, "%s/%s/" SEARCH_LOG_FILE, _home, de->d_name);
-			if (stat(logfile, &st) < 0 || !S_ISREG(st.st_mode))
-			{
+			if (stat(logfile, &st) < 0 || !S_ISREG(st.st_mode)) {
 				log_notice(">> skip child directory without logfile (NAME:%s)", de->d_name);
 				continue;
 			}
-			if (st.st_size < smin)
-			{
+			if (st.st_size < smin) {
 				log_notice(">> logfile size too small to skip (NAME:%s, SIZE:%d)", de->d_name, st.st_size);
 				continue;
 			}
 
 			pid = fork();
-			if (pid < 0)
-			{
+			if (pid < 0) {
 				log_error(">> failed to fork child process (ERROR:%s, NAME:%s)",
-					strerror(errno), de->d_name);
-			}
-			else if (pid > 0)
-			{
+						strerror(errno), de->d_name);
+			} else if (pid > 0) {
 				// parent, wait child process
 				waitpid(pid, &cc, WUNTRACED);
 				log_notice("------------------------------------------");
 				log_notice(">> end process (NAME:%s, STATUS:0x%04x) <<", de->d_name, cc);
-			}
-			else
-			{
+			} else {
 				// child, goto child begin			
 				log_alert(">> begin child process (NAME:%s) <<", de->d_name);
 				log_notice("------------------------------------------");
@@ -699,27 +651,22 @@ int main(int argc, char *argv[])
 	}
 
 	// normal mode
-	if ((dbpath == NULL || logfile == NULL) && home == NULL)
-	{
+	if ((dbpath == NULL || logfile == NULL) && home == NULL) {
 		log_error("home directory of project did not specified");
 		goto main_end;
 	}
-	if (dbpath == NULL)
-	{
-		dbpath = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_DB) + 1);
-		if (dbpath == NULL)
-		{
+	if (dbpath == NULL) {
+		dbpath = (char *) malloc(strlen(home) + sizeof (SEARCH_LOG_DB) + 1);
+		if (dbpath == NULL) {
 			log_error("failed to allocate memory for dbpath (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
 		sprintf(dbpath, "%s/" SEARCH_LOG_DB, home);
 		flag |= FLAG_FREE_DBPATH;
 	}
-	if (logfile == NULL)
-	{
-		logfile = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_FILE) + 1);
-		if (logfile == NULL)
-		{
+	if (logfile == NULL) {
+		logfile = (char *) malloc(strlen(home) + sizeof (SEARCH_LOG_FILE) + 1);
+		if (logfile == NULL) {
 			log_error("failed to allocate memory for logfile (ERROR:%s)", strerror(errno));
 			goto main_end;
 		}
@@ -737,8 +684,7 @@ child_begin:
 	log_notice("search log file (FILE:%s)", logfile);
 
 	// open the log_db
-	try
-	{
+	try {
 		int action = (flag & FLAG_CLEAN) ? Xapian::DB_CREATE_OR_OVERWRITE : Xapian::DB_CREATE_OR_OPEN;
 
 		log_info("open the writable database (DB:%s)", dbpath);
@@ -751,55 +697,40 @@ child_begin:
 
 		log_info("load scws dictionary into memory");
 		indexer.set_scws(load_user_scws(DEFAULT_SCWS_MULTI, dbpath));
-	}
-	catch (const Xapian::Error &e)
-	{
+	} catch (const Xapian::Error &e) {
 		log_error("xapian exception on initialization (ERROR:%s)", e.get_msg().data());
 		goto main_end;
-	}
-	catch (...)
-	{
+	} catch (...) {
 		log_error("unknown error on initialization (DB:%s)", dbpath);
 		goto main_end;
 	}
 
 	// initlize from defaul db
-	if ((flag & FLAG_DBTERMS) && home != NULL)
-	{
+	if ((flag & FLAG_DBTERMS) && home != NULL) {
 		load_db_terms(home);
 		log_notice("terms loaded (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
-			total_add, total_update, total_fail, database.get_doccount());
+				total_add, total_update, total_fail, database.get_doccount());
 	}
 
 	// parse search log file [rename & copy]
-	if ((cc = open(logfile, O_RDWR)) < 0)
-	{
+	if ((cc = open(logfile, O_RDWR)) < 0) {
 		log_error("failed to open log (FILE:%s, ERROR:%s)", logfile, strerror(errno));
-	}
-	else
-	{
+	} else {
 		char *buf = NULL;
 		off_t size, bytes = 0;
 
 		FLOCK_WR(cc);
 		size = lseek(cc, 0, SEEK_END);
-		if (size == 0)
-		{
+		if (size == 0) {
 			log_notice("search log file is empty");
-		}
-		else if ((buf = (char *) malloc(size + 1)) == NULL)
-		{
+		} else if ((buf = (char *) malloc(size + 1)) == NULL) {
 			log_error("failed to allocate memory for log data (SIZE:%ld)", size + 1);
-		}
-		else
-		{
+		} else {
 			bytes = pread(cc, buf, size, 0);
 			log_notice("search log read in (EXPECT:%ld, ACTUAL:%ld)", size, bytes);
-			if (bytes > 0)
-			{
+			if (bytes > 0) {
 				buf[bytes] = '\0';
-				if (!(flag & FLAG_KEEP_LOG))
-				{
+				if (!(flag & FLAG_KEEP_LOG)) {
 					log_notice("clear old search log (SIZE:%ld->0)", size);
 					ftruncate(cc, 0);
 				}
@@ -808,59 +739,59 @@ child_begin:
 		FLOCK_UN(cc);
 		close(cc);
 
-		if (bytes > 0)
-		{
+		if (bytes > 0) {
 			char *ptr, *str, *qtr;
 			int wdf;
 			std::map<string, int> lines;
 			std::map<string, int>::iterator it;
 
 			log_info("using std::map to parse log data (BYTES:%ld)", bytes);
-			for (str = buf; *str && (ptr = strchr(str, '\n')) != NULL; str = ptr + 1)
-			{
-				if (ptr == str)
+			for (str = buf; *str && (ptr = strchr(str, '\n')) != NULL; str = ptr + 1) {
+				if (ptr == str) {
 					continue;
+				}
 				wdf = 1;
 				*ptr = '\0';
-				if ((qtr = strchr(str, '\t')) != NULL)
-				{
+				if ((qtr = strchr(str, '\t')) != NULL) {
 					*qtr++ = '\0';
 					wdf = atoi(qtr);
 				}
 
 				fix_log_words(str);
-				if (*str != '\0')
-				{
+				if (*str != '\0') {
 					string line(str);
 					lines[line] = lines[line] + wdf;
 				}
 			}
 
 			log_notice("log words loaded (COUNT:%d)", lines.size());
-			for (it = lines.begin(); it != lines.end(); it++)
-			{
+			for (it = lines.begin(); it != lines.end(); it++) {
 				add_log_words(it->first, it->second);
 			}
 		}
-		if (buf != NULL)
+		if (buf != NULL) {
 			free(buf);
+		}
 	}
 
 	// ok to finish
 	database.commit();
 	flag |= FLAG_FINISHED;
 	log_alert("finished (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
-		total_add, total_update, total_fail, database.get_doccount());
+			total_add, total_update, total_fail, database.get_doccount());
 
 	// end, free resources
 main_end:
 	py_dict_unload();
-	if (xdict != NULL)
+	if (xdict != NULL) {
 		xdict_close(xdict);
-	if (flag & FLAG_FREE_DBPATH)
+	}
+	if (flag & FLAG_FREE_DBPATH) {
 		free(dbpath);
-	if (flag & FLAG_FREE_LOGFILE)
+	}
+	if (flag & FLAG_FREE_LOGFILE) {
 		free(logfile);
+	}
 	log_close();
 	exit((flag & FLAG_FINISHED) ? 0 : -1);
 }

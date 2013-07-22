@@ -14,18 +14,17 @@ ini_set('display_errors', !extension_loaded('xdebug'));
 require_once dirname(__FILE__) . '/../lib/XS.class.php';
 
 // check sapi
-if (php_sapi_name() != 'cli')
-{
+if (php_sapi_name() != 'cli') {
 	echo "<p>该脚本只能在 cli 模式下运行！</p>\n";
 	exit(-1);
 }
 
 // load defined constant of commands
 $DEFINES = array();
-foreach (get_defined_constants() as $key => $value)
-{
-	if (strncmp($key, 'CMD_', 4) || isset($DEFINES[$value]))
+foreach (get_defined_constants() as $key => $value) {
+	if (strncmp($key, 'CMD_', 4) || isset($DEFINES[$value])) {
 		continue;
+	}
 	$DEFINES[$value] = $key;
 }
 
@@ -40,44 +39,38 @@ $stdin = fopen('php://stdin', 'r');
 $trace = '';
 
 // loop to read input
-while (($line = fgets($stdin, 8192)) !== false)
-{
+while (($line = fgets($stdin, 8192)) !== false) {
 	$line = trim($line);
 	$args = '';
-	if (($pos = strpos($line, ' ')) === false)
+	if (($pos = strpos($line, ' ')) === false) {
 		$cmd = $line;
-	else
-	{
+	} else {
 		$cmd = substr($line, 0, $pos);
 		$args = substr($line, $pos + 1);
 	}
 
 	// quit normal
-	if ($cmd == 'exit' || $cmd == 'quit' || $cmd == 'bye')
+	if ($cmd == 'exit' || $cmd == 'quit' || $cmd == 'bye') {
 		break;
+	}
 
 	// execute the cmd
-	if ($cmd == 'trace')
-	{
+	if ($cmd == 'trace') {
 		echo $trace . "\n";
-	}
-	else if (!empty($cmd))
-	{
-		if (!function_exists('cmd_' . $cmd))
-		{
+	} elseif (!empty($cmd)) {
+		if (!function_exists('cmd_' . $cmd)) {
 			$cmd = 'send';
 			$args = $line;
 		}
-		try
-		{
-			if ($cmd == 'recv' && (!$server || !$server->hasRespond()))
+		try {
+			if ($cmd == 'recv' && (!$server || !$server->hasRespond())) {
 				throw new XSException("没有任何可读取的数据");
-			if ($cmd == 'open' || $cmd == 'help' || _check_server())
+			}
+			if ($cmd == 'open' || $cmd == 'help' || _check_server()) {
 				call_user_func('cmd_' . $cmd, $args);
+			}
 			$trace = '';
-		}
-		catch (XSException $e)
-		{
+		} catch (XSException $e) {
 			echo "  " . $e . "\n";
 			$trace = $e->getTraceAsString();
 		}
@@ -128,19 +121,15 @@ function cmd_open($args)
 {
 	global $server;
 
-	if (empty($args))
-	{
-		if (!$server instanceof XSServer)
-		{
+	if (empty($args)) {
+		if (!$server instanceof XSServer) {
 			echo "  请问要打开什么服务端? (索引默认端口:8383, 搜索默认端口:8384)\n";
 			echo "  用法: open <port>|<host:port>|<path>|<search|index>\n";
 			return;
 		}
 		$res = $server->reopen();
 		echo "  重新打开服务端连接\n";
-	}
-	else
-	{
+	} else {
 		$args == 'index' && $args = '8383';
 		$args == 'search' && $args = '8384';
 		$server = new XSServer($args);
@@ -184,14 +173,12 @@ function cmd_send2($args)
 
 	// get the command
 	$cmd = _get_send_arg($args);
-	if ($cmd === false)
-	{
+	if ($cmd === false) {
 		echo "  用法: " . $GLOBALS['cmd'] . " <cmd>[ <arg1>[ <arg2>[ <buf>[ <buf1>]]]]\n";
 		return false;
 	}
 	$cmd = _get_def_cmd($cmd2 = $cmd);
-	if ($cmd == 0)
-	{
+	if ($cmd == 0) {
 		echo "  未定义的命令: $cmd2\n";
 		return false;
 	}
@@ -199,16 +186,12 @@ function cmd_send2($args)
 	// parse arguments: arg1, arg2, buf, buf1
 	$arg1 = _get_send_arg();
 	$buf = null;
-	if (!is_numeric($arg1))
-	{
+	if (!is_numeric($arg1)) {
 		$buf = $arg1;
 		$arg1 = $arg2 = 0;
-	}
-	else
-	{
+	} else {
 		$arg2 = _get_send_arg();
-		if (!is_numeric($arg2))
-		{
+		if (!is_numeric($arg2)) {
 			$buf = $arg2;
 			$arg2 = 0;
 		}
@@ -221,15 +204,15 @@ function cmd_send2($args)
 	$buf1 = $buf1 === false ? '' : $buf1;
 
 	// show sending command
-	printf(">>发送到服务端的指令: {%s, %d, %d, %d, %d}...\n", _get_cmd_def($cmd), $arg1, $arg2, strlen($buf1), strlen($buf));
+	printf(">>发送到服务端的指令: {%s, %d, %d, %d, %d}...\n", _get_cmd_def($cmd), $arg1, $arg2, strlen($buf1),
+			strlen($buf));
 	$cmd = new XSCommand($cmd, $arg1, $arg2, $buf, $buf1);
 
 	// send command
 	$server->sendCommand($cmd);
 
 	// dont ans
-	if ($cmd->cmd & 0x80)
-	{
+	if ($cmd->cmd & 0x80) {
 		echo "  完成, 不过这条命令无需服务端应答!\n";
 		return false;
 	}
@@ -245,27 +228,29 @@ function cmd_recv($args = '')
 	global $server;
 
 	$wait = empty($args) ? 0 : _get_def_cmd($args);
-	while (true)
-	{
+	while (true) {
 		$res = $server->getRespond();
 
 		// force to decode som command(unpack)
 		if ($res->cmd == CMD_OK && strlen($res->buf) == 4
-			&& ($res->arg == CMD_OK_SEARCH_TOTAL || $res->arg == CMD_OK_DB_TOTAL))
-		{
+				&& ($res->arg == CMD_OK_SEARCH_TOTAL || $res->arg == CMD_OK_DB_TOTAL)) {
 			$tmp = unpack('Icount', $res->buf);
 			$res->buf = '{count:' . $tmp['count'] . '}';
 		}
-		if ($res->cmd == CMD_SEARCH_RESULT_DOC && strlen($res->buf) == 20)
-		{
+		if ($res->cmd == CMD_SEARCH_RESULT_DOC && strlen($res->buf) == 20) {
 			$tmp = unpack('Idocid/Irank/Iccount/ipercent/fweight', $res->buf);
-			$res->buf = sprintf('{docid:%u, rank:%d, ccount:%d, percent:%d%%, weight:%.2f}', $tmp['docid'], $tmp['rank'], $tmp['ccount'], $tmp['percent'], $tmp['weight']);
+			$res->buf = sprintf('{docid:%u, rank:%d, ccount:%d, percent:%d%%, weight:%.2f}', $tmp['docid'],
+					$tmp['rank'], $tmp['ccount'], $tmp['percent'], $tmp['weight']);
 		}
 		// output
-		printf("<<<CMD: %s\n<<<ARG: %s\n<<<BUF1(%d): %s\n<<<BUF(%d): %s\n<<<END\n", _get_cmd_def($res->cmd), $res->cmd == CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1), $res->buf1, strlen($res->buf), $res->buf);
+		printf("<<<CMD: %s\n<<<ARG: %s\n<<<BUF1(%d): %s\n<<<BUF(%d): %s\n<<<END\n",
+				_get_cmd_def($res->cmd),
+				$res->cmd == CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1),
+				$res->buf1, strlen($res->buf), $res->buf);
 		// break
-		if ($wait == 0 || $res->cmd == CMD_ERR || $res->cmd == $wait)
+		if ($wait == 0 || $res->cmd == CMD_ERR || $res->cmd == $wait) {
 			break;
+		}
 	}
 }
 
@@ -275,8 +260,9 @@ function cmd_recv($args = '')
  */
 function cmd_send($args)
 {
-	if (cmd_send2($args))
+	if (cmd_send2($args)) {
 		cmd_recv();
+	}
 }
 
 /**
@@ -287,8 +273,9 @@ function cmd_send($args)
 function _check_server()
 {
 	global $server;
-	if ($server instanceof XSServer)
+	if ($server instanceof XSServer) {
 		return true;
+	}
 	echo "  尚未打开服务端连接, 请先先使用 `open' 命令\n";
 	return false;
 }
@@ -301,8 +288,9 @@ function _check_server()
 function _get_cmd_def($cmd)
 {
 	global $DEFINES;
-	if (isset($DEFINES[$cmd]))
+	if (isset($DEFINES[$cmd])) {
 		return $DEFINES[$cmd];
+	}
 	return strval($cmd);
 }
 
@@ -314,21 +302,19 @@ function _get_cmd_def($cmd)
 function _get_def_cmd($cmd)
 {
 	$cmd2 = strtoupper($cmd);
-	if (is_numeric($cmd))
-	{
+	if (is_numeric($cmd)) {
 		global $DEFINES;
 		$cmd = intval($cmd);
 		return isset($DEFINES[$cmd]) ? $cmd : 0;
-	}
-	else if (defined('CMD_' . $cmd2))
+	} elseif (defined('CMD_' . $cmd2)) {
 		return constant('CMD_' . $cmd2);
-	else if (defined('CMD_SEARCH_' . $cmd2))
+	} elseif (defined('CMD_SEARCH_' . $cmd2)) {
 		return constant('CMD_SEARCH_' . $cmd2);
-	else if (defined('CMD_INDEX_' . $cmd2))
+	} elseif (defined('CMD_INDEX_' . $cmd2)) {
 		return constant('CMD_INDEX_' . $cmd2);
-	else if (defined('CMD_QUERY_' . $cmd2))
+	} elseif (defined('CMD_QUERY_' . $cmd2)) {
 		return constant('CMD_QUERY_' . $cmd2);
-
+	}
 	return 0;
 }
 
@@ -343,72 +329,64 @@ function _get_send_arg($args = NULL)
 {
 	static $buf = NULL, $off = 0;
 
-	if ($args !== NULL)
-	{
+	if ($args !== NULL) {
 		$off = 0;
 		$buf = $args;
 	}
-	if ($buf === NULL || $off >= strlen($buf))
+	if ($buf === NULL || $off >= strlen($buf)) {
 		return false;
+	}
 
 	// get start pos
 	$quote = false;
 	$len = strlen($buf);
-	for ($start = $off; $start < $len; $start++)
-	{
+	for ($start = $off; $start < $len; $start++) {
 		$char = substr($buf, $start, 1);
-		if (strpos(" \r\n\t", $char) !== false)
+		if (strpos(" \r\n\t", $char) !== false) {
 			continue;
-		if ($char == '"')
-		{
+		}
+		if ($char == '"') {
 			$quote = true;
 			$start++;
 		}
 		break;
 	}
 	// cut the string
-	for ($ret = '', $end = $start; $end < $len; $end++)
-	{
+	for ($ret = '', $end = $start; $end < $len; $end++) {
 		$char = substr($buf, $end, 1);
 
 		// support: \r,\n,\t,\",\\,\xNN
-		if ($char == '\\' && $end < ($len - 1))
-		{
+		if ($char == '\\' && $end < ($len - 1)) {
 			$char2 = substr($buf, ++$end, 1);
-			if ($char2 == 'r')
+			if ($char2 == 'r') {
 				$char = "\r";
-			else if ($char2 == 'n')
+			} elseif ($char2 == 'n') {
 				$char = "\n";
-			else if ($char2 == 't')
+			} elseif ($char2 == 't') {
 				$char = "\t";
-			else if ($char2 == 'x' && $end < ($len - 2))
-			{
+			} elseif ($char2 == 'x' && $end < ($len - 2)) {
 				$char = chr(hexdec(substr($buf, $end, 2)));
 				$end += 2;
-			}
-			else
-			{
+			} else {
 				// keep unsupported chars
-				if ($char2 != '"' && $char2 != '\\' && $char2 != "'")
+				if ($char2 != '"' && $char2 != '\\' && $char2 != "'") {
 					$ret .= $char;
+				}
 				$char = $char2;
 			}
-		}
-		else if ($quote && $char == '"')
-		{
+		} elseif ($quote && $char == '"') {
 			$end++;
 			break;
-		}
-		else if (!$quote && strpos(" \t\r\n", $char) !== false)
-		{
+		} elseif (!$quote && strpos(" \t\r\n", $char) !== false) {
 			break;
 		}
 		$ret .= $char;
 	}
 
 	// pack() support
-	if (!empty($ret) && !strncasecmp($ret, 'pack(', 5) && substr($ret, -1, 1) == ')')
+	if (!empty($ret) && !strncasecmp($ret, 'pack(', 5) && substr($ret, -1, 1) == ')') {
 		eval('$ret = ' . $ret . ';');
+	}
 
 	$off = $end;
 	return ($end == $start ? false : $ret);
