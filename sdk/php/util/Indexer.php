@@ -232,15 +232,16 @@ try {
 			$index->beginRebuild();
 		}
 
-		// import data from source	
+		// import data from source
 		$fid = $xs->getFieldId();
 		if (!empty($source)) {
 			echo "初始化数据源 ... $source \n";
 			$total = $total_ok = $total_failed = 0;
 			$src = XSDataSource::instance($source, strpos($source, ':') ? $sql : $file);
 			$dcs = $src->getCharset();
-			if ($dcs === false)
+			if ($dcs === false) {
 				$dcs = $charset === null ? 'UTF-8' : $charset;
+			}
 
 			echo "开始批量导入数据 (" . (empty($file) ? "请直接输入数据" : $file) . ") ...\n";
 			XSUtil::flush();
@@ -249,7 +250,7 @@ try {
 			while ($data = $src->getData()) {
 				$doc = new XSDocument($dcs);
 				if ($source == 'csv') {
-					$data = csv_transform($data);
+					$data = csvTransform($data);
 					if (is_null($data)) {
 						continue;
 					}
@@ -359,7 +360,7 @@ try {
 }
 
 // translate csv data
-function csv_transform($data)
+function csvTransform($data)
 {
 	static $fields = null;
 	global $xs; /* @var $xs XS */

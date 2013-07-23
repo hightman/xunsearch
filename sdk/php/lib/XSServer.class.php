@@ -63,11 +63,11 @@ class XSCommand extends XSComponent
 	{
 		if (is_array($cmd)) {
 			foreach ($cmd as $key => $value) {
-				if ($key === 'arg' || property_exists($this, $key))
+				if ($key === 'arg' || property_exists($this, $key)) {
 					$this->$key = $value;
+				}
 			}
-		}
-		else {
+		} else {
 			$this->cmd = $cmd;
 			$this->arg1 = $arg1;
 			$this->arg2 = $arg2;

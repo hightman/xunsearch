@@ -10,4 +10,4 @@ if test -f ../config.h ; then
   grep "PACKAGE_" ../config.h | grep -v "STRING" | awk '{ print "define(\047" $2 "\047,\t" $3 ");" }'
 fi
 echo "/* end the cmd defination */"
-echo
+

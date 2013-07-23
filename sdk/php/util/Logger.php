@@ -96,7 +96,7 @@ try {
 
 	$search = $xs->search;
 	try {
-		// NOTE: use setQuery to call preQueryString for preparing fieldset		
+		// NOTE: use setQuery to call preQueryString for preparing fieldset
 		$search->setDb($db)->setQuery('dummy');
 		$search->setTimeout(0); // sometimes user may import lots of terms
 		$log_ready = true;
@@ -158,7 +158,7 @@ try {
 						$word = trim($line);
 						$wdf = 1;
 					}
-					add_search_log($word, $wdf);
+					addSearchLog($word, $wdf);
 				}
 				fclose($fd);
 			}
@@ -238,7 +238,7 @@ try {
 }
 
 // local function add word
-function add_search_log($word, $wdf)
+function addSearchLog($word, $wdf)
 {
 	global $search, $log_ready;
 	static $record = array();

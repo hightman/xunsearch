@@ -38,8 +38,9 @@ EOF;
 
 // output dir
 $output = XSUtil::getOpt('o', 'output', true);
-if ($output === null)
+if ($output === null) {
 	$output = '.';
+}
 if (!is_dir($output)) {
 	echo "错误：输出目录 ($output) 不是一个有效的目录。\n";
 	exit(-1);
@@ -60,14 +61,16 @@ try {
 	$vars = array();
 
 	// timezone
-	if (!ini_get('date.timezone'))
+	if (!ini_get('date.timezone')) {
 		date_default_timezone_set('Asia/Chongqing');
+	}
 
 	// basic
 	$vars['@project@'] = is_file($project) ? realpath($project) : $project;
 	$vars['@charset@'] = $xs->getDefaultCharset();
-	if ($vars['@charset@'] !== 'GB2312' && $vars['@charset@'] !== 'GBK')
+	if ($vars['@charset@'] !== 'GB2312' && $vars['@charset@'] !== 'GBK') {
 		$vars['@charset@'] = 'UTF-8';
+	}
 	$vars['@xs_lib_root@'] = XS_LIB_ROOT;
 	$vars['@date_time@'] = date('Y-m-d H:i:s');
 	$vars['@project_name@'] = ucfirst($xs->name);

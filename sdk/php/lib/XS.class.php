@@ -428,9 +428,9 @@ class XS extends XSComponent
 	{
 		if ($this->_search === null) {
 			$conns = array();
-			if (!isset($this->_config['server.search']))
+			if (!isset($this->_config['server.search'])) {
 				$conns[] = 8384;
-			else {
+			} else {
 				foreach (explode(';', $this->_config['server.search']) as $conn) {
 					$conn = trim($conn);
 					if ($conn !== '') {
@@ -682,11 +682,11 @@ spl_autoload_register('XS::autoload', true, true);
  * 修改默认的错误处理函数
  * 把发生的错误修改为抛出异常, 方便统一处理
  */
-function xs_error_handler($errno, $error, $file, $line)
+function xsErrorHandler($errno, $error, $file, $line)
 {
 	if (($errno & ini_get('error_reporting')) && !strncmp($file, XS_LIB_ROOT, strlen(XS_LIB_ROOT))) {
 		throw new XSErrorException($errno, $error, $file, $line);
 	}
 	return false;
 }
-set_error_handler('xs_error_handler');
+set_error_handler('xsErrorHandler');

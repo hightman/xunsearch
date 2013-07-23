@@ -552,7 +552,7 @@ class XSSearch extends XSServer
 		$ret = $this->_facets = array();
 		$vnoes = $this->xs->getScheme()->getVnoMap();
 
-		// get result documents		
+		// get result documents
 		while (true) {
 			$res = $this->getRespond();
 			if ($res->cmd == CMD_SEARCH_RESULT_FACETS) {
@@ -667,7 +667,7 @@ class XSSearch extends XSServer
 		$ret = array();
 		$limit = max(1, min(20, intval($limit)));
 
-		// Simple to disable query with field filter		
+		// Simple to disable query with field filter
 		if ($query === null) {
 			$query = $this->cleanFieldQuery($this->_query);
 		}
@@ -720,15 +720,15 @@ class XSSearch extends XSServer
 			$cmd = array('cmd' => CMD_QUERY_GET_EXPANDED, 'arg1' => $limit, 'buf' => $buf);
 			$res = $this->execCommand($cmd, CMD_OK_RESULT_BEGIN);
 
-			// echo "Raw Query: " . $res->buf . "\n";			
-			// get result documents		
+			// echo "Raw Query: " . $res->buf . "\n";
+			// get result documents
 			while (true) {
 				$res = $this->getRespond();
 				if ($res->cmd == CMD_SEARCH_RESULT_FIELD) {
 					$ret[] = XS::convert($res->buf, $this->_charset, 'UTF-8');
 				} elseif ($res->cmd == CMD_OK && $res->arg == CMD_OK_RESULT_END) {
 					// got the end
-					// echo "Parsed Query: " . $res->buf . "\n";	
+					// echo "Parsed Query: " . $res->buf . "\n";
 					break;
 				} else {
 					$msg = 'Unexpected respond in search {CMD:' . $res->cmd . ', ARG:' . $res->arg . '}';
@@ -818,8 +818,7 @@ class XSSearch extends XSServer
 			$value = preg_replace($this->_highlight['pattern'], $this->_highlight['replace'], $value);
 		}
 		if (isset($this->_highlight['pairs'])) {
-			$value = str_replace(array_keys($this->_highlight['pairs']),
-					array_values($this->_highlight['pairs']), $value);
+			$value = str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
 		}
 		return $value;
 	}
@@ -838,7 +837,7 @@ class XSSearch extends XSServer
 		if ($query !== '' && $query !== null) {
 			$terms = $this->terms($query, false);
 		} else {
-			// 无结果、包含 OR、XOR、NOT/-、默认 fuzzy		
+			// 无结果、包含 OR、XOR、NOT/-、默认 fuzzy
 			$query = $this->_query;
 			if (!$this->_lastCount || ($this->_defaultOp == CMD_QUERY_OP_OR && strpos($query, ' '))
 					|| strpos($query, ' OR ') || strpos($query, ' NOT ') || strpos($query, ' XOR ')) {
@@ -1107,7 +1106,7 @@ class XSSearch extends XSServer
 			}
 
 			// auto fixed duality in libscws
-			// ABC => AB,BC => ABC,BC,AB 
+			// ABC => AB,BC => ABC,BC,AB
 			// ABCD => AB,BC,CD => CD,ABC,BC,AB
 			// ABCDE => AB,BC,CD,DE => CDE,DE,CD,ABC,BC,AB
 			for ($j = $i + 1; $j < count($tmps); $j++) {

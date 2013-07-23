@@ -325,10 +325,10 @@ try {
 			// body & title
 			$body = $title = '';
 			if ($ftitle !== false) {
-				$title = cli_highlight($doc->f($ftitle));
+				$title = cliHighlight($doc->f($ftitle));
 			}
 			if ($fbody !== false) {
-				$body = cli_highlight($doc->f($fbody)) . "\n";
+				$body = cliHighlight($doc->f($fbody)) . "\n";
 			}
 
 			// main fields
@@ -342,7 +342,7 @@ try {
 				if ($field->isSpeical()) {
 					continue;
 				}
-				$tmp = ucfirst($field->name) . ':' . cli_highlight($doc->f($field));
+				$tmp = ucfirst($field->name) . ':' . cliHighlight($doc->f($field));
 				if ((strlen($tmp) + strlen($line)) > 80) {
 					if (strlen($line) > 0) {
 						echo $line . "\n";
@@ -374,7 +374,7 @@ try {
 }
 
 // local highlight function
-function cli_highlight($str)
+function cliHighlight($str)
 {
 	global $search;
 	$str = $search->highlight($str);

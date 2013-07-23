@@ -96,7 +96,7 @@ class XSIndex extends XSServer
 			throw new XSException('Missing value of primary key (FIELD:' . $fid . ')');
 		}
 
-		// request cmd		
+		// request cmd
 		$cmd = new XSCommand(CMD_INDEX_REQUEST, CMD_INDEX_REQUEST_ADD);
 		if ($add !== true) {
 			$cmd->arg1 = CMD_INDEX_REQUEST_UPDATE;
@@ -222,7 +222,7 @@ class XSIndex extends XSServer
 		// get field
 		$field = $field === null ? $this->xs->getFieldId() : $this->xs->getField($field);
 
-		// get commands	
+		// get commands
 		$cmds = array();
 		$terms = is_array($term) ? array_unique($term) : array($term);
 		$terms = XS::convert($terms, 'UTF-8', $this->xs->getDefaultCharset());
@@ -257,7 +257,7 @@ class XSIndex extends XSServer
 			throw new XSException('Failed to read exdata from file');
 		}
 
-		// try to check allowed (BUG: check the first cmd only): 
+		// try to check allowed (BUG: check the first cmd only):
 		// CMD_IMPORT_HEADER, CMD_INDEX_REQUEST, CMD_INDEX_REMOVE, CMD_INDEX_EXDATA
 		$first = ord(substr($data, 0, 1));
 		if ($first != CMD_IMPORT_HEADER
