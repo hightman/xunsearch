@@ -214,6 +214,8 @@ EOF;
 		$lines = file($this->root . '/doc/guide/toc.txt');
 		foreach ($lines as $line) {
 			$line = trim($line);
+			if ($line === '')
+				continue;
 			if ($line[0] === '*')
 				$list[] = array('label' => substr($line, 2));
 			elseif ($line[0] === '-') {
