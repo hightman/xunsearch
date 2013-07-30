@@ -24,7 +24,7 @@ class XSExceptionTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('[XSException] lib/XSExceptionTest.php(14): Test without code', strval($e1));
 
 		$this->assertInstanceOf('XSException', $e2);
-		$this->assertEquals('[XSException] lib/XSExceptionTest.php(23): Test with code(S#400)', '' . $e2);
+		$this->assertEquals('[XSException] lib/XSExceptionTest.php(19): Test with code(S#400)', '' . $e2);
 	}
 
 	public function testGetRelPath()
