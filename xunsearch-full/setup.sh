@@ -11,15 +11,6 @@ if ! test -d ./packages ; then
   exit -1
 fi
 
-# clean
-if test "$1" = "--clean" ; then
-  echo -n "Cleaning ... "
-  rm -rf setup.log
-  rm -rf xapian-core-scws-* scws-* libevent-* xunsearch-*
-  echo "done"
-  exit
-fi
-
 # get default prefix
 if test -f $HOME/.xs_installed ; then
   def_prefix=`cat $HOME/.xs_installed`
@@ -29,15 +20,67 @@ else
   def_prefix=$HOME/xunsearch
 fi
 
-# get input prefix
+# clean
+do_clean()
+{
+  echo -n "Cleaning ... "
+  rm -rf setup.log
+  rm -rf xapian-core-scws-* scws-* libevent-* xunsearch-*
+  echo "done"
+}
+
+# show usage
+show_usage()
+{
+  echo "Usage: $0 [options]"
+  echo "       --prefix=DIR             Specify install directory, default: $def_prefix"
+  echo "       --clean                  Just clean extracted package files"
+  echo "       --force                  Force to recompile all packages"
+  echo "       --enable-debug           Trun on debug symbol and verbose log info"
+  echo "       --enable-memory-cache    Enable memory cache for xs-searchd"
+  echo "                                (Notice: This feature may cause unstable on some OS)"
+  echo "       --help                   Show these messages"
+}
+
+# parse arguments
 set_prefix=
-if test "$1" != "" ; then
-  arg_name=`echo $1 | cut -d= -f1`
-  arg_value=`echo $1 | cut -d= -f2`
-  if test "$arg_name" = "--prefix"; then
-	set_prefix=$arg_value
-  fi
-fi
+set_force="no"
+xs_add_option=""
+
+i=0
+while [ $i -lt $# ] ; do
+  i=`expr $i + 1`
+  eval arg=\$$i
+  opt=`echo $arg | cut -d= -f1`
+  val=`echo $arg | cut -d= -f2`
+  case $opt in
+	"--prefix")
+	  set_prefix="$val"
+	;;
+	"--clean")
+	  do_clean
+	  exit
+	;;
+	"--force")
+	  if test "$val" != "no" ; then
+        set_force=yes
+      fi
+	;;
+	"--enable-debug"|"--enable-memory-cache")
+	  xs_add_option="$xs_add_option $arg"
+	;;
+	"--help")
+      show_usage
+      exit
+	;;
+	*)
+	  echo "ERROR: unknown option '$arg'" >&2
+	  echo "" >&2
+	  show_usage
+	  exit -1
+	;;
+  esac
+done
 
 # welcome msg
 echo
@@ -112,7 +155,7 @@ elif test -f $prefix/include/scws/scws_version.h ; then
 else
   echo "no"
 fi
-do_install=
+do_install=$set_force
 new_file=`ls ./packages/scws-* | grep -v dict`
 new_version=`echo $new_file | sed 's#^.*scws-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
@@ -145,7 +188,7 @@ if test "$do_install" = "yes" ; then
 fi
 
 # check & install scws dict
-do_install=
+do_install=$set_force
 new_dict=./packages/scws-dict-chs-utf8.tar.bz2
 old_dict=$prefix/etc/dict.utf8.xdb
 echo -n "Checking scws dict ... "
@@ -211,7 +254,7 @@ if test -f $prefix/include/xapian/version.h ; then
 else
   echo "no"
 fi
-do_install=
+do_install=$set_force
 new_file=`ls ./packages/xapian-core-scws-*`
 new_version=`echo $new_file | sed 's#^.*xapian-core-scws-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
@@ -252,7 +295,7 @@ if test -f $prefix/include/event-config.h ; then
 else
   echo "no"
 fi
-do_install=
+do_install=$set_force
 new_file=`ls ./packages/libevent-*`
 new_version=`echo $new_file | sed 's#^.*libevent-\(.*\)\.tar\.bz2#\1#'`
 if test -z "$old_version" ; then
@@ -295,7 +338,7 @@ echo "Extracting xunsearch package ($new_version) ..."
 tar -xjf $new_file
 cd xunsearch-$new_version
 echo "Configuring xunsearch ..."
-./configure --prefix=$prefix --with-scws=$prefix \
+./configure --prefix=$prefix --with-scws=$prefix $xs_add_option \
 --with-libevent=$prefix --with-xapian=$prefix >> ../setup.log 2>&1
 if test $? -ne 0 ; then
   setup_abort "configure xunsearch"
