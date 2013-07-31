@@ -2067,6 +2067,7 @@ scws_end:
 	if (rc != CMD_RES_PAUSE && rc != CMD_RES_TIMEOUT) {
 		conn_quit(conn, rc);
 	} else {
+		CONN_FLUSH();
 		conn->zarg = NULL;
 		conn->flag ^= CONN_FLAG_ON_SCWS;
 		conn->tv.tv_sec = tv_sec;
@@ -2212,6 +2213,7 @@ task_end:
 	if (rc != CMD_RES_PAUSE) {
 		conn_quit(conn, rc);
 	} else {
+		CONN_FLUSH();
 		conn->zarg = NULL;
 		conn_server_push_back(conn);
 	}
