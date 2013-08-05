@@ -615,7 +615,9 @@ class XSSearch extends XSServer
 			// trigger log & highlight
 			if ($this->_curDb !== self::LOG_DB) {
 				$this->logQuery();
-				$this->initHighlight();
+				if ($saveHighlight) {
+					$this->initHighlight();
+				}
 			}
 		}
 		$this->_limit = $this->_offset = 0;
