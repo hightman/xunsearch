@@ -548,11 +548,12 @@ class XSSearch extends XSServer
 	 * 默认提取最匹配的前 self::PAGE_SIZE 个结果
 	 * 如需分页请参见 {@link setLimit} 设置, 每次调用本函数后都会还原 setLimit 的设置
 	 * @param string $query 搜索语句, 若传入 null 使用默认语句, 最大长度为 80 字节
+	 * @param boolean $saveHighlight 是否存储查询词用于高亮处理, 默认为 true
 	 * @return XSDocument[] 匹配的搜索结果文档列表
 	 */
-	public function search($query = null)
+	public function search($query = null, $saveHighlight = true)
 	{
-		if ($this->_curDb !== self::LOG_DB) {
+		if ($this->_curDb !== self::LOG_DB && $saveHighlight) {
 			$this->_highlight = $query;
 		}
 		$query = $query === null ? '' : $this->preQueryString($query);

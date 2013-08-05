@@ -389,11 +389,24 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct search_r
 			data.resize(0);
 			while (tb != te) {
 				string tt = *tb;
-				for (i = 0; tt[i] >= 'A' && tt[i] <= 'Z'; i++);
-				if (data.size() == 0) {
-					data = tt.substr(i);
+				Xapian::TermIterator ub = zarg->qp->unstem_begin(tt);
+				Xapian::TermIterator ue = zarg->qp->unstem_end(tt);
+				if (ub == ue) {
+					for (i = 0; tt[i] >= 'A' && tt[i] <= 'Z'; i++);
+					if (data.size() == 0) {
+						data = tt.substr(i);
+					} else {
+						data += " " + tt.substr(i);
+					}
 				} else {
-					data += " " + tt.substr(i);
+					while (ub != ue) {
+						tt = *ub++;
+						if (data.size() == 0) {
+							data = tt;
+						} else {
+							data += " " + tt;
+						}
+					}
 				}
 				tb++;
 			}
