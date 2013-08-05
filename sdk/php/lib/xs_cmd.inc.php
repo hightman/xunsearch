@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/07/31 18:37 */
+/* Automatically generated at 2013/08/05 12:40 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -40,6 +40,7 @@ define('CMD_ERR',	129);
 define('CMD_SEARCH_RESULT_DOC',	140);
 define('CMD_SEARCH_RESULT_FIELD',	141);
 define('CMD_SEARCH_RESULT_FACETS',	142);
+define('CMD_SEARCH_RESULT_MATCHED',	143);
 define('CMD_DOC_TERM',	160);
 define('CMD_DOC_VALUE',	161);
 define('CMD_DOC_INDEX',	162);
@@ -102,6 +103,8 @@ define('CMD_INDEX_REQUEST_ADD',	0);
 define('CMD_INDEX_REQUEST_UPDATE',	1);
 define('CMD_INDEX_SYNONYMS_ADD',	0);
 define('CMD_INDEX_SYNONYMS_DEL',	1);
+define('CMD_SEARCH_MISC_SYN_SCALE',	1);
+define('CMD_SEARCH_MISC_MATCHED_TERM',	2);
 define('CMD_SCWS_GET_VERSION',	1);
 define('CMD_SCWS_GET_RESULT',	2);
 define('CMD_SCWS_GET_TOPS',	3);

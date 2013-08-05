@@ -379,6 +379,26 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct search_r
 
 		cut_matched_string(data, vno, rd->docid, (struct search_zarg *) conn->zarg);
 		rc = conn_respond(conn, CMD_SEARCH_RESULT_FIELD, vno, data.data(), data.size());
+
+		// send matched terms
+		if (conn->flag & CONN_FLAG_MATCHED_TERM) {
+			int i;
+			Xapian::TermIterator tb = zarg->eq->get_matching_terms_begin(rd->docid);
+			Xapian::TermIterator te = zarg->eq->get_matching_terms_end(rd->docid);
+			// get matched terms
+			data.resize(0);
+			while (tb != te) {
+				string tt = *tb;
+				for (i = 0; tt[i] >= 'A' && tt[i] <= 'Z'; i++);
+				if (data.size() == 0) {
+					data = tt.substr(i);
+				} else {
+					data += " " + tt.substr(i);
+				}
+				tb++;
+			}
+			rc = conn_respond(conn, CMD_SEARCH_RESULT_MATCHED, 0, data.data(), data.size());
+		}
 	} catch (const Xapian::Error &e) {
 		// ignore the error simply
 		log_error_conn("xapian exception on sending doc (ERROR:%s)", e.get_msg().data());
@@ -602,8 +622,14 @@ static int zcmd_task_default(XS_CONN *conn)
 			zarg->eq->set_cutoff(cmd->arg1 > 100 ? 100 : cmd->arg1, (double) cmd->arg2 / 10.0);
 			break;
 		case CMD_SEARCH_SET_MISC:
-			if (cmd->arg1 == 1) {
+			if (cmd->arg1 == CMD_SEARCH_MISC_SYN_SCALE) {
 				zarg->qp->set_syn_scale((double) cmd->arg2 / 100.0);
+			} else if (cmd->arg1 == CMD_SEARCH_MISC_MATCHED_TERM) {
+				if (cmd->arg2 == 1) {
+					conn->flag |= CONN_FLAG_MATCHED_TERM;
+				} else {
+					conn->flag &= ~CONN_FLAG_MATCHED_TERM;
+				}
 			}
 			break;
 		case CMD_QUERY_INIT:

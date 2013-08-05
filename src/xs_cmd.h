@@ -315,6 +315,12 @@ struct xs_import_hdr
 #define	CMD_SEARCH_RESULT_FACETS	142
 
 /**
+ * Result matched terms of document
+ * blen:terms_len, buff:terms_string (implode by ' ')
+ */
+#define	CMD_SEARCH_RESULT_MATCHED	143
+
+/**
  * -----------------------------------------
  * Request commands without respond: 160~255
  * -----------------------------------------
@@ -417,8 +423,8 @@ struct xs_import_hdr
 
 /**
  * Set misc options of search
- * arg1:type(syn_scale|...)
- * arg2:scale*10
+ * arg1:type(1:syn_scale|2:matched_term)
+ * arg2:scale*10|0/1|
  */
 #define	CMD_SEARCH_SET_MISC		200
 
@@ -545,6 +551,10 @@ struct xs_import_hdr
 // 10. synonyms op
 #define	CMD_INDEX_SYNONYMS_ADD		0
 #define	CMD_INDEX_SYNONYMS_DEL		1
+
+// 11. search misc options
+#define	CMD_SEARCH_MISC_SYN_SCALE		1
+#define	CMD_SEARCH_MISC_MATCHED_TERM	2
 
 /**
  * ----------------------------------

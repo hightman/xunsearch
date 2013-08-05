@@ -89,7 +89,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 设置百分比/权重剔除参数
-	 * 通常是在开启 {setFuzzy} 或使用 OR 连接搜索语句时才需要设置此项
+	 * 通常是在开启 {@link setFuzzy} 或使用 OR 连接搜索语句时才需要设置此项
 	 * @param int $percent 剔除匹配百分比低于此值的文档, 值范围 0-100
 	 * @param float $weight 剔除权重低于此值的文档, 值范围 0.1-25.5, 0 表示不剔除
 	 * @return XSSearch 返回对象本身以支持串接操作
@@ -100,6 +100,22 @@ class XSSearch extends XSServer
 		$percent = max(0, min(100, intval($percent)));
 		$weight = max(0, (intval($weight * 10) & 255));
 		$cmd = new XSCommand(CMD_SEARCH_SET_CUTOFF, $percent, $weight);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
+	 * 设置在搜索结果文档中返回匹配词表
+	 * 请在 {@link search} 前调用本方法, 然后使用 {@link XSDocument::matched} 获取
+	 * @param bool $value 设为 true 表示开启返回, 设为 false 关闭该功能, 默认是不开启
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.4.8
+	 */
+	public function setRequireMatchedTerm($value = true)
+	{
+		$arg1 = CMD_SEARCH_MISC_MATCHED_TERM;
+		$arg2 = $value === true ? 1 : 0;
+		$cmd = new XSCommand(CMD_SEARCH_SET_MISC, $arg1, $arg2);
 		$this->execCommand($cmd);
 		return $this;
 	}
@@ -130,7 +146,7 @@ class XSSearch extends XSServer
 	 */
 	public function setSynonymScale($value)
 	{
-		$arg1 = 1;
+		$arg1 = CMD_SEARCH_MISC_SYN_SCALE;
 		$arg2 = max(0, (intval($value * 100) & 255));
 		$cmd = new XSCommand(CMD_SEARCH_SET_MISC, $arg1, $arg2);
 		$this->execCommand($cmd);
@@ -578,6 +594,11 @@ class XSSearch extends XSServer
 				if (isset($doc)) {
 					$name = isset($vnoes[$res->arg]) ? $vnoes[$res->arg] : $res->arg;
 					$doc->setField($name, $res->buf);
+				}
+			} elseif ($res->cmd == CMD_SEARCH_RESULT_MATCHED) {
+				// matched terms
+				if (isset($doc)) {
+					$doc->setField('matched', explode(' ', $res->buf), true);
 				}
 			} elseif ($res->cmd == CMD_OK && $res->arg == CMD_OK_RESULT_END) {
 				// got the end

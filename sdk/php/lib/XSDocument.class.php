@@ -34,6 +34,7 @@
  * @method int percent() percent(void) 取得搜索结果文档的匹配百分比 (结果匹配度, 1~100)
  * @method float weight() weight(void) 取得搜索结果文档的权重值 (浮点数)
  * @method int ccount() ccount(void) 取得搜索结果折叠的数量 (按字段折叠搜索时)
+ * @method array matched() matched(void) 取得搜索结果文档中匹配查询的词汇 (数组)
  *
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
@@ -164,13 +165,22 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * 设置某个字段的值
 	 * @param string $name 字段名称
 	 * @param mixed $value 字段值
+	 * @param bool $isMeta 是否为元数据字段
 	 */
-	public function setField($name, $value)
+	public function setField($name, $value, $isMeta = false)
 	{
 		if ($value === null) {
-			unset($this->_data[$name]);
+			if ($isMeta) {
+				unset($this->_meta[$name]);
+			} else {
+				unset($this->_data[$name]);
+			}
 		} else {
-			$this->_data[$name] = $value;
+			if ($isMeta) {
+				$this->_meta[$name] = $value;
+			} else {
+				$this->_data[$name] = $value;
+			}
 		}
 	}
 
