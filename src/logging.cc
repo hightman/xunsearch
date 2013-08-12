@@ -374,7 +374,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			int plen;
 
 			log_info("+add term (TERM:%s, TAG:%s, WDF:%d)", words.data(), stat_tag, wdf);
-			tmp = Xapian::sortable_serialise((double) wdf);
+			tmp = Xapian::sortable_serialise((double)(db_term == false ? wdf : 0));
 			doc.add_value(VNO_TOTAL, tmp); // total
 			doc.add_value(VNO_LASTNUM, tmp); // last_num
 			doc.add_value(VNO_CURRNUM, tmp); // curr_num
