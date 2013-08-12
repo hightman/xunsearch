@@ -628,7 +628,8 @@ class XS extends XSComponent
 				$cache = eaccelerator_get($cache_key);
 				$cache_write = 'eaccelerator_put';
 			}
-			if ($cache && isset($cache['mtime']) && filemtime($file) <= $cache['mtime']) {
+			if ($cache && isset($cache['mtime']) && isset($cache['scheme'])
+					&& filemtime($file) <= $cache['mtime']) {
 				// cache HIT
 				$this->_scheme = $this->_bindScheme = unserialize($cache['scheme']);
 				$this->_config = $cache['config'];
