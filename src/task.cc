@@ -2188,7 +2188,15 @@ void task_exec(void *arg)
 			char fpath[256];
 			sprintf(fpath, "%s/" CUSTOM_DICT_FILE, conn->user->home);
 			scws_add_dict(s, fpath, SCWS_XDICT_TXT);
-			db = fetch_conn_database(conn, DEFAULT_DB_NAME);
+			try {
+				db = fetch_conn_database(conn, DEFAULT_DB_NAME);
+			} catch (...) {
+				/* hightman.20130813: Tempory fix bug for NODB */
+				Xapian::WritableDatabase *wdb;
+				wdb = new Xapian::WritableDatabase(string(conn->user->home) + "/" DEFAULT_DB_NAME, Xapian::DB_CREATE_OR_OPEN);
+				delete wdb;
+				db = fetch_conn_database(conn, DEFAULT_DB_NAME);
+			}
 			zarg.db = new Xapian::Database();
 			zarg.db->add_database(*db);
 			try {
