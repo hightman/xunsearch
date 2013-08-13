@@ -117,10 +117,10 @@ static void xs_logging_call(XS_USER *user)
 		if (pid == 0) {
 			char *option, *home;
 			if (user == NULL) {
-				option = "-SQT";
+				option = "-SQ";
 				home = DEFAULT_DATA_DIR;
 			} else {
-				option = "-QT";
+				option = "-Q";
 				home = user->home;
 			}
 			EXTERNAL_CALL(xs_logging, "xs-logging", option, home);

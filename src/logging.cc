@@ -706,6 +706,9 @@ child_begin:
 	}
 
 	// initlize from defaul db
+	if (database.get_doccount() == 0) {
+		flag |= FLAG_DBTERMS;
+	}
 	if ((flag & FLAG_DBTERMS) && home != NULL) {
 		load_db_terms(home);
 		log_notice("terms loaded (ADD:%d, UPDATE:%d, FAILED:%d, DB_TOTAL:%d)",
