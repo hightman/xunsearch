@@ -1,7 +1,6 @@
 #!/bin/sh
 # FULL fast install/upgrade script
-# --prefix=...
-# --clean
+# See help message via `--help'
 # $Id$
 
 # self check
@@ -34,18 +33,21 @@ show_usage()
 {
   echo "Usage: $0 [options]"
   echo "       --prefix=DIR             Specify install directory, default: $def_prefix"
-  echo "       --clean                  Just clean extracted package files"
+  echo "       --no-clean               Keep extracted package files after installation completed"
   echo "       --force                  Force to recompile all packages"
   echo "       --enable-debug           Trun on debug symbol and verbose log info"
   echo "       --enable-memory-cache    Enable memory cache for xs-searchd"
   echo "                                (Notice: This feature may cause unstable on some OS)"
+  echo "       --jobs=N                 Specify the number of make jobs to run simultaneously"
   echo "       --help                   Show these messages"
 }
 
 # parse arguments
 set_prefix=
 set_force="no"
-xs_add_option=""
+set_no_clean="no"
+mk_add_option=
+xs_add_option=
 
 i=0
 while [ $i -lt $# ] ; do
@@ -57,6 +59,10 @@ while [ $i -lt $# ] ; do
 	"--prefix")
 	  set_prefix="$val"
 	;;
+	"--no-clean")
+	  set_no_clean=yes
+	;;
+	# just for back compatibility
 	"--clean")
 	  do_clean
 	  exit
@@ -68,6 +74,9 @@ while [ $i -lt $# ] ; do
 	;;
 	"--enable-debug"|"--enable-memory-cache")
 	  xs_add_option="$xs_add_option $arg"
+	;;
+	"--jobs")
+	  mk_add_option="$mk_add_option -j$val"
 	;;
 	"--help")
       show_usage
@@ -123,6 +132,8 @@ echo
 else
 echo "Specified installation directory: $set_prefix"
 fi
+
+echo $mk_add_option
 
 # record it
 prefix=$set_prefix
@@ -180,7 +191,7 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure scws"
   fi
   echo "Compiling & installing scws ..."
-  make clean install >> ../setup.log 2>&1
+  make $mk_add_option clean install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile scws"
   fi
@@ -232,7 +243,7 @@ if test -z "$uuid_place" ; then
     setup_abort "configure libuuid"
   fi
   echo "Compiling & installing libuuid ..."
-  make clean install >> ../setup.log 2>&1
+  make $mk_add_option clean install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile libuuid"
   fi
@@ -279,7 +290,7 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure xapian-core-scws"
   fi
   echo "Compiling & installing xapian-core-scws ..."
-  make clean install >> ../setup.log 2>&1
+  make $mk_add_option clean install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile xapian-core-scws"
   fi
@@ -320,7 +331,7 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure libevent"
   fi
   echo "Compiling & installing libevent ..."
-  make clean install >> ../setup.log 2>&1
+  make $mk_add_option clean install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile libevent"
   fi
@@ -344,11 +355,16 @@ if test $? -ne 0 ; then
   setup_abort "configure xunsearch"
 fi
 echo "Compiling & installing xunsearch ..."
-make clean install >> ../setup.log 2>&1
+make $mk_add_option clean install >> ../setup.log 2>&1
 if test $? -ne 0 ; then
   setup_abort "compile xunsearch"
 fi
 cd ..
+
+# clean
+if test "$set_no_clean" = "no" ; then
+  do_clean
+fi
 
 # all done
 echo
@@ -361,7 +377,7 @@ echo "| 1. 开启/重新开启 xunsearch 服务程序，命令如下： |"
 echo "|    $prefix/bin/xs-ctl.sh restart"
 echo "|    强烈建议将此命令写入服务器开机脚本中         |"
 echo "|                                                 |"
-echo "| 2. 所有的索引数据将被保存在下面这个目录中：    |"
+echo "| 2. 所有的索引数据将被保存在下面这个目录中：     |"
 echo "|    $prefix/data"
 echo "|    如需要转移到其它目录，请使用软链接。         |"
 echo "|                                                 |"
