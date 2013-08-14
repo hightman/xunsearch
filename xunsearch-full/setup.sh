@@ -133,8 +133,6 @@ else
 echo "Specified installation directory: $set_prefix"
 fi
 
-echo $mk_add_option
-
 # record it
 prefix=$set_prefix
 echo $prefix > $HOME/.xs_installed
@@ -175,7 +173,7 @@ if test -z "$old_version" ; then
     exit 2
   fi
   echo "Installing scws ($new_version) ... "
-  do_install=yes  
+  do_install=yes
 elif ! test -z "$new_version" && test "$new_version" != "$old_version" ; then
   echo "Upgrading scws ($old_version -> $new_version)"
   do_install=yes
@@ -191,7 +189,8 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure scws"
   fi
   echo "Compiling & installing scws ..."
-  make $mk_add_option clean install >> ../setup.log 2>&1
+  make clean >> ../setup.log 2>&1
+  make $mk_add_option install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile scws"
   fi
@@ -243,7 +242,8 @@ if test -z "$uuid_place" ; then
     setup_abort "configure libuuid"
   fi
   echo "Compiling & installing libuuid ..."
-  make $mk_add_option clean install >> ../setup.log 2>&1
+  make clean >> ../setup.log 2>&1
+  make $mk_add_option install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile libuuid"
   fi
@@ -274,7 +274,7 @@ if test -z "$old_version" ; then
     exit 2
   fi
   echo "Installing xapian-core-scws ($new_version) ... "
-  do_install=yes  
+  do_install=yes
 elif ! test -z "$new_version" && test "$new_version" != "$old_version" ; then
   echo "Upgrading xapian ($old_version -> $new_version)"
   do_install=yes
@@ -290,7 +290,8 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure xapian-core-scws"
   fi
   echo "Compiling & installing xapian-core-scws ..."
-  make $mk_add_option clean install >> ../setup.log 2>&1
+  make clean >> ../setup.log 2>&1
+  make $mk_add_option install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile xapian-core-scws"
   fi
@@ -315,7 +316,7 @@ if test -z "$old_version" ; then
     exit 2
   fi
   echo "Installing libevent ($new_version) ... "
-  do_install=yes  
+  do_install=yes
 elif ! test -z "$new_version" && test "$new_version" != "$old_version" ; then
   echo "Upgrading libevent ($old_version -> $new_version)"
   do_install=yes
@@ -331,7 +332,8 @@ if test "$do_install" = "yes" ; then
     setup_abort "configure libevent"
   fi
   echo "Compiling & installing libevent ..."
-  make $mk_add_option clean install >> ../setup.log 2>&1
+  make clean >> ../setup.log 2>&1
+  make $mk_add_option install >> ../setup.log 2>&1
   if test $? -ne 0 ; then
     setup_abort "compile libevent"
   fi
@@ -355,7 +357,8 @@ if test $? -ne 0 ; then
   setup_abort "configure xunsearch"
 fi
 echo "Compiling & installing xunsearch ..."
-make $mk_add_option clean install >> ../setup.log 2>&1
+make clean >> ../setup.log 2>&1
+make $mk_add_option install >> ../setup.log 2>&1
 if test $? -ne 0 ; then
   setup_abort "compile xunsearch"
 fi
