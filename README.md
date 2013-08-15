@@ -49,6 +49,13 @@ SDK 开发文档
 请参看 [README.arch](README.arch)
 
 
+开源捐赠
+-------
+
+我们一直在努力，我们一直想做得更好，开源事业离不开大家的支持！
+[捐赠我们](http://www.xunsearch.com/site/donate)
+
+
 商业、其它技术支持
 ----------------
 
