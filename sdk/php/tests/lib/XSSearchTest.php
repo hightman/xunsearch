@@ -102,7 +102,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	{
 		self::$xs->search->setCharset('UTF8')->setFuzzy(false)->reopen(true);
 		self::$xs->search->setDb(null)->setTimeout(30);
-		self::$xs->index->setDb(null);
+		self::$xs->index->setDb('db');
 	}
 
 	/**
@@ -568,8 +568,9 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			
 		}
 		$this->assertNull($e1);
-		$this->assertInstanceOf('XSException', $e2);
-		$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
+		$this->assertNull($e2);
+		//$this->assertInstanceOf('XSException', $e2);
+		//$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
 	}
 
 	public function testCustomDict()
