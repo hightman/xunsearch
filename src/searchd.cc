@@ -76,7 +76,7 @@ MC *mc;
 #endif
 
 Xapian::Stem stemmer;
-Xapian::SimpleStopper stopper;
+Xapian::SimpleStopper *stopper;
 
 /**
  * Local static variables
@@ -488,6 +488,7 @@ int main(int argc, char *argv[])
 	worker_num = DEFAULT_WORKER_NUM;
 	stemmer = Xapian::Stem(DEFAULT_STEMMER);
 	main_flag = FLAG_MASTER;
+	stopper = NULL;
 
 #ifndef HAVE_SETPROCTITLE
 	save_main_args(argc, argv);
@@ -537,6 +538,7 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "WARNING: stopwords file not found (FILE:%s)\n", optarg);
 				} else {
 					char buf[64], *ptr;
+					stopper = new Xapian::SimpleStopper();
 					buf[sizeof (buf) - 1] = '\0';
 					while (fgets(buf, sizeof (buf) - 1, fp) != NULL) {
 						if (buf[0] == ';' || buf[0] == '#' || buf[0] == '\r' || buf[0] == '\n') {
@@ -554,7 +556,7 @@ int main(int argc, char *argv[])
 						while (*ptr == ' ' || *ptr == '\t') {
 							ptr++;
 						}
-						stopper.add(ptr);
+						stopper->add(ptr);
 					}
 					fclose(fp);
 				}

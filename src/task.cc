@@ -44,7 +44,7 @@ static scws_t _scws;
  * Extern global variables
  */
 extern Xapian::Stem stemmer;
-extern Xapian::SimpleStopper stopper;
+extern Xapian::SimpleStopper *stopper;
 using std::string;
 
 /**
@@ -2174,7 +2174,7 @@ void task_exec(void *arg)
 		zarg.qq = new Xapian::Query();
 		zarg.qp = get_queryparser();
 		zarg.qp->set_stemmer(stemmer);
-		zarg.qp->set_stopper(&stopper);
+		zarg.qp->set_stopper(stopper);
 		zarg.qp->set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
 		// scws object
 		pthread_mutex_lock(&qp_mutex);
