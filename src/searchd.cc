@@ -539,8 +539,8 @@ int main(int argc, char *argv[])
 				} else {
 					char buf[64], *ptr;
 					stopper = new Xapian::SimpleStopper();
-					buf[sizeof (buf) - 1] = '\0';
-					while (fgets(buf, sizeof (buf) - 1, fp) != NULL) {
+					buf[sizeof(buf) - 1] = '\0';
+					while (fgets(buf, sizeof(buf) - 1, fp) != NULL) {
 						if (buf[0] == ';' || buf[0] == '#' || buf[0] == '\r' || buf[0] == '\n') {
 							continue;
 						}
@@ -631,7 +631,7 @@ int main(int argc, char *argv[])
 	// init global variables
 	// TODO: check malloc return value & mm_global?
 	log_debug("init global states");
-	cc = sizeof (worker_t) * (worker_num + 1);
+	cc = sizeof(worker_t) * (worker_num + 1);
 	worker_pids = (worker_t *) malloc(cc);
 	memset(worker_pids, 0, cc);
 

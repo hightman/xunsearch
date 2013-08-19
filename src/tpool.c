@@ -239,7 +239,7 @@ tpool_t *tpool_init(tpool_t *tp, int max_total, int min_spare, int max_spare)
 	if (tp != NULL) {
 		tp->status = 0;
 	} else {
-		tp = (tpool_t *) malloc(sizeof (tpool_t));
+		tp = (tpool_t *) malloc(sizeof(tpool_t));
 		if (tp == NULL) {
 			return NULL;
 		}
@@ -274,7 +274,7 @@ tpool_t *tpool_init(tpool_t *tp, int max_total, int min_spare, int max_spare)
 	pthread_mutex_init(&tp->mutex, NULL);
 	pthread_cond_init(&tp->cond, NULL);
 
-	memset(tp->threads, 0, sizeof (tp->threads));
+	memset(tp->threads, 0, sizeof(tp->threads));
 	for (max_total = 0; max_total < TPOOL_MAX_LIMIT_THREADS; max_total++) {
 		tp->threads[max_total].status = TPOOL_THREAD_NONE;
 		tp->threads[max_total].index = max_total;
@@ -366,13 +366,13 @@ void tpool_exec(tpool_t *tp, tpool_func_t func, tpool_func_t cancel, void *arg)
 {
 	struct tpool_task *task;
 
-	task = (struct tpool_task *) malloc(sizeof (struct tpool_task));
+	task = (struct tpool_task *) malloc(sizeof(struct tpool_task));
 	if (task == NULL) {
-		debug_printf("failed to allocate memory for new task (SIZE:%d)", (int) sizeof (struct tpool_task));
+		debug_printf("failed to allocate memory for new task (SIZE:%d)", (int) sizeof(struct tpool_task));
 		return;
 	}
 
-	memset(task, 0, sizeof (struct tpool_task));
+	memset(task, 0, sizeof(struct tpool_task));
 	task->task_func = func;
 	task->cancel_func = cancel;
 	task->arg = arg;
@@ -540,7 +540,7 @@ int main()
 		printf(">");
 		fflush(stdout);
 
-		if (!fgets(buf, sizeof (buf) - 1, stdin)) {
+		if (!fgets(buf, sizeof(buf) - 1, stdin)) {
 			puts("Aborted!\n");
 			break;
 		}

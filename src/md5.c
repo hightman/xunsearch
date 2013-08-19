@@ -164,7 +164,7 @@ static void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 	PUT_32BIT_LSB_FIRST(digest + 4, ctx->buf[1]);
 	PUT_32BIT_LSB_FIRST(digest + 8, ctx->buf[2]);
 	PUT_32BIT_LSB_FIRST(digest + 12, ctx->buf[3]);
-	memset(ctx, 0, sizeof (ctx)); /* In case it's sensitive */
+	memset(ctx, 0, sizeof(ctx)); /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5

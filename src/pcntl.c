@@ -43,12 +43,12 @@ int pcntl_running(const char *bind, int save)
 
 	// get pid file
 	ptr = (char *) bind;
-	if (!strncmp(DEFAULT_TEMP_DIR, ptr, sizeof (DEFAULT_TEMP_DIR) - 1)) {
-		ptr += sizeof (DEFAULT_TEMP_DIR) - 1;
+	if (!strncmp(DEFAULT_TEMP_DIR, ptr, sizeof(DEFAULT_TEMP_DIR) - 1)) {
+		ptr += sizeof(DEFAULT_TEMP_DIR) - 1;
 	}
 	strcpy(pid_file, DEFAULT_TEMP_DIR "pid.");
 	fd = strlen(pid_file);
-	while (*ptr && (fd < sizeof (pid_file) - 1)) {
+	while (*ptr && (fd < sizeof(pid_file) - 1)) {
 		if (*ptr == '.' || *ptr == ':' || *ptr == '/') {
 			pid_file[fd] = '_';
 		} else {
@@ -66,8 +66,8 @@ int pcntl_running(const char *bind, int save)
 	}
 
 	// read exists pid
-	memset(pid_file, 0, sizeof (pid_file));
-	if (read(fd, pid_file, sizeof (pid_file) - 1) > 0) {
+	memset(pid_file, 0, sizeof(pid_file));
+	if (read(fd, pid_file, sizeof(pid_file) - 1) > 0) {
 		pid = atoi(pid_file);
 		if (kill(pid, 0) != 0) {
 			pid = 0;
@@ -387,8 +387,8 @@ void setproctitle(const char *fmt, ...)
 
 		eoa = orig_argv[orig_argc - 1] + strlen(orig_argv[orig_argc - 1]);
 		procttl_maxlen = eoa - orig_argv[0];
-		if (procttl_maxlen > sizeof (procttl_buf)) {
-			procttl_maxlen = sizeof (procttl_buf);
+		if (procttl_maxlen > sizeof(procttl_buf)) {
+			procttl_maxlen = sizeof(procttl_buf);
 		}
 		if ((eoa = strrchr(orig_argv[0], '/')) == NULL) {
 			eoa = orig_argv[0];

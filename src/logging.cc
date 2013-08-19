@@ -221,7 +221,7 @@ static bool valid_8bit_term(const string &term)
 	if (res == NULL) {
 		return term.size() > 6;
 	}
-	return (res->attr[0] != 'u' && res->attr[0] != 'x' && res->attr[0] != 'y');
+	return(res->attr[0] != 'u' && res->attr[0] != 'x' && res->attr[0] != 'y');
 }
 
 /**
@@ -374,7 +374,7 @@ static void add_log_words(const string &words, int wdf, bool db_term = false)
 			int plen;
 
 			log_info("+add term (TERM:%s, TAG:%s, WDF:%d)", words.data(), stat_tag, wdf);
-			tmp = Xapian::sortable_serialise((double)(db_term == false ? wdf : 0));
+			tmp = Xapian::sortable_serialise((double) (db_term == false ? wdf : 0));
 			doc.add_value(VNO_TOTAL, tmp); // total
 			doc.add_value(VNO_LASTNUM, tmp); // last_num
 			doc.add_value(VNO_CURRNUM, tmp); // curr_num
@@ -494,7 +494,7 @@ static void load_stat_tag(const char *tag)
 	} else if (!strcasecmp(tag, "day")) {
 		sprintf(stat_tag, "%04d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
 	} else { // FIXME: %Y may be wrong for first week
-		strftime(stat_tag, sizeof (stat_tag), "%Y-W%W", &tm);
+		strftime(stat_tag, sizeof(stat_tag), "%Y-W%W", &tm);
 	}
 }
 
@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
 		goto main_end;
 	}
 	if (dbpath == NULL) {
-		dbpath = (char *) malloc(strlen(home) + sizeof (SEARCH_LOG_DB) + 1);
+		dbpath = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_DB) + 1);
 		if (dbpath == NULL) {
 			log_error("failed to allocate memory for dbpath (ERROR:%s)", strerror(errno));
 			goto main_end;
@@ -665,7 +665,7 @@ int main(int argc, char *argv[])
 		flag |= FLAG_FREE_DBPATH;
 	}
 	if (logfile == NULL) {
-		logfile = (char *) malloc(strlen(home) + sizeof (SEARCH_LOG_FILE) + 1);
+		logfile = (char *) malloc(strlen(home) + sizeof(SEARCH_LOG_FILE) + 1);
 		if (logfile == NULL) {
 			log_error("failed to allocate memory for logfile (ERROR:%s)", strerror(errno));
 			goto main_end;

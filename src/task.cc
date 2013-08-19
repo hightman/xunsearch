@@ -199,7 +199,7 @@ static Xapian::QueryParser *get_queryparser()
 		}
 	}
 	if (head == NULL) /* alloc new one */ {
-		debug_malloc(head, sizeof (struct cache_qp), struct cache_qp);
+		debug_malloc(head, sizeof(struct cache_qp), struct cache_qp);
 		if (head == NULL) {
 			pthread_mutex_unlock(&qp_mutex);
 			throw new Xapian::InternalError("not enough memory to create cache_qp");
@@ -254,7 +254,7 @@ static inline void cut_matched_string(string &s, int v, unsigned int id, struct 
 		int i;
 		char buf[64];
 		buf[63] = '\0';
-		snprintf(buf, sizeof (buf) - 1, "%f", Xapian::sortable_unserialise(s));
+		snprintf(buf, sizeof(buf) - 1, "%f", Xapian::sortable_unserialise(s));
 		i = strlen(buf) - 1;
 		while (i >= 0) {
 			if (buf[i] == '0') {
@@ -359,7 +359,7 @@ static int send_result_doc(XS_CONN *conn, struct result_doc *rd, struct search_r
 		Xapian::ValueIterator v = d.values_begin();
 
 		// send doc header
-		rc = conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) rd, sizeof (struct result_doc));
+		rc = conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) rd, sizeof(struct result_doc));
 		if (rc != CMD_RES_CONT) {
 			return rc;
 		}
@@ -455,7 +455,7 @@ static void zarg_add_object(struct search_zarg *zarg, enum object_type type, con
 {
 	struct object_chain *oc;
 
-	debug_malloc(oc, sizeof (struct object_chain), struct object_chain);
+	debug_malloc(oc, sizeof(struct object_chain), struct object_chain);
 	if (oc == NULL) {
 		return;
 	}
@@ -542,7 +542,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			if (zarg->db == NULL) {
 				rc = CONN_RES_ERR(NODB);
 			} else {
-				rc = CONN_RES_OK3(DB_TOTAL, (char *) &zarg->db_total, sizeof (zarg->db_total));
+				rc = CONN_RES_OK3(DB_TOTAL, (char *) &zarg->db_total, sizeof(zarg->db_total));
 			}
 			break;
 		case CMD_SEARCH_ADD_LOG:
@@ -624,7 +624,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			if (XS_CMD_BLEN(cmd) > 0) {
 				int i, j;
 				unsigned char *buf = (unsigned char *) XS_CMD_BUF(cmd);
-				for (i = j = 0; i <= sizeof (zarg->facets) && j < XS_CMD_BLEN(cmd); j++) {
+				for (i = j = 0; i <= sizeof(zarg->facets) && j < XS_CMD_BLEN(cmd); j++) {
 					if (buf[j] < XS_DATA_VNO) {
 						zarg->facets[i++] = buf[j] + 1;
 					}
@@ -654,7 +654,7 @@ static int zcmd_task_default(XS_CONN *conn)
 				zarg->qp->clear();
 				zarg->qp->set_database(*zarg->db);
 				zarg->parse_flag = 0;
-				memset(&zarg->cuts, 0, sizeof (zarg->cuts));
+				memset(&zarg->cuts, 0, sizeof(zarg->cuts));
 			}
 			break;
 		case CMD_QUERY_PREFIX:
@@ -690,6 +690,7 @@ static int zcmd_task_default(XS_CONN *conn)
 		}
 			break;
 		case CMD_SEARCH_SCWS_SET:
+			// support multi only
 			if (cmd->arg1 == CMD_SCWS_SET_MULTI) {
 				scws_t scws = (scws_t) zarg->qp->get_scws();
 				if (scws != NULL) {
@@ -809,7 +810,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 #ifdef XS_HACK_UUID
 	if (is_hack_query(qq)) {
 		count = 5201344;
-		return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof (count));
+		return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof(count));
 	}
 #endif
 
@@ -872,7 +873,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 					cs.count = count;
 					cs.lastid = zarg->db->get_lastdocid();
 					C_LOCK_CACHE();
-					mc_put(mc, md5, &cs, sizeof (cs));
+					mc_put(mc, md5, &cs, sizeof(cs));
 					C_UNLOCK_CACHE();
 					log_debug_conn("search count cache created (KEY:%s, COUNT:%d)", md5, count);
 				} else if (cache_flag & CACHE_FOUND) {
@@ -886,7 +887,7 @@ static int zcmd_task_get_total(XS_CONN *conn)
 		}
 	}
 
-	return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof (count));
+	return CONN_RES_OK3(SEARCH_TOTAL, (char *) &count, sizeof(count));
 }
 
 /**
@@ -907,11 +908,11 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 	conn_server_add_num_task(1);
 	// load & clear specified facets
-	memset(facets, 0, sizeof (facets));
+	memset(facets, 0, sizeof(facets));
 	facets[0] = (conn->flag & CONN_FLAG_EXACT_FACETS) ? '+' : '~';
-	memcpy(facets + 1, zarg->facets, sizeof (zarg->facets));
+	memcpy(facets + 1, zarg->facets, sizeof(zarg->facets));
 	conn->flag &= ~CONN_FLAG_EXACT_FACETS;
-	memset(zarg->facets, 0, sizeof (zarg->facets));
+	memset(zarg->facets, 0, sizeof(zarg->facets));
 	log_debug_conn("search facets: %s(%d)", facets, strlen((const char *) facets));
 
 	// check db & data length
@@ -927,14 +928,14 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	FETCH_CMD_QUERY(qq);
 
 	// check input (off+limit) in buf1
-	if (XS_CMD_BLEN1(cmd) != (sizeof (int) + sizeof (int))) {
+	if (XS_CMD_BLEN1(cmd) != (sizeof(int) + sizeof(int))) {
 		if (XS_CMD_BLEN1(cmd) != 0)
 			return CONN_RES_ERR(WRONGFORMAT);
 		off = 0;
 		limit = (MAX_SEARCH_RESULT >> 4) + 1;
 	} else {
 		off = *((unsigned int *) XS_CMD_BUF1(cmd));
-		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof (int)));
+		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof(int)));
 		if (limit > MAX_SEARCH_RESULT) {
 			limit = MAX_SEARCH_RESULT;
 		}
@@ -967,11 +968,11 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		struct result_doc rd;
 
 		count = 5201314;
-		memset(&rd, 0, sizeof (rd));
+		memset(&rd, 0, sizeof(rd));
 		rd.docid = rd.rank = 1;
 		rd.percent = 100;
-		CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof (count));
-		conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) &rd, sizeof (struct result_doc));
+		CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count));
+		conn_respond(conn, CMD_SEARCH_RESULT_DOC, 0, (char *) &rd, sizeof(struct result_doc));
 		for (rc = 0; rc < 5; rc++) {
 			conn_respond(conn, CMD_SEARCH_RESULT_FIELD, rc == 4 ? XS_DATA_VNO : rc, data[rc].data(), data[rc].size());
 		}
@@ -1028,7 +1029,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		limit2 = (cache_flag & CACHE_USE) ? MAX_SEARCH_RESULT : limit;
 
 		// register search facets
-		memset(spy, 0, sizeof (spy));
+		memset(spy, 0, sizeof(spy));
 		for (i = 1; facets[i] != '\0'; i++) {
 			log_debug_conn("add match spy (VNO:%d)", facets[i] - 1);
 			spy[i - 1] = new Xapian::ValueCountMatchSpy(facets[i] - 1);
@@ -1045,7 +1046,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 			while (tv != spy[i]->values_end()) {
 				const string &tt = *tv++;
 				if (tt.size() <= 255) {
-					facets_len += 2 + sizeof (unsigned int) +tt.size();
+					facets_len += 2 + sizeof(unsigned int) +tt.size();
 				}
 			}
 		}
@@ -1053,9 +1054,9 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 		// create cache result buffer 
 		// FIXME: this may cause memory leak on Xapian::Exception
-		debug_malloc(cr, sizeof (struct search_result) +facets_len, struct search_result);
+		debug_malloc(cr, sizeof(struct search_result) +facets_len, struct search_result);
 		cr->facets_len = facets_len;
-		ptr = (unsigned char *) cr + sizeof (struct search_result);
+		ptr = (unsigned char *) cr + sizeof(struct search_result);
 
 		// filled with facets data
 		for (i = 0; spy[i] != NULL; i++) {
@@ -1067,7 +1068,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 					*ptr++ = facets[i + 1] - 1;
 					*ptr++ = (unsigned char) tt.size();
 					*((unsigned int *) ptr) = (unsigned int) tv.get_termfreq() * ro;
-					ptr += sizeof (unsigned int);
+					ptr += sizeof(unsigned int);
 					memcpy(ptr, tt.data(), tt.size());
 					ptr += tt.size();
 				}
@@ -1082,17 +1083,17 @@ static int zcmd_task_get_result(XS_CONN *conn)
 #ifdef HAVE_MEMORY_CACHE
 		if (count > MAX_SEARCH_RESULT && (cache_flag & CACHE_USE)) {
 			cache_flag |= CACHE_NEED;
-			memset(&cr->doc, 0, sizeof (cr->doc));
+			memset(&cr->doc, 0, sizeof(cr->doc));
 		}
 #endif
 		// first to send the total header
-		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof (count))) != CMD_RES_CONT) {
+		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &count, sizeof(count))) != CMD_RES_CONT) {
 			goto res_err1;
 		}
 
 		// send facets data
 		if (cr->facets_len > 0) {
-			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof (struct search_result), cr->facets_len);
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct search_result), cr->facets_len);
 		}
 
 		// send every document
@@ -1135,7 +1136,7 @@ res_err1:
 			cr->count = count;
 			cr->lastid = zarg->db->get_lastdocid();
 			C_LOCK_CACHE();
-			mc_put(mc, md5, cr, sizeof (struct search_result) +cr->facets_len);
+			mc_put(mc, md5, cr, sizeof(struct search_result) +cr->facets_len);
 			C_UNLOCK_CACHE();
 			log_debug_conn("search result cache created (KEY:%s, COUNT:%d)", md5, count);
 		} else if (cache_flag & CACHE_FOUND) {
@@ -1151,13 +1152,13 @@ res_err1:
 #ifdef HAVE_MEMORY_CACHE
 	else {
 		// send the total header (break to switch)
-		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &cr->count, sizeof (cr->count))) != CMD_RES_CONT) {
+		if ((rc = CONN_RES_OK3(RESULT_BEGIN, (char *) &cr->count, sizeof(cr->count))) != CMD_RES_CONT) {
 			goto res_err2;
 		}
 
 		// send facets data
 		if (cr->facets_len > 0) {
-			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof (struct search_result), cr->facets_len);
+			conn_respond(conn, CMD_SEARCH_RESULT_FACETS, 0, (char *) cr + sizeof(struct search_result), cr->facets_len);
 		}
 
 		// send documents
@@ -1192,7 +1193,7 @@ static int zcmd_task_get_synonyms(XS_CONN *conn)
 	}
 
 	// check input (off+limit) in buf1
-	if (XS_CMD_BLEN1(cmd) != (sizeof (int) + sizeof (int))) {
+	if (XS_CMD_BLEN1(cmd) != (sizeof(int) + sizeof(int))) {
 		if (XS_CMD_BLEN1(cmd) != 0) {
 			return CONN_RES_ERR(WRONGFORMAT);
 		}
@@ -1200,7 +1201,7 @@ static int zcmd_task_get_synonyms(XS_CONN *conn)
 		limit = MAX_SEARCH_RESULT;
 	} else {
 		off = *((unsigned int *) XS_CMD_BUF1(cmd));
-		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof (int)));
+		limit = *((unsigned int *) (XS_CMD_BUF1(cmd) + sizeof(int)));
 	}
 	log_debug_conn("list synonyms (USER:%s, OFF:%d, LIMIT:%d)", conn->user->name, off, limit);
 
@@ -1426,10 +1427,11 @@ static struct fixed_query *get_fixed_query(char *str, int len)
 	char *raw, *nsp, *end = str + len - 1;
 
 	// sizeof(struct) + <raw> \0 <non-space> \0 <py_buffer> \0
-	debug_malloc(fq, sizeof (struct fixed_query) + (len << 2) + 2, struct fixed_query);
-	if (fq == NULL)
+	debug_malloc(fq, sizeof(struct fixed_query) + (len << 2) + 2, struct fixed_query);
+	if (fq == NULL) {
 		return NULL;
-	raw = fq->raw = (char *) fq + sizeof (struct fixed_query);
+	}
+	raw = fq->raw = (char *) fq + sizeof(struct fixed_query);
 	nsp = fq->nsp = fq->raw + len + 1;
 	fq->py = fq->nsp + len + 1;
 	fq->flag = 0;
@@ -1893,8 +1895,8 @@ static int zcmd_scws_get(XS_CONN *conn)
 		cur = top = scws_get_tops(scws, cmd->arg2, xattr);
 		while (cur != NULL) {
 			wlen = strlen(cur->word);
-			if (!size || wlen > (size - sizeof (struct scws_response))) {
-				size = sizeof (struct scws_response) +wlen;
+			if (!size || wlen > (size - sizeof(struct scws_response))) {
+				size = sizeof(struct scws_response) +wlen;
 				rep = (struct scws_response *) realloc(rep, size);
 			}
 			// FIXME:
@@ -1905,7 +1907,7 @@ static int zcmd_scws_get(XS_CONN *conn)
 			rep->attr[3] = '\0';
 			memcpy(rep->attr, cur->attr, 2);
 			memcpy(rep->word, cur->word, wlen);
-			CONN_RES_OK3(SCWS_TOPS, (const char *) rep, wlen + sizeof (struct scws_response));
+			CONN_RES_OK3(SCWS_TOPS, (const char *) rep, wlen + sizeof(struct scws_response));
 			cur = cur->next;
 		}
 		scws_free_tops(top);
@@ -1925,8 +1927,8 @@ static int zcmd_scws_get(XS_CONN *conn)
 		scws_send_text(scws, text, XS_CMD_BLEN(cmd));
 		while ((cur = res = scws_get_result(scws)) != NULL) {
 			while (cur != NULL) {
-				if (!size || cur->len > (size - sizeof (struct scws_response))) {
-					size = sizeof (struct scws_response) +cur->len;
+				if (!size || cur->len > (size - sizeof(struct scws_response))) {
+					size = sizeof(struct scws_response) +cur->len;
 					rep = (struct scws_response *) realloc(rep, size);
 				}
 				// FIXME:
@@ -1937,7 +1939,7 @@ static int zcmd_scws_get(XS_CONN *conn)
 				rep->attr[3] = '\0';
 				memcpy(rep->attr, cur->attr, 2);
 				memcpy(rep->word, text + cur->off, cur->len);
-				CONN_RES_OK3(SCWS_RESULT, (const char *) rep, cur->len + sizeof (struct scws_response));
+				CONN_RES_OK3(SCWS_RESULT, (const char *) rep, cur->len + sizeof(struct scws_response));
 				cur = cur->next;
 			}
 			scws_free_result(res);
@@ -2053,7 +2055,7 @@ static void task_do_scws(XS_CONN *conn)
 	conn->zarg = (void *) scws_fork(_scws);
 	pthread_mutex_unlock(&qp_mutex);
 	if (conn->zarg == NULL) {
-		log_error_conn("scws_fork faillure (ERROR: out of memory?)");
+		log_error_conn("scws_fork failure (ERROR: out of memory?)");
 		CONN_RES_ERR(NOMEM);
 		rc = CMD_RES_ERROR;
 		goto scws_end;
@@ -2165,7 +2167,7 @@ void task_exec(void *arg)
 
 	// init the zarg
 	log_debug_conn("init search zarg");
-	memset(&zarg, 0, sizeof (zarg));
+	memset(&zarg, 0, sizeof(zarg));
 	conn->zarg = &zarg;
 	try {
 		scws_t s;

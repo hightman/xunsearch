@@ -168,8 +168,8 @@ static inline void batch_committed(int reopen)
 		// save new number of skip
 		if ((flag & FLAG_HEADER) && total > num_skip) {
 			off_t off = lseek(fd, 0, SEEK_CUR);
-			lseek(fd, sizeof (XS_CMD) + offsetof(struct xs_import_hdr, proc_num), SEEK_SET);
-			write(fd, &total, sizeof (total));
+			lseek(fd, sizeof(XS_CMD) + offsetof(struct xs_import_hdr, proc_num), SEEK_SET);
+			write(fd, &total, sizeof(total));
 			lseek(fd, off, SEEK_SET);
 		}
 	} catch (const Xapian::Error &e) {
@@ -314,7 +314,7 @@ static int header_read(struct xs_import_hdr *hdr)
 		return 0;
 	}
 
-	if (data_read(&cmd, sizeof (cmd)) < 0) {
+	if (data_read(&cmd, sizeof(cmd)) < 0) {
 		return -1;
 	}
 
@@ -333,8 +333,8 @@ static int header_read(struct xs_import_hdr *hdr)
 			return -1;
 		}
 
-		if (size > sizeof (struct xs_import_hdr)) {
-			size = sizeof (struct xs_import_hdr);
+		if (size > sizeof(struct xs_import_hdr)) {
+			size = sizeof(struct xs_import_hdr);
 		}
 		memcpy(hdr, buf, size);
 		free(buf);
@@ -358,7 +358,7 @@ static int doc_fetch()
 	XS_CMD cmd;
 
 	// read the first cmd header
-	if (data_read(&cmd, sizeof (cmd)) < 0) {
+	if (data_read(&cmd, sizeof(cmd)) < 0) {
 		return FETCH_ABORT;
 	}
 
@@ -398,7 +398,7 @@ static int doc_fetch()
 	// read cmd buffer? (try to get the vno from arg2)
 	buf = term = NULL;
 	if (size > 0) {
-		term = (char *) malloc(size + sizeof (prefix));
+		term = (char *) malloc(size + sizeof(prefix));
 		if (term == NULL) {
 			log_error("failed to allocate memory for command (CMD:%d, BUFSIZE:%d)", cmd.cmd, size);
 			return FETCH_ABORT;
@@ -510,7 +510,7 @@ static int doc_fetch()
 	indexer.set_document(doc);
 	do {
 		// read the doc cmd
-		if (data_read(&cmd, sizeof (cmd)) < 0) {
+		if (data_read(&cmd, sizeof(cmd)) < 0) {
 			rc = FETCH_ABORT;
 			goto doc_end;
 		}
@@ -707,8 +707,8 @@ int main(int argc, char *argv[])
 					log_notice("stopwords file not found (FILE:%s)", optarg);
 				} else {
 					char buf[64], *ptr;
-					buf[sizeof (buf) - 1] = '\0';
-					while (fgets(buf, sizeof (buf) - 1, fp) != NULL) {
+					buf[sizeof(buf) - 1] = '\0';
+					while (fgets(buf, sizeof(buf) - 1, fp) != NULL) {
 						if (buf[0] == ';' || buf[0] == '#' || buf[0] == '\r' || buf[0] == '\n')
 							continue;
 						ptr = buf + strlen(buf) - 1;
@@ -856,7 +856,7 @@ int main(int argc, char *argv[])
 			char dba_path[256];
 
 			flag |= FLAG_DEFAULT_DB;
-			snprintf(dba_path, sizeof (dba_path), "%.*s" DEFAULT_DB_NAME "_a", (int) (ptr - db_path), db_path);
+			snprintf(dba_path, sizeof(dba_path), "%.*s" DEFAULT_DB_NAME "_a", (int) (ptr - db_path), db_path);
 
 			log_info("try to open archive database (DB_A:%s)", dba_path);
 			archive = Xapian::WritableDatabase(dba_path, Xapian::DB_OPEN);

@@ -36,8 +36,8 @@ static const char *_log_level[] = {
 const char *log_ident(const char *ident)
 {
 	if (ident != NULL) {
-		memset(lid, 0, sizeof (lid));
-		strncpy(lid, ident, sizeof (lid) - 1);
+		memset(lid, 0, sizeof(lid));
+		strncpy(lid, ident, sizeof(lid) - 1);
 	}
 	return lid;
 }

@@ -111,11 +111,11 @@ XS_USER *xs_user_put(XS_USER *user)
 
 	G_LOCK_USER();
 	if ((new_user = xs_user_nget(user->name, strlen(user->name))) == NULL) {
-		DEBUG_G_MALLOC(new_user, sizeof (XS_USER), XS_USER);
+		DEBUG_G_MALLOC(new_user, sizeof(XS_USER), XS_USER);
 		if (new_user == NULL) {
-			log_error("G_MALLOC failed when create new user (SIZE:%d)", sizeof (XS_USER));
+			log_error("G_MALLOC failed when create new user (SIZE:%d)", sizeof(XS_USER));
 		} else {
-			memcpy(new_user, user, sizeof (XS_USER));
+			memcpy(new_user, user, sizeof(XS_USER));
 			new_user->next = G_VAR(user_base);
 			G_VAR(user_base) = new_user;
 		}
@@ -173,10 +173,10 @@ XS_DB *xs_user_get_db(XS_USER *user, const char *name, int len)
 		}
 	}
 	if (db == NULL && len <= XS_MAX_NAME_LEN) {
-		DEBUG_G_MALLOC(db, sizeof (XS_DB), XS_DB);
+		DEBUG_G_MALLOC(db, sizeof(XS_DB), XS_DB);
 		if (db != NULL) {
 			// NOTE: Please ensure that len is less than XS_MAX_NAME_LEN+1
-			memset(db, 0, sizeof (XS_DB));
+			memset(db, 0, sizeof(XS_DB));
 			memcpy(db->name, name, len);
 			db->next = user->db;
 			db->flag = XS_DBF_FORCE_COMMIT;

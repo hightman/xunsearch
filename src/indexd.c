@@ -305,7 +305,7 @@ static XS_DB *db_get_by_pid(pid_t pid, XS_USER **db_user)
 static inline XS_DB *get_conn_wdb(XS_CONN *conn)
 {
 	if (conn->wdb == NULL) {
-		conn->wdb = xs_user_get_db(conn->user, DEFAULT_DB_NAME, sizeof (DEFAULT_DB_NAME) - 1);
+		conn->wdb = xs_user_get_db(conn->user, DEFAULT_DB_NAME, sizeof(DEFAULT_DB_NAME) - 1);
 	}
 	return conn->wdb;
 }
@@ -564,23 +564,23 @@ static inline void update_eff_size(int fd)
 {
 	off_t size = lseek(fd, 0, SEEK_CUR);
 
-	if (size > (sizeof (XS_CMD) + sizeof (struct xs_import_hdr))) {
-		lseek(fd, sizeof (XS_CMD) + offsetof(struct xs_import_hdr, eff_size), SEEK_SET);
-		write(fd, &size, sizeof (off_t));
+	if (size > (sizeof(XS_CMD) + sizeof(struct xs_import_hdr))) {
+		lseek(fd, sizeof(XS_CMD) + offsetof(struct xs_import_hdr, eff_size), SEEK_SET);
+		write(fd, &size, sizeof(off_t));
 		lseek(fd, size, SEEK_SET);
 	} else {
 		XS_CMD cmd;
 		struct xs_import_hdr hdr;
 
-		memset(&cmd, 0, sizeof (XS_CMD));
-		memset(&hdr, 0, sizeof (struct xs_import_hdr));
+		memset(&cmd, 0, sizeof(XS_CMD));
+		memset(&hdr, 0, sizeof(struct xs_import_hdr));
 		cmd.cmd = CMD_IMPORT_HEADER;
-		cmd.blen = sizeof (struct xs_import_hdr);
-		hdr.eff_size = sizeof (XS_CMD) + sizeof (struct xs_import_hdr);
+		cmd.blen = sizeof(struct xs_import_hdr);
+		hdr.eff_size = sizeof(XS_CMD) + sizeof(struct xs_import_hdr);
 
 		lseek(fd, 0, SEEK_SET);
-		write(fd, &cmd, sizeof (XS_CMD));
-		write(fd, &hdr, sizeof (struct xs_import_hdr));
+		write(fd, &cmd, sizeof(XS_CMD));
+		write(fd, &hdr, sizeof(struct xs_import_hdr));
 		ftruncate(fd, hdr.eff_size);
 	}
 }
@@ -594,10 +594,10 @@ static inline void check_eff_size(int fd)
 	off_t file_size, eff_size = 0;
 
 	file_size = lseek(fd, 0, SEEK_END);
-	lseek(fd, sizeof (XS_CMD) + offsetof(struct xs_import_hdr, eff_size), SEEK_SET);
+	lseek(fd, sizeof(XS_CMD) + offsetof(struct xs_import_hdr, eff_size), SEEK_SET);
 
-	if (read(fd, &eff_size, sizeof (off_t)) != sizeof (off_t)
-			|| eff_size > file_size || eff_size <= (sizeof (XS_CMD) + sizeof (struct xs_import_hdr))) {
+	if (read(fd, &eff_size, sizeof(off_t)) != sizeof(off_t)
+			|| eff_size > file_size || eff_size <= (sizeof(XS_CMD) + sizeof(struct xs_import_hdr))) {
 		// invalid file, reset import header
 		if (file_size > 0) {
 			log_notice("reset import file header (FILE_SIZE:%ld, EFF_SIZE:%ld)",
@@ -796,7 +796,7 @@ static int save_conn_request(XS_CONN *conn)
 		unsigned int off = 0, blen = XS_CMD_BLEN(cmd);
 
 		// NOTICE: cmd pointer was changed
-		while ((blen - off) >= sizeof (XS_CMD)) {
+		while ((blen - off) >= sizeof(XS_CMD)) {
 			cmd = (XS_CMD *) (buf + off);
 			off += XS_CMD_SIZE(cmd);
 
@@ -943,7 +943,7 @@ static int index_zcmd_exec(XS_CONN *conn)
 			int fd, size = 0;
 			char fpath[256];
 
-			snprintf(fpath, sizeof (fpath) - 1, "%s/" CUSTOM_DICT_FILE, conn->user->home);
+			snprintf(fpath, sizeof(fpath) - 1, "%s/" CUSTOM_DICT_FILE, conn->user->home);
 			if (cmd->arg1 == 0) // get dict
 			{
 				char *buf = NULL;
@@ -1041,7 +1041,7 @@ static int index_zcmd_exec(XS_CONN *conn)
 				rc = CONN_RES_ERR(NODB);
 			} else {
 				char buf[256];
-				snprintf(buf, sizeof (buf) - 1, "{\"name\":\"%s\", \"flag\":%d, \"fd\":%d, \"count\":%d, \"pid\":%d}",
+				snprintf(buf, sizeof(buf) - 1, "{\"name\":\"%s\", \"flag\":%d, \"fd\":%d, \"count\":%d, \"pid\":%d}",
 						conn->wdb->name, conn->wdb->flag, conn->wdb->fd, conn->wdb->count, conn->wdb->pid);
 				rc = CONN_RES_OK2(DB_INFO, buf);
 			}
@@ -1221,8 +1221,8 @@ int main(int argc, char *argv[])
 		goto main_end;
 	}
 	// check the import/logging binary executable file
-	snprintf(xs_import, sizeof (xs_import), "%s/xs-import", epath);
-	snprintf(xs_logging, sizeof (xs_logging), "%s/xs-logging", epath);
+	snprintf(xs_import, sizeof(xs_import), "%s/xs-import", epath);
+	snprintf(xs_logging, sizeof(xs_logging), "%s/xs-logging", epath);
 	if (access(xs_import, X_OK) < 0) {
 		fprintf(stderr, "ERROR: `xs-import' checking failure (FILE:%s, ERROR:%s)\n",
 				xs_import, strerror(errno));

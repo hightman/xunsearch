@@ -88,7 +88,7 @@ static int ym_flag(const char *ym, int len)
 {
 	int high, low, mid, cmp;
 
-	high = sizeof (ym_table) / sizeof (struct yunmu) - 1;
+	high = sizeof(ym_table) / sizeof(struct yunmu) - 1;
 	low = 0;
 	while (low <= high) {
 		mid = (high + low) >> 1;
@@ -130,9 +130,9 @@ static inline void py_list_append(py_list **pl, py_list *join)
  */
 static inline py_list *py_list_item(const char *py, int len)
 {
-	py_list *cur = (py_list *) malloc(sizeof (struct py_list) +len + 4);
+	py_list *cur = (py_list *) malloc(sizeof(struct py_list) +len + 4);
 	if (cur != NULL) {
-		memset(cur, 0, sizeof (struct py_list) +len + 4);
+		memset(cur, 0, sizeof(struct py_list) +len + 4);
 		memcpy(cur->py, py, len);
 		if (!strchr(sm_table, *py)) {
 			cur->flag |= 0x02; // zero sm

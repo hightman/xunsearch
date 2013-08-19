@@ -155,7 +155,7 @@ static int _get_hasher(const char *s, int size)
 		h ^= (unsigned char) s[l];
 		h &= 0x7fffffff;
 	}
-	return (h % size);
+	return(h % size);
 }
 
 /**
@@ -220,7 +220,7 @@ static void _chain_remove(mc_node **root, mc_node *node)
  */
 static mc_node *_rb_sibling(mc_node *node)
 {
-	return (node == node->dash_up->dash_left ? node->dash_up->dash_right : node->dash_up->dash_left);
+	return(node == node->dash_up->dash_left ? node->dash_up->dash_right : node->dash_up->dash_left);
 }
 
 #    define	_rb_is_right(n)		((n)->dash_up->dash_right == n)
@@ -554,7 +554,7 @@ static void _mc_remove_node(MC *mc, mc_node *node)
 	if (mc->flag & MC_FLAG_COPY_VALUE) {
 		_mc_free(mc, node->value, node->vlen);
 	}
-	_mc_free(mc, node, sizeof (mc_node));
+	_mc_free(mc, node, sizeof(mc_node));
 }
 
 /**
@@ -681,16 +681,16 @@ MC *mc_create(MM *mm)
 {
 	MC *mc;
 	if (mm == NULL) {
-		mc = malloc(sizeof (MC));
+		mc = malloc(sizeof(MC));
 	} else {
-		mc = mm_malloc(mm, sizeof (MC));
+		mc = mm_malloc(mm, sizeof(MC));
 	}
 	if (mc == NULL) {
 		return NULL;
 	}
 
-	memset(mc, 0, sizeof (MC));
-	mc->mem_used = sizeof (MC);
+	memset(mc, 0, sizeof(MC));
+	mc->mem_used = sizeof(MC);
 	mc->mem_max = 8 * 1024 * 1024;
 	mc->mm = mm;
 	if (mc_set_hash_size(mc, 0x800) != MC_OK
@@ -719,9 +719,9 @@ void mc_destroy(MC *mc)
 				_mc_free(mc, node->value, node->vlen);
 			}
 
-			_mc_free(mc, node, sizeof (mc_node));
+			_mc_free(mc, node, sizeof(mc_node));
 		}
-		_mc_free(mc, mc->nodes, sizeof (mc_node *) * mc->size);
+		_mc_free(mc, mc->nodes, sizeof(mc_node *) * mc->size);
 	}
 	_mc_free(mc, mc, 0);
 }
@@ -759,7 +759,7 @@ int mc_set_hash_size(MC *mc, int size)
 {
 	mc_node **nodes;
 	int cur = 0;
-	int max = sizeof (hash_sizes) / sizeof (int) - 1;
+	int max = sizeof(hash_sizes) / sizeof(int) - 1;
 
 	if (mc->head != NULL) {
 		return MC_EDISALLOW;
@@ -784,13 +784,13 @@ int mc_set_hash_size(MC *mc, int size)
 	}
 
 
-	nodes = (mc_node **) _mc_malloc(mc, cur * sizeof (mc_node *));
+	nodes = (mc_node **) _mc_malloc(mc, cur * sizeof(mc_node *));
 	if (nodes == NULL) {
 		return MC_EMEMORY;
 	}
 
 	if (mc->nodes != NULL) {
-		_mc_free(mc, mc->nodes, sizeof (mc_node *) * mc->size);
+		_mc_free(mc, mc->nodes, sizeof(mc_node *) * mc->size);
 	}
 
 	mc->nodes = nodes;
@@ -852,7 +852,7 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 {
 	mc_node *node;
 	int i = _get_hasher(key, mc->size);
-	int sz = sizeof (mc_node) + 1024;
+	int sz = sizeof(mc_node) + 1024;
 
 	/* check memory used & size, keep 1kb */
 	if (mc->flag & MC_FLAG_COPY_KEY) sz = sz + strlen(key) + 1;
@@ -870,12 +870,12 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 	node = mc->fetch(&mc->nodes[i], key);
 	if (node == NULL) {
 		/* not found? build it!! */
-		node = (mc_node *) _mc_malloc(mc, sizeof (mc_node));
+		node = (mc_node *) _mc_malloc(mc, sizeof(mc_node));
 		if (node == NULL) {
 			return MC_EMEMORY;
 		}
 
-		memset(node, 0, sizeof (mc_node));
+		memset(node, 0, sizeof(mc_node));
 		node->vlen = vlen;
 		if (!(mc->flag & MC_FLAG_COPY_KEY)) {
 			node->key = (char *) key;
@@ -884,7 +884,7 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 
 			node->key = (char *) _mc_malloc(mc, j);
 			if (node->key == NULL) {
-				_mc_free(mc, node, sizeof (mc_node));
+				_mc_free(mc, node, sizeof(mc_node));
 				return MC_EMEMORY;
 			}
 			memcpy(node->key, key, j);
@@ -898,7 +898,7 @@ int mc_put(MC *mc, const char *key, void *value, int vlen)
 					_mc_free(mc, node->key, strlen(node->key) + 1);
 				}
 
-				_mc_free(mc, node, sizeof (mc_node));
+				_mc_free(mc, node, sizeof(mc_node));
 				return MC_EMEMORY;
 			}
 			memcpy(node->value, value, vlen);
@@ -969,7 +969,7 @@ int mc_del(MC *mc, const char *key)
 	if (mc->flag & MC_FLAG_COPY_VALUE) {
 		_mc_free(mc, node->value, node->vlen);
 	}
-	_mc_free(mc, node, sizeof (mc_node));
+	_mc_free(mc, node, sizeof(mc_node));
 
 	return MC_OK;
 }
@@ -979,7 +979,7 @@ int mc_del(MC *mc, const char *key)
  */
 const char *mc_strerror(int err)
 {
-	if (err < 0 || err > (sizeof (mc_errlist) / sizeof (char *))) {
+	if (err < 0 || err > (sizeof(mc_errlist) / sizeof(char *))) {
 		return NULL;
 	}
 	return mc_errlist[err];

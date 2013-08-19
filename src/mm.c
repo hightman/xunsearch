@@ -108,7 +108,7 @@ static int mm_do_lock(mm_mutex *lock, int num, int val)
 		rc = semop(lock->semid, &op, 1);
 	} while (rc < 0 && errno == EINTR);
 
-	return (rc == 0);
+	return(rc == 0);
 }
 
 static void mm_destroy_lock(mm_mutex *lock)
@@ -139,7 +139,7 @@ static MM *mm_create_shm(size_t size)
 	p = (MM *) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
 	if (p != (MM *) MAP_FAILED) {
 		p->size = size;
-		p->start = (char *) p + sizeof (MM);
+		p->start = (char *) p + sizeof(MM);
 	}
 	return p;
 }
@@ -155,7 +155,7 @@ static void mm_init(MM *mm)
 {
 	mm->start = MM_ALIGN(mm->start);
 	mm->lock = mm->start;
-	mm->start = MM_ALIGN((void *) (((char *) (mm->start)) + sizeof (mm_mutex)));
+	mm->start = MM_ALIGN((void *) (((char *) (mm->start)) + sizeof(mm_mutex)));
 	mm->available = mm->size - (((char *) (mm->start))-(char *) mm);
 	mm->free_list = (mm_free_bucket *) mm->start;
 	mm->free_list->size = mm->available;
@@ -194,7 +194,7 @@ void *mm_malloc_nolock(MM *mm, size_t size)
 				p = p->next;
 			}
 			if (x == NULL && best != NULL) {
-				if (best->size - realsize < sizeof (mm_free_bucket)) {
+				if (best->size - realsize < sizeof(mm_free_bucket)) {
 					realsize = best->size;
 					x = (mm_mem_head *) best;
 					if (best_prev == NULL) {
@@ -398,5 +398,5 @@ int mm_protect(MM *mm, int mode)
 		pmode |= PROT_EXEC;
 	}
 
-	return (mprotect(mm, mm->size, pmode) == 0);
+	return(mprotect(mm, mm->size, pmode) == 0);
 }
