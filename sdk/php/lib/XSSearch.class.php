@@ -825,7 +825,7 @@ class XSSearch extends XSServer
 	 * @param string $value 需要处理的数据
 	 * @return string 高亮后的数据
 	 */
-	public function highlight($value)
+	public function highlight($value, $strtr = false)
 	{
 		// return empty value directly
 		if (empty($value)) {
@@ -842,7 +842,9 @@ class XSSearch extends XSServer
 			$value = preg_replace($this->_highlight['pattern'], $this->_highlight['replace'], $value);
 		}
 		if (isset($this->_highlight['pairs'])) {
-			$value = str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
+			$value = $strtr ?
+					strtr($value, $this->_highlight['pairs']) :
+					str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
 		}
 		return $value;
 	}
