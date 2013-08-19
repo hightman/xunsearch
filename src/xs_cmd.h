@@ -411,7 +411,7 @@ struct xs_import_hdr
 
 /**
  * scws set operators
- * arg1:op ...
+ * arg1:op, arg2:dict_mode, buf: dict_path
  */
 #define	CMD_SEARCH_SCWS_SET		198
 
@@ -570,6 +570,8 @@ struct xs_import_hdr
 #define	CMD_SCWS_SET_IGNORE		50
 #define	CMD_SCWS_SET_MULTI		51
 #define	CMD_SCWS_SET_DUALITY	52
+#define	CMD_SCWS_SET_DICT		53
+#define	CMD_SCWS_ADD_DICT		54
 
 /**
  * ----------------------------------

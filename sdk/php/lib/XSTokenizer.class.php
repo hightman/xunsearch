@@ -202,6 +202,11 @@ class XSTokenizerScws implements XSTokenizer
 				define('SCWS_MULTI_ZMAIN', 4);
 				define('SCWS_MULTI_ZALL', 8);
 			}
+			if (!defined('SCWS_XDICT_XDB')) {
+				define('SCWS_XDICT_XDB', 1);
+				define('SCWS_XDICT_MEM', 2);
+				define('SCWS_XDICT_TXT', 4);
+			}
 		}
 	}
 
@@ -246,8 +251,8 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setIgnore($yes = true)
 	{
-		$this->_setting['ignore'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_IGNORE,
-				$yes === false ? 0 : 1);
+		$this->_setting['ignore'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_IGNORE, $yes === false
+							? 0 : 1);
 		return $this;
 	}
 
@@ -266,14 +271,48 @@ class XSTokenizerScws implements XSTokenizer
 	}
 
 	/**
+	 * 设置分词词典, 支持 TXT/XDB 格式
+	 * @param string $fpath 服务端的词典路径
+	 * @param int $mode 词典类型, 常量: SCWS_XDICT_XDB|SCWS_XDICT_TXT|SCWS_XDICT_MEM
+	 * @return XSTokenizerScws 返回对象本身以支持串接操作
+	 */
+	public function setDict($fpath, $mode = null)
+	{
+		if (!is_int($mode)) {
+			$mode = stripos($fpath, '.txt') !== false ? SCWS_XDICT_TXT : SCWS_XDICT_XDB;
+		}
+		$this->_setting['set_dict'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DICT, $mode, $fpath);
+		unset($this->_setting['add_dict']);
+		return $this;
+	}
+
+	/**
+	 * 添加分词词典, 支持 TXT/XDB 格式
+	 * @param string $fpath 服务端的词典路径
+	 * @param int $mode 词典类型, 常量: SCWS_XDICT_XDB|SCWS_XDICT_TXT|SCWS_XDICT_MEM
+	 * @return XSTokenizerScws 返回对象本身以支持串接操作
+	 */
+	public function addDict($fpath, $mode = null)
+	{
+		if (!is_int($mode)) {
+			$mode = stripos($fpath, '.txt') !== false ? SCWS_XDICT_TXT : SCWS_XDICT_XDB;
+		}
+		if (!isset($this->_setting['add_dict'])) {
+			$this->_setting['add_dict'] = array();
+		}
+		$this->_setting['add_dict'][] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_ADD_DICT, $mode, $fpath);
+		return $this;
+	}
+
+	/**
 	 * 设置散字二元组合
 	 * @param bool $yes 是否开启散字自动二分组合功能
 	 * @return XSTokenizerScws 返回对象本身以支持串接操作
 	 */
 	public function setDuality($yes = true)
 	{
-		$this->_setting['duality'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DUALITY,
-				$yes === false ? 0 : 1);
+		$this->_setting['duality'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DUALITY, $yes === false
+							? 0 : 1);
 		return $this;
 	}
 
@@ -348,7 +387,13 @@ class XSTokenizerScws implements XSTokenizer
 	{
 		self::$_server->reopen();
 		foreach ($this->_setting as $key => $cmd) {
-			self::$_server->execCommand($cmd);
+			if (is_array($cmd)) {
+				foreach ($cmd as $_cmd) {
+					self::$_server->execCommand($_cmd);
+				}
+			} else {
+				self::$_server->execCommand($cmd);
+			}
 		}
 		return XS::convert($text, 'UTF-8', self::$_charset);
 	}

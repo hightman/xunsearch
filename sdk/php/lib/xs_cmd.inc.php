@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2013/08/05 12:40 */
+/* Automatically generated at 2013/08/19 10:29 */
 define('CMD_NONE',	0);
 define('CMD_DEFAULT',	CMD_NONE);
 define('CMD_PROTOCOL',	20110707);
@@ -113,6 +113,8 @@ define('CMD_SCWS_GET_MULTI',	5);
 define('CMD_SCWS_SET_IGNORE',	50);
 define('CMD_SCWS_SET_MULTI',	51);
 define('CMD_SCWS_SET_DUALITY',	52);
+define('CMD_SCWS_SET_DICT',	53);
+define('CMD_SCWS_ADD_DICT',	54);
 define('CMD_ERR_UNKNOWN',	600);
 define('CMD_ERR_NOPROJECT',	401);
 define('CMD_ERR_TOOLONG',	402);

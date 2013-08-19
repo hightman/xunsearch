@@ -1856,6 +1856,17 @@ static int zcmd_scws_set(XS_CONN *conn)
 		scws_set_multi(scws, (cmd->arg2 << 12) & SCWS_MULTI_MASK);
 	} else if (cmd->arg1 == CMD_SCWS_SET_IGNORE) {
 		scws_set_ignore(scws, cmd->arg2 == 0 ? SCWS_NA : SCWS_YEA);
+	} else if (cmd->arg1 == CMD_SCWS_SET_DICT || cmd->arg1 == CMD_SCWS_ADD_DICT) {
+		char fpath[PATH_MAX];
+		if (XS_CMD_BLEN(cmd) < sizeof(fpath)) {
+			memset(fpath, 0, sizeof(fpath));
+			strncpy(fpath, XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
+			if (cmd->arg1 == CMD_SCWS_SET_DICT) {
+				scws_set_dict(scws, fpath, cmd->arg2);
+			} else {
+				scws_add_dict(scws, fpath, cmd->arg2);
+			}
+		}
 	}
 	return CMD_RES_CONT;
 }
