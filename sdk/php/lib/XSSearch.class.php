@@ -1036,7 +1036,7 @@ class XSSearch extends XSServer
 					continue;
 				}
 			}
-			if (($part[0] == '+' || $part[0] == '-') && $part[1] != '('
+			if (strlen($part) > 1 && ($part[0] == '+' || $part[0] == '-') && $part[1] != '('
 					&& preg_match('/[\x81-\xfe]/', $part)) {
 				$newQuery .= substr($part, 0, 1) . '(' . substr($part, 1) . ')';
 				continue;

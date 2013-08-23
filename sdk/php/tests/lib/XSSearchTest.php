@@ -533,7 +533,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 						->setQuery('subject:项目测试')->setLimit(1)->search();
 		try {
 			$docs[0]->matched();
-		} catch (XSException $e) {
+		} catch (Exception $e) {
 
 		}
 		$this->assertInstanceOf('XSException', $e);
