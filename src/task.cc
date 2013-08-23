@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <poll.h>
+#include <limits.h>
 #include <xapian.h>
 #include <pthread.h>
 
