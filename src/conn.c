@@ -248,7 +248,7 @@ XS_CONN *conn_new(int sock)
 		// put to event list
 		memset(conn, 0, sizeof(XS_CONN));
 		conn->tv.tv_sec = CONN_TIMEOUT;
-		event_set(&conn->ev, sock, EV_READ, client_ev_cb, conn);
+		event_assign(&conn->ev, event_get_base(&conn_server.listen_ev), sock, EV_READ, client_ev_cb, conn);
 		CONN_EVENT_ADD();
 		log_debug_conn("add connection to event base (CONN:%p, SOCK:%d)", conn, sock);
 
@@ -794,7 +794,7 @@ void conn_server_shutdown()
 	conn_server.flag |= CONN_SERVER_STOPPED;
 	event_del(&conn_server.listen_ev);
 	event_del(&conn_server.pipe_ev);
-	close(conn_server.listen_ev.ev_fd);
+	close(event_get_fd(&conn_server.listen_ev));
 }
 
 /**
@@ -998,6 +998,7 @@ int conn_server_listen(const char *bind_path)
 void conn_server_start(int listen_sock)
 {
 	short listen_event = (EV_READ | EV_PERSIST);
+	struct event_base *base;
 
 	// check socket
 	if (listen_sock < 0) {
@@ -1007,7 +1008,7 @@ void conn_server_start(int listen_sock)
 
 	// initlize the conn_server flag
 	log_debug("init the listen event");
-	event_init();
+	base = event_base_new();
 	if (conn_server.timeout_handler != NULL && conn_server.tv.tv_sec > 0) {
 		conn_server.flag |= CONN_SERVER_TIMEOUT;
 		listen_event ^= EV_PERSIST;
@@ -1015,7 +1016,7 @@ void conn_server_start(int listen_sock)
 
 	// listen event
 	fcntl(listen_sock, F_SETFL, O_NONBLOCK);
-	event_set(&conn_server.listen_ev, listen_sock, listen_event, server_ev_cb, NULL);
+	event_assign(&conn_server.listen_ev, base, listen_sock, listen_event, server_ev_cb, NULL);
 
 	// pipe event
 	log_debug("init the pipe event");
@@ -1025,7 +1026,7 @@ void conn_server_start(int listen_sock)
 		return;
 	}
 	fcntl(pipe_fd[0], F_SETFL, O_NONBLOCK);
-	event_set(&conn_server.pipe_ev, pipe_fd[0], EV_READ | EV_PERSIST, pipe_ev_cb, NULL);
+	event_assign(&conn_server.pipe_ev, base, pipe_fd[0], EV_READ | EV_PERSIST, pipe_ev_cb, NULL);
 
 	// thread mutex
 	if (conn_server.flag & CONN_SERVER_THREADS) {
@@ -1036,7 +1037,8 @@ void conn_server_start(int listen_sock)
 	log_notice("event loop start (EVENT:0x%04x, FLAG:0x%04x)", listen_event, conn_server.flag);
 	event_add(&conn_server.listen_ev, (listen_event & EV_PERSIST) ? NULL : &conn_server.tv);
 	event_add(&conn_server.pipe_ev, NULL);
-	event_dispatch();
+    event_base_dispatch(base);
+    event_base_free(base);
 
 	// end the event loop
 	log_notice("event loop end");

@@ -15,7 +15,7 @@ xs_import_LDADD = -lxapian -lscws
 
 xs_indexd_SOURCES = conn.c flock.c log.c pcntl.c user.c
 xs_indexd_SOURCES += indexd.c
-xs_indexd_LDADD = -levent
+xs_indexd_LDADD = -levent_core
 
 xs_logging_SOURCES = flock.c log.c logging.cc pinyin.c
 xs_logging_LDADD = -lxapian -lscws
@@ -25,7 +25,7 @@ xs_searchd_SOURCES += searchd.cc task.cc
 if HAVE_MEMORY_CACHE
 xs_searchd_SOURCES += mcache.c md5.c
 endif HAVE_MEMORY_CACHE
-xs_searchd_LDADD = -levent -lxapian -lscws
+xs_searchd_LDADD = -levent_core -lxapian -lscws
 
 EXTRA_DIST = xs-ctl.sh.in xs-optimize.sh.in
 

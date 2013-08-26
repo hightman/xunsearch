@@ -7,7 +7,8 @@
 #ifndef __XS_CONN_20090514_H__
 #define	__XS_CONN_20090514_H__
 
-#include <event.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
 #include <sys/time.h>
 #include "xs_cmd.h"
 #include "user.h"
@@ -21,7 +22,7 @@ extern "C" {
 #define	CONN_BUFSIZE		1024
 
 /* simple macro for connection operator */
-#define	CONN_FD()			conn->ev.ev_fd
+#define	CONN_FD()			event_get_fd(&conn->ev)
 #define	CONN_RECV()			conn_data_recv(conn)
 #define	CONN_FLUSH()		conn_data_send(conn, NULL, 0)
 

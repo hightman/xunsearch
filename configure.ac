@@ -96,45 +96,45 @@ fi
 # Libevent package check
 AC_ARG_WITH(libevent,
 	AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
-		[specify the install directory of libevent, The version should be 1.4.14 or greater.]),
+		[specify the install directory of libevent, The version should be 2.0.0 or greater.]),
 	[ ], [with_libevent=yes]
 )
 if test "$with_libevent" != "no" ; then
-	AC_MSG_CHECKING([for event.h of libevent])
+	AC_MSG_CHECKING([for event2/event.h of libevent])
 	LIBEVENT_DIR=""
 	if test "$with_libevent" = "yes" ; then
         search_dirs=`echo $ac_search_dirs | sed 's#<name>#libevent#g'`
 		for tmpdir in $search_dirs; do
-			if test -f $tmpdir/include/event.h ; then
+			if test -f $tmpdir/include/event2/event.h ; then
 				LIBEVENT_DIR=$tmpdir
 				break
 			fi
 		done
-	elif test -f "$with_libevent/include/event.h" ; then
+	elif test -f "$with_libevent/include/event2/event.h" ; then
 		LIBEVENT_DIR=$with_libevent
 	fi
 	if test "$LIBEVENT_DIR" = "" ; then
 		AC_MSG_RESULT(no)
-		AC_MSG_ERROR([event.h NOT FOUND. please check your libevent install directory. >= 1.4.14])
+		AC_MSG_ERROR([event2/event.h NOT FOUND. please check your libevent install directory. >= 2.0.0])
 	else
 		AC_MSG_RESULT([yes: $LIBEVENT_DIR])
 	fi
 
-	# Check libevent version ( >= 1.4.14)
+	# Check libevent version ( >= 2.0.0)
 	AC_MSG_CHECKING([for correct libevent version])
 	AC_EGREP_CPP(yes, [
-#include "$LIBEVENT_DIR/include/event-config.h"
-#if _EVENT_NUMERIC_VERSION >= 0x01040e00
+#include "$LIBEVENT_DIR/include/event2/event-config.h"
+#if _EVENT_NUMERIC_VERSION >= 0x02000000
 yes
 #endif
 	], [
 		AC_MSG_RESULT(ok)
 	], [
-		AC_MSG_ERROR([libevent 1.4.14 or greater required.])
+		AC_MSG_ERROR([libevent 2.0.0 or greater required.])
 	])
 
 	# Check libevent library
-	AC_CHECK_LIB(event, event_init,
+	AC_CHECK_LIB(event_core, event_base_new,
 		[
             tmp_extra_added=`echo $ac_extra_added | sed "s#$LIBEVENT_DIR##"`
 			if test "$ac_extra_added" = "$tmp_extra_added" ; then
@@ -145,13 +145,13 @@ yes
 			  CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
             fi
 		], [
-			AC_MSG_ERROR([event_init() NOT found in libevent, please check it first.])
+			AC_MSG_ERROR([event_base_new() NOT found in libevent, please check it first.])
 		], [
 			-L$LIBEVENT_DIR/lib
 		]
 	)
 else
-	AC_MSG_ERROR([libevent is required, get it from: http://monkey.org/~provos/libevent/])
+	AC_MSG_ERROR([libevent is required, get it from: http://libevent.org/])
 fi
 
 # scws library check
