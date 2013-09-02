@@ -981,10 +981,10 @@ static int zcmd_task_get_result(XS_CONN *conn)
 	}
 #endif	
 
+	total = zarg->db->get_doccount();
 #ifdef HAVE_MEMORY_CACHE
 	// Only cache for default db with default sorter, and only top MAX_SEARCH_RESUT items
 	// KEY: MD5("Result for " +  user + ": " + query");
-	total = zarg->db->get_doccount();
 	if ((off + limit) <= MAX_SEARCH_RESULT
 			&& !(conn->flag & (CONN_FLAG_CH_SORT | CONN_FLAG_CH_DB | CONN_FLAG_CH_COLLAPSE))) {
 		string key = "Result for " + string(conn->user->name) + ": " + qq.get_description();
