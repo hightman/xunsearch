@@ -407,6 +407,7 @@ class XSFieldMeta
 
 	/**
 	 * 获取自定义词法分析器
+	 * 自 1.4.8 起会自动加载 lib 或当前目录下的 XSTokenizer???.class.php
 	 * @return XSTokenizer 获取当前字段的自定义词法分析器
 	 * @throw XSException 如果分词器不存在或有出错抛出异常
 	 */
@@ -424,7 +425,15 @@ class XSFieldMeta
 				$arg = null;
 			}
 			if (!class_exists($name)) {
-				throw new XSException('Undefined custom tokenizer `' . $this->tokenizer . '\' for field `' . $this->name . '\'');
+				$file = $name . '.class.php';
+				if (file_exists($file)) {
+					require_once $file;
+				} else if (XS_LIB_ROOT . DIRECTORY_SEPARATOR . $file) {
+					require_once XS_LIB_ROOT . DIRECTORY_SEPARATOR . $file;
+				}
+				if (!class_exists($name)) {
+					throw new XSException('Undefined custom tokenizer `' . $this->tokenizer . '\' for field `' . $this->name . '\'');
+				}
 			}
 
 			$obj = $arg === null ? new $name : new $name($arg);
