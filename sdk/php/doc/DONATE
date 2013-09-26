@@ -16,7 +16,25 @@
 
 <table>
 <tr>
-	<th>时间</th><th>姓名<th><th>金额</th><th>附言</th>
+	<th>时间</th><th>姓名</th><th>金额</th><th>附言</th>
+</tr>
+<tr>
+	<td>2013-09-24 16:10</td>
+	<td>段*钧</td>
+	<td>200.00</td>
+	<td>支持SWCS，想与hightman交个朋友</td>
+</tr>
+<tr>
+	<td>2013-09-10 11:15</td>
+	<td>肖*明</td>
+	<td>111.11</td>
+	<td>其实算是认识hightman很久了,能静心做点东西真不错.</td>
+</tr>
+<tr>
+	<td>2013-09-06 16:11</td>
+	<td>吕*利</td>
+	<td>100.00</td>
+	<td>在用xunsearch，很稳定，支持一下。;-)</td>
 </tr>
 <tr>
 	<td>2013-09-06 13:16</td>
