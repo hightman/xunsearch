@@ -111,6 +111,7 @@
                  内部调用 `preg_split(arg, ..)` 来分割取词，以支持正则或其它特殊字符分割
 	- xlen([2]) 表示根据指定参数长度分段取词，如 ABCDEF => AB + CD + EF
 	- xstep([2]) 表示根据指定参数步长逐段取词，如 ABCDEF => AB + ABCD + ABCDEF
+	- scws([3]) 表示采用指定参数为复合等级的 scws 分词，（若无特殊复合需求，无需指定）
     ~~~
 	tokenizer = default
     ~~~
