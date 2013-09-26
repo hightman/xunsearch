@@ -428,7 +428,7 @@ class XSFieldMeta
 				$file = $name . '.class.php';
 				if (file_exists($file)) {
 					require_once $file;
-				} else if (XS_LIB_ROOT . DIRECTORY_SEPARATOR . $file) {
+				} else if (file_exists(XS_LIB_ROOT . DIRECTORY_SEPARATOR . $file)) {
 					require_once XS_LIB_ROOT . DIRECTORY_SEPARATOR . $file;
 				}
 				if (!class_exists($name)) {
