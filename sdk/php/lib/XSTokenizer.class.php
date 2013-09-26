@@ -183,8 +183,9 @@ class XSTokenizerScws implements XSTokenizer
 	/**
 	 * 构造函数
 	 * 初始化用于分词的搜索服务端
+	 * @param string $arg 复合等级参数，默认不指定
 	 */
-	public function __construct()
+	public function __construct($arg = null)
 	{
 		if (self::$_server === null) {
 			$xs = XS::getLastXS();
@@ -207,6 +208,9 @@ class XSTokenizerScws implements XSTokenizer
 				define('SCWS_XDICT_MEM', 2);
 				define('SCWS_XDICT_TXT', 4);
 			}
+		}
+		if ($arg !== null && $arg !== '') {
+			$this->setMulti($arg);
 		}
 	}
 
