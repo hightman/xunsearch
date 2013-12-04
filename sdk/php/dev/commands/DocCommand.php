@@ -253,8 +253,8 @@ EOF;
 	protected function formatMarkdown($data)
 	{
 		if (self::$_parser === null) {
-			Yii::import('application.vendors.Markdown', true);
-			self::$_parser = new Markdown;
+			Yii::import('application.vendors.XMarkdown', true);
+			self::$_parser = new XMarkdown;
 		}
 		return self::$_parser->transform($data);
 	}

@@ -1,7 +1,7 @@
 <?php
 require_once(dirname(__FILE__) . '/MarkdownParser.php');
 
-class Markdown extends CMarkdown
+class XMarkdown extends CMarkdown
 {
 	public $cssFile = false;
 
