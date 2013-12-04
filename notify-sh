@@ -3,7 +3,7 @@
 # Distribute hook script, run by make automatically
 
 # install notify
-if test -x "/usr/bin/nc" ; then
+if test -x "/usr/bin/nc" || test -x "/bin/nc" ; then
   t_type=install
   t_ver=`cat VERSION`
   t_host=`hostname 2> /dev/null`
