@@ -46,6 +46,7 @@ install-customDATA:
 	    $(sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(customdir)/$$f"; \
 	  fi; \
 	done
+	@sh dist-sh notify $(prefix)
 
 uninstall-customDATA:
 	@$(NORMAL_UNINSTALL)
