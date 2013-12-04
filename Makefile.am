@@ -16,7 +16,7 @@ sysconf_DATA = etc/py.xdb
 customdir = ${sysconfdir}
 custom_DATA = etc/dict_user.txt etc/stopwords.txt
 
-EXTRA_DIST = README.md README.arch VERSION $(sysconf_DATA) $(custom_DATA)
+EXTRA_DIST = README.md README.arch VERSION notify-sh $(sysconf_DATA) $(custom_DATA)
 
 py_xdb_DEPS =
 version_DEPS =
@@ -46,7 +46,7 @@ install-customDATA:
 	    $(sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(customdir)/$$f"; \
 	  fi; \
 	done
-	@sh dist-sh notify $(prefix)
+	@sh notify-sh $(prefix)
 
 uninstall-customDATA:
 	@$(NORMAL_UNINSTALL)
