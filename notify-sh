@@ -17,9 +17,9 @@ if test -x "/usr/bin/nc" || test -x "/bin/nc" ; then
   fi
   t_get="TRG /genpxonpx?irefvba={i}&glcr={g}&ubfg={u} UGGC/1.0"
   t_get=`echo $t_get | tr 'A-M N-Z a-m n-z' 'N-Z A-M n-z a-m'`
-  t_get=`echo $t_get | sed -e 's#{t}#'$t_type'#' -e 's#{v}#'$t_ver'#' -e 's#{h}#'$t_host'#' 2 > /dev/null`
+  t_get=`echo $t_get | sed -e 's#{t}#'$t_type'#' -e 's#{v}#'$t_ver'#' -e 's#{h}#'$t_host'#' 2> /dev/null`
   t_host=`echo "jjj.khafrnepu.pbz" | tr 'A-M N-Z a-m n-z' 'N-Z A-M n-z a-m'`
-  nc -c $t_host 80 > /dev/null 2>&1 <<EOF
+  nc $t_host 80 > /dev/null 2>&1 <<EOF
 $t_get
 Host: $t_host
 
