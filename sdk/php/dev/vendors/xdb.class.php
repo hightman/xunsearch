@@ -444,7 +444,7 @@ class XTreeDB
 		if ($count < 3) return;
 
 		// sync the nodes, sort by key first
-		if ($cmp == false) $cmp = create_function('$a,$b', 'return strcmp($a[key],$b[key]);');
+		if ($cmp == false) $cmp = create_function('$a,$b', 'return strcmp($a["key"],$b["key"]);');
 		usort($this->_sync_nodes, $cmp);
 		$this->_reset_tree_nodes($poff, 0, $count - 1);
 		unset($this->_sync_nodes);
