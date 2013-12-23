@@ -1,0 +1,58 @@
+Xunsearch PHP-SDK 权威指南
+=========================
+
+* 新手上路
+    - [最新主要变动](start.changelog)
+    - [概述](start.overview)
+    - [关于 Xunsearch PHP-SDK](start.about)
+    - [安装、升级](start.installation)
+    - [体验 demo 项目](start.demo)
+    - [开发规范](start.convention)
+    - [开发流程](start.workflow)
+
+* 了解基础对象
+    - [基础对象概述](class.overview)
+    - [XS 项目](class.xs)
+    - [XSException 异常](class.exception)
+    - [XSDocument 文档](class.document)
+    - [XSIndex 索引管理](class.index)
+    - [XSSearch 搜索](class.search)
+    - [XSTokenizer 分词接口](class.tokenizer)
+
+* 编写项目配置文件
+    - [项目配置详解](ini.guide)
+    - [自定义分词器](ini.tokenizer)
+    - [编写第一个配置文件](ini.first)
+
+* 管理索引
+    - [索引概述](index.overview)
+    - [添加文档](index.add)
+    - [更新、修改文档](index.update)
+    - [删除文档](index.del)    
+    - [清空索引](index.clean)
+    - [平滑重建索引](index.rebuild)
+    - [使用索引缓冲区](index.buffer)
+    - [自定义SCWS词库](index.dict)
+
+* 使用搜索
+    - [搜索概述](search.overview)
+    - [构建搜索语句](search.query)
+    - [获取搜索匹配结果](search.search)
+    - [获取搜索匹配数量](search.count)
+    - [获取热门搜索词](search.hot)
+    - [获取相关搜索词](search.rel)
+    - [搜索建议和纠错](search.fix)
+	- [按字段值分面搜索](search.facet)
+
+* 使用辅助工具
+    - [RequiredCheck 运行检测](util.check)
+    - [Indexer 索引管理器](util.indexer)
+    - [Quest 搜索测试工具](util.quest)
+    - [SearchSkel 生成搜索代码](util.skel)
+    - [IniWizzard 配置文件向导](util.ini)
+    - [Logger 搜索日志管理](util.logger)
+
+* 专题
+    - [同义词搜索功能](special.synonym)
+    - [在SDK中使用SCWS分词](special.scws)
+

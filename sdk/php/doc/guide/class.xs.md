@@ -1,0 +1,42 @@
+XS 项目
+=======
+
+[XS] 是搜索项目的总对象，所有操作均基于此对象或其属性，在此我们只挑最常用的一些属性、方法进行介绍。
+
+创建 XS 对象
+-----------
+
+创建 XS 对象的唯一参数是项目配置文件的可访问路径，或者项目名，也可以是项目配置文件的内容。如果给出
+的参数是项目名则自动使用 `$prefix/sdk/php/app/项目名.ini`，例子代码如下：
+
+~~~
+[php]
+require_once '$prefix/sdk/php/lib/XS.php';
+$xs = new XS('demo');	// 自动使用 $prefix/sdk/php/app/demo.ini 作项目配置文件
+$xs = new XS('/path/to/demo.ini');	// 使用 /path/to/demo.ini
+~~~
+
+重要属性
+--------
+
+* [XS::defaultCharset] **项目默认字符集**
+  影响范围包括使用时的输入数据以及搜索结果的输出数据，该属性默认由配置文件中的
+  `project.default_charset` 指定，如有必要可以自行修改，但要确保在使用索引、搜索对象之前。
+
+* [XS::index] **索引管理对象**
+  类型为 [XSIndex]，比如用下面代码可以清空项目索引内容：
+  ~~~
+  [php]
+  $xs->index->clean();
+  ~~~
+
+* [XS::search] **搜索对象**
+  类型为 [XSSearch]，比如用下面代码可以快速检索包含 `hightman` 的结果
+  ~~~
+  [php]
+  $docs = $xs->search->search('hightman');
+  print_r($docs);
+  ~~~
+
+
+<div class="revision">$Id$</div>

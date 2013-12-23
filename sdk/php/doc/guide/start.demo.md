@@ -1,0 +1,121 @@
+体验 DEMO 项目
+=============
+
+为了让您对 `xunsearch` 有一个初步的印象和了解，我们在这个章节，借助辅助工具
+带您体验一下搜索和索引的操作。这里可能有很多内容您尚不熟悉，请不必感到惶恐，
+只要跟着说明完成操作即可，后面还有大量章节对各项进行深入讲解。
+
+> note: 这些例子中的命令、代码均假定为默认的 UTF-8 环境，如果您使用的是 GBK
+> 编码环境，请在运行所有 `php` 脚本时加入 `-c gbk` 参数。
+
+
+查看项目配置文件
+--------------
+
+每一个 `xunsearch` 搜索项目都有一个独立的 INI 配置文件。DEMO 项目的配置文件
+位于 `$prefix/sdk/php/app/demo.ini` 使用以下指令便可直接查看配置文件内容。
+
+~~~
+cat $prefix/sdk/php/app/demo.ini
+~~~
+
+没错，配置文件很简单、清晰，它默认连接本地的 `8383、8384` 端口并使用 UTF-8 
+编码，包含四个字段：pid，subject，message，chrono 。
+
+
+填充索引数据
+-----------
+
+出于测试方便，我们采用 `csv` 格式来写入索引数据，请先按以下方式操：
+
+~~~
+cd $prefix/sdk/php
+util/Indexer.php --source=csv --clean demo
+~~~
+
+然后脚本会给出如下提示：
+
+~~~
+初始化数据源 ... csv
+WARNING: input file not specified, read data from <STDIN>
+开始批量导入数据 ...
+~~~
+
+然后我们测试输入下面三条数据，最后一条数据打完后必须敲入回车，然后按 `Ctrl-D` 结束操作。
+
+> note: 在 Windows 的命令行下运行请使用 `Ctrl-Z` 来表示结束。
+
+~~~
+1,关于 xunsearch 的 DEMO 项目测试,项目测试是一个很有意思的行为！,1314336158
+2,测试第二篇,这里是第二篇文章的内容,1314336160
+3,项目测试第三篇,俗话说，无三不成礼，所以就有了第三篇,1314336168
+~~~
+
+这里屏幕会提示如下信息，表示完成数据提交：
+
+~~~
+INFO: reach end of file or error occured, total lines: 3
+完成索引导入：成功 3 条，失败 0 条
+刷新索引提交 ...
+~~~
+
+索引数据的提交是异步行为，所以录完数据并不是立刻就能检索到（当然，这个时间差也不会太大）。
+所以为稳定起见请稍等几秒再进行下一步的搜索测试。
+
+
+测试搜索
+-------
+
+首先，我们体验一下正常的搜索，分别以关键词 *项目*、*测试*、*项目测试*、*俗话说*、*莫须有* 进行检索：
+
+~~~
+cd $prefix/sdk/php
+util/Quest.php demo 项目
+util/Quest.php demo 测试
+util/Quest.php demo 项目测试
+util/Quest.php demo 俗话说
+util/Quest.php demo 莫须有
+~~~
+
+每个搜索后的关键词系统都会记录下来进行分析，并保存在日志中用于统计热门搜索、搜索建议、相关搜索等。
+默认情况系统会每 2 小时进行一次更新日志，由于我们在进行测试，所以请使用以下指令进行强制刷新。
+
+~~~
+util/Indexer.php --flush-log demo
+~~~
+
+接下来我们测试一下稍微复杂一点的字段、布尔搜索功能：
+
+~~~
+util/Quest.php demo subject:测试
+util/Quest.php demo pid:2
+util/Quest.php demo "第三篇 OR pid:1"
+~~~
+
+最后我们再测试一下日志相关的搜索情况，其中 --suggest 是搜索建议，当用户敲入少许汉字或字母时给出
+相应的关键词建议（常用于搜索输入框下拉自动提示），而 --related 表示相关搜索、--hot 表示热门搜索、
+--correct 表示搜索纠错。
+
+~~~
+util/Quest.php --hot demo
+util/Quest.php --related demo 项目
+util/Quest.php --correct demo yunsearch
+util/Quest.php --correct demo xmcs
+util/Quest.php --correct demo xianmu
+util/Quest.php --suggest demo x
+util/Quest.php --suggest demo xm
+util/Quest.php --suggest demo xia
+util/Quest.php --suggest demo xiangmuc
+util/Quest.php --suggest demo 项
+~~~
+
+
+总结
+----
+
+现在应该对 xunsearch 所提供的功能有了初步的印象。您可能会发现在这个体验过程中并
+没有涉及到一行代码，因为我们目的只是先了解和接触一下 `xunsearch` 搜索，所以采用
+了附加提供的脚本工具来完成所有操作，关于脚本工具的详细使用请阅读后面的专题章节。
+
+
+<div class="revision">$Id$</div>

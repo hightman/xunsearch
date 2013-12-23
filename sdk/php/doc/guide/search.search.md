@@ -1,0 +1,130 @@
+获取搜索结果
+===========
+
+获取搜索结果是进行搜索的最主要目的。通过 [XSSearch::search] 获得[搜索结果文档](class.document)，
+如果没有任何符合条件的匹配则会返回一个空数组。
+
+在获取搜索结果前您必须用[上一章](search.query)学到的知识先构造好相应的搜索语句 `$query`。
+
+> note: 只有不带参数的 [XSSearch::search] 搜索调用才会将关键词记录搜索日志中去。
+
+
+设置分页、数量
+------------
+
+默认情况下，每次返回搜索结果的前 10 条数据，您可以通过 [XSSearch::setLimit] 指定返回的条数及偏移量，
+这样就可以实现分页搜索的效果。特别注意，每一次调用 [XSSearch::search] 后均会把这些设置恢复到默认值状态。
+
+~~~
+[php]
+$search->setLimit(5); // 设置返回结果为前 5 条
+$search->setLimit(5, 15); // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
+~~~
+
+设置排序方式
+-----------
+
+默认情况，搜索结果根据内部算法计算相关度进行排序，采用著名的 `BM25` 算法，这在信息检索概率模型中表现
+非常优秀，通常只要使用默认的算法即可。
+
+通过 [XSSearch::setSort] 我们可以指定让搜索结果按照某一个字段的值进行正序或倒序排列，参考代码：
+
+~~~
+[php]
+$search->setSort('chrono'); // 按 chrono 字段的值倒序
+$search->setSort('chrono', true); // 按 chrono 字段的值正序排列
+~~~
+
+自从 1.1.0 版本起，通过 [XSSearch::setMultiSort] 可以实现按照多字段的值排序，
+它接受一个数组参数用于表述排序的方式。以字段名称为键，用 true/false 值来表示是否需要正序排列，
+默认为 false 表示逆序排列。参见以下代码：
+
+~~~
+[php]
+// 表示先以 chrono 正序、再以 pid 逆序(pid 是字符串并不是数值所以 12 会排在 3 之后)
+$sorts = array('chrono' => true, 'pid' => false);
+
+// 如果直接把字段名作为数组的值，默认对该字段采用逆序，因此以上用法和下面用法是完全一样的
+$sorts = array('chrono', 'pid' => false);
+
+// 设置搜索排序
+$search->setMultiSort($sorts);
+~~~
+
+> note: 按字段值排序是一个低效能的行为，如非必要，强烈建议使用默认排序方式。
+> 排序默认也是按照字节序比较，对于数字型的字段请将字段类型设为 `numeric`。
+>
+> 为了兼容，您也可以把多字段排序的参数直接传递给 [XSSearch::setSort] 即可。
+>
+
+
+读取搜索结果文档
+---------------
+
+调用 [XSSearch::search] 后返回的是[搜索结果文档对象](class.document)组成的数组，
+您直接使用这些文档对象的属性即可。
+
+~~~
+[php]
+// 以 demo 项目的配置为例
+$docs = $search->setQuery('测试')->setLimit(5)->search();
+foreach ($docs as $doc)
+{
+   // 其中常用魔术方法：percent() 表示匹配度百分比, rank() 表示匹配结果序号
+   echo $doc->rank() . '. ' . $doc->subject . " [" . $doc->percent() . "%] - ";
+   echo date("Y-m-d", $doc->chrono) . "\n" . $doc->message . "\n";
+}
+~~~
+
+
+搜索结果高亮处理
+---------------
+
+根据搜索的习惯，通会希望让搜索结果中匹配关键词的部分进行飘红或加粗等高亮处理，
+由于其中涉及到了分词等细节处理比较麻烦。因此，我们统一提供了 [XSSearch::highlight] 
+方法，可以对搜索结果文档中的字段值直接进行处理，匹配关键词部分会自动套上 `em` 标签。
+
+您只要在 `CSS` 中定义它即可实现自己的高亮代码。
+
+~~~
+[php]
+$docs = $search->setQuery('测试')->setLimit(5)->search();
+foreach ($docs as $doc)
+{
+   $subject = $search->highlight($doc->subject); // 高亮处理 subject 字段
+   $message = $search->highlight($doc->message); // 高亮处理 message 字段
+   echo $doc->rank() . '. ' . $subject . " [" . $doc->percent() . "%] - ";
+   echo date("Y-m-d", $doc->chrono) . "\n" . $message . "\n";
+}
+~~~
+
+> note: 这个方法不适合于快捷搜索，也就是说必须使用 `setQuery` 以及不带参数的 `search` 才有效。
+
+
+按字段值折叠搜索结果
+------------------
+
+有时我们也反折叠搜索称为归并搜索，就像 `Google` 上通常搜索结果中对于某一个网站只会显示 2 条最匹配的结果，
+其余的归并折叠起来。
+
+在 `Xunsearch` 中，通过 [XSSearch::setCollapse] 可以设置按照指定字段的值归并搜索结果，其中第二参数可以
+指定归并后返回数量，默认为 1。对于这种情况，请在搜索结果文档中调用 `$doc->ccount()` 获取展开的全部匹配数。
+
+~~~
+[php]
+// 表示搜索结果按 tid 字段的值归并，至多返回 1 条最匹配的数据
+$search->setCollapse('tid');
+
+// 然后正常进行搜索后得到的搜索结果文档
+$docs = $search->search();
+
+foreach ($docs as $doc)
+{
+    // 输出 $doc 的有关信息
+
+    // 得出相同 tid 下还有多少条匹配信息
+    echo '该主是下还有 ' . ($doc->ccount() - 1) . ' 条匹配结果。';
+}
+~~~
+
+<div class="revision">$Id$</div>
