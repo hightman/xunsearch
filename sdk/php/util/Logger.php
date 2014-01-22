@@ -206,7 +206,7 @@ try {
 					$word = trim($tmp);
 					$wdf = 1;
 				}
-				add_search_log($word, $wdf);
+				addSearchLog($word, $wdf);
 			}
 		}
 
