@@ -1195,6 +1195,18 @@ static int zcmd_task_get_synonyms(XS_CONN *conn)
 		return CONN_RES_ERR(NODB);
 	}
 
+	// check arg1 = 2 (just for one term`)
+	if (cmd->arg1 == 2) {
+		string term = string(XS_CMD_BUF(cmd), XS_CMD_BLEN(cmd));
+		Xapian::TermIterator sb = zarg->db->synonyms_begin(term);
+		Xapian::TermIterator se = zarg->db->synonyms_end(term);
+		string result;
+		while (sb != se) {
+			result += (*sb++) + "\n";
+		}
+		return CONN_RES_OK3(RESULT_SYNONYMS, result.data(), result.size() > 0 ? result.size() - 1 : 0);
+	}
+
 	// check input (off+limit) in buf1
 	if (XS_CMD_BLEN1(cmd) != (sizeof(int) + sizeof(int))) {
 		if (XS_CMD_BLEN1(cmd) != 0) {

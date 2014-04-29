@@ -234,7 +234,8 @@ struct xs_import_hdr
 
 /**
  * Load and list synonyms for current db
- * arg1:0/1(no exclue Zxxx), blen1:8, buf1:int(offset)+int(limit)
+ * arg1:0/1(no exclude Zxxx), blen1:8, buf1:int(offset)+int(limit)
+ * arg1:2 (for special term), blen:term_len, buf:term
  */
 #define	CMD_SEARCH_GET_SYNONYMS	72
 

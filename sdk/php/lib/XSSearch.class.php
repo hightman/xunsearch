@@ -179,6 +179,24 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 获取指定词汇的同义词列表
+	 * @param string $term 要查询同义词的原词
+	 * @return array 同义词记录数组, 不存在同义词则返回空数组
+	 * @since 1.4.9
+	 */
+	public function getSynonyms($term)
+	{
+		$term = strval($term);
+		if (strlen($term) === 0) {
+			return false;
+		}
+		$cmd = array('cmd' => CMD_SEARCH_GET_SYNONYMS, 'arg1' => 2, 'buf' => $term);
+		$res = $this->execCommand($cmd, CMD_OK_RESULT_SYNONYMS);
+		$ret = $res->buf === '' ? array() : explode("\n", $res->buf);
+		return $ret;
+	}
+
+	/**
 	 * 获取解析后的搜索语句
 	 * @param string $query 搜索语句, 若传入 null 使用默认语句
 	 * @return string 返回解析后的搜索语句
@@ -843,8 +861,8 @@ class XSSearch extends XSServer
 		}
 		if (isset($this->_highlight['pairs'])) {
 			$value = $strtr ?
-					strtr($value, $this->_highlight['pairs']) :
-					str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
+				strtr($value, $this->_highlight['pairs']) :
+				str_replace(array_keys($this->_highlight['pairs']), array_values($this->_highlight['pairs']), $value);
 		}
 		return $value;
 	}
@@ -866,7 +884,7 @@ class XSSearch extends XSServer
 			// 无结果、包含 OR、XOR、NOT/-、默认 fuzzy
 			$query = $this->_query;
 			if (!$this->_lastCount || ($this->_defaultOp == CMD_QUERY_OP_OR && strpos($query, ' '))
-					|| strpos($query, ' OR ') || strpos($query, ' NOT ') || strpos($query, ' XOR ')) {
+				|| strpos($query, ' OR ') || strpos($query, ' NOT ') || strpos($query, ' XOR ')) {
 				return;
 			}
 			$terms = $this->terms(null, false);
@@ -1009,7 +1027,7 @@ class XSSearch extends XSServer
 				}
 				$name = substr($part, $i, $pos - $i);
 				if (($field = $this->xs->getField($name, false)) !== false
-						&& $field->vno != XSFieldScheme::MIXED_VNO) {
+					&& $field->vno != XSFieldScheme::MIXED_VNO) {
 					$this->regQueryPrefix($name);
 					if ($field->hasCustomTokenizer()) {
 						$prefix = $i > 0 ? substr($part, 0, $i) : '';
@@ -1037,7 +1055,7 @@ class XSSearch extends XSServer
 				}
 			}
 			if (strlen($part) > 1 && ($part[0] == '+' || $part[0] == '-') && $part[1] != '('
-					&& preg_match('/[\x81-\xfe]/', $part)) {
+				&& preg_match('/[\x81-\xfe]/', $part)) {
 				$newQuery .= substr($part, 0, 1) . '(' . substr($part, 1) . ')';
 				continue;
 			}
@@ -1053,8 +1071,8 @@ class XSSearch extends XSServer
 	private function regQueryPrefix($name)
 	{
 		if (!isset($this->_prefix[$name])
-				&& ($field = $this->xs->getField($name, false))
-				&& ($field->vno != XSFieldScheme::MIXED_VNO)) {
+			&& ($field = $this->xs->getField($name, false))
+			&& ($field->vno != XSFieldScheme::MIXED_VNO)) {
 			$type = $field->isBoolIndex() ? CMD_PREFIX_BOOLEAN : CMD_PREFIX_NORMAL;
 			$cmd = new XSCommand(CMD_QUERY_PREFIX, $type, $field->vno, $name);
 			$this->execCommand($cmd);

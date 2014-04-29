@@ -20,7 +20,7 @@ XSUtil::parseOpt(array('p', 'q', 'c', 'd', 's',
 $project = XSUtil::getOpt('p', 'project', true);
 $query = XSUtil::getOpt('q', 'query', true);
 $hot = XSUtil::getOpt(null, 'hot');
-$synonyms = XSUtil::getOpt(null, 'list-synonyms');
+$synonyms = XSUtil::getOpt(null, 'list-synonyms', false);
 $terms = XSUtil::getOpt(null, 'terms');
 $weights = XSUtil::getOpt(null, 'add-weight');
 $info = XSUtil::getOpt(null, 'info');
@@ -36,7 +36,7 @@ $query = XSUtil::convertIn($query);
 $sort = XSUtil::getOpt('s', 'sort');
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
-		|| (!$info && !$hot && !$synonyms && !is_string($query))) {
+	|| (!$info && !$hot && !$synonyms && !is_string($query))) {
 	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
 	echo <<<EOF
 Quest - 搜索查询和测试工具 ($version)
@@ -72,7 +72,7 @@ Quest - 搜索查询和测试工具 ($version)
     --related    根据当前搜索词查找相关搜索词
     --list-synonyms[=stemmed]
                  列出库内的全部同义词，每行显示一个，可以搭配 --limit 使用，默认显示前 100 个
-                 如果设置了 stemmed 值则连同词根同义词也列出
+                 如果设置了 stemmed 值则连同词根同义词也列出，设置其它值则只列出指定词的全部同义词
     --limit=<num>用于设置 suggest|hot|related 的返回数量，两者默认值均为 10 个
                  对于普通搜索和列出同义词时，还支持用 --limit=offset,num 的格式
     --show-query 用于在搜索结果显示内部的 Xapian 结构的 query 语句用于调试
@@ -129,8 +129,7 @@ try {
 			echo "暂无相关热门搜索记录。\n";
 		} else {
 			$i = 1;
-			printf("序  %s %s\n%s\n", XSUtil::fixWidth('搜索关键词(' . $type . ')', 40),
-					XSUtil::fixWidth('次数', 10), XSUtil::fixWidth('', 56, '-'));
+			printf("序  %s %s\n%s\n", XSUtil::fixWidth('搜索关键词(' . $type . ')', 40), XSUtil::fixWidth('次数', 10), XSUtil::fixWidth('', 56, '-'));
 			foreach ($result as $word => $freq) {
 				printf("%2d. %s %d\n", $i, XSUtil::fixWidth($word, 40), $freq);
 				$i++;
@@ -145,7 +144,12 @@ try {
 		// thread pool
 		$res = $search->execCommand(CMD_SEARCH_DRAW_TPOOL);
 		echo $res->buf;
+	} elseif (is_string($synonyms) && $synonyms !== 'stemmed') {
+		echo "列出\033[7m" . $synonyms . "\033[m的同义词：\n";
+		$synonyms = $search->getSynonyms($synonyms);
+		print_r($synonyms);
 	} elseif ($synonyms !== null) {
+		// list all 
 		if ($limit === null) {
 			$offset = $limit1 = 0;
 		} elseif (($pos = strpos($limit, ',')) === false) {
@@ -314,8 +318,7 @@ try {
 		$related = $search->getRelatedQuery();
 
 		// info
-		printf("在 %s 条数据中，大约有 %d 条包含 \033[7m%s\033[m ，第 %d-%d 条，用时：%.4f 秒。\n", number_format($total),
-				$matched, $query, min($matched, $offset + 1), min($matched, $limit1 + $offset), $cost);
+		printf("在 %s 条数据中，大约有 %d 条包含 \033[7m%s\033[m ，第 %d-%d 条，用时：%.4f 秒。\n", number_format($total), $matched, $query, min($matched, $offset + 1), min($matched, $limit1 + $offset), $cost);
 		// correct
 		if (count($correct) > 0) {
 			echo "您是不是想找：\033[4m" . implode("\033[m \033[4m", $correct) . "\033[m\n";
@@ -332,8 +335,7 @@ try {
 			}
 
 			// main fields
-			printf("\n%d. \033[4m%s#%s# [%d%%,%.2f]\033[m\n", $doc->rank(), $title, $doc->f($fid),
-					$doc->percent(), $doc->weight());
+			printf("\n%d. \033[4m%s#%s# [%d%%,%.2f]\033[m\n", $doc->rank(), $title, $doc->f($fid), $doc->percent(), $doc->weight());
 			echo $body;
 
 			// other fields
