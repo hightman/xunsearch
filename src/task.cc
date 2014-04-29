@@ -722,6 +722,8 @@ static inline Xapian::Database *fetch_conn_database(XS_CONN *conn, const char *n
 		db->keep_alive();
 		zarg_add_object(zarg, OTYPE_DB, name, db);
 		log_debug_conn("new (Xapian::Database *) %p (KEY:%s)", db, name);
+	} else {
+		db->reopen();
 	}
 	return db;
 }
