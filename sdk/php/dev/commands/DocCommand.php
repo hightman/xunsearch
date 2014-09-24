@@ -28,7 +28,7 @@ class DocCommand extends ApiCommand
 	{
 		return <<<EOF
 用法
-  {$_SERVER['argv'][0]} api [mode] [output_dir]
+  {$_SERVER['argv'][0]} doc [mode] [output_dir]
 
 描述
   这条命令用于自动根据代码注释和 Markdown 文档生成 HTML 格式文档、CHM 索引文件。
