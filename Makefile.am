@@ -39,7 +39,7 @@ install-customDATA:
 	test -z "$(customdir)" || $(MKDIR_P) "$(DESTDIR)$(customdir)"
 	@list='$(custom_DATA)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=$(am__strip_dir) \
+	  $(am__strip_dir) \
 	  if test -f "$(DESTDIR)$(customdir)/$$f"; then \
 	    echo " Ignore exists custom data file '$$p'"; else \
 	    echo " $(sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(customdir)/$$f'"; \
