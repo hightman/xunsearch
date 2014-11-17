@@ -2,7 +2,7 @@
 # usage ./before_patch.sh [version]
 #
 version=$1
-srcfile="xapian-core-${version}.tar.gz"
+srcfile="xapian-core-${version}.tar.xz"
 
 if ! test -f $srcfile ; then
   echo "Not exists source file: $srcfile"
