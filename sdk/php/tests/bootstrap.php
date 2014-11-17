@@ -5,6 +5,7 @@
 $prefix = trim(file_get_contents(getenv('HOME') . '/.xs_installed'));
 shell_exec($prefix . '/bin/xs-ctl.sh restart');
 sleep(1);
+ini_set('memory_limit', '2048M');
 
 // global temp ini files
 $GLOBALS['fixIniData'] = array(
