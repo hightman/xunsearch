@@ -23,9 +23,9 @@ class XSCommand extends XSComponent
 {
 	/**
 	 * @var int 命令代码
-	 * 通常是预定义常量 CMD_xxx, 取值范围 0~255
+	 * 通常是预定义常量 XS_CMD_xxx, 取值范围 0~255
 	 */
-	public $cmd = CMD_NONE;
+	public $cmd = XS_CMD_NONE;
 
 	/**
 	 * @var int 参数1
@@ -203,7 +203,7 @@ class XSServer extends XSComponent
 				$this->_sendBuffer = '';
 			}
 			if (!$ioerr && !($this->_flag & self::FILE)) {
-				$cmd = new XSCommand(CMD_QUIT);
+				$cmd = new XSCommand(XS_CMD_QUIT);
 				fwrite($this->_sock, $cmd);
 			}
 			fclose($this->_sock);
@@ -251,8 +251,8 @@ class XSServer extends XSComponent
 	public function setProject($name, $home = '')
 	{
 		if ($name !== $this->_project) {
-			$cmd = array('cmd' => CMD_USE, 'buf' => $name, 'buf1' => $home);
-			$this->execCommand($cmd, CMD_OK_PROJECT);
+			$cmd = array('cmd' => XS_CMD_USE, 'buf' => $name, 'buf1' => $home);
+			$this->execCommand($cmd, XS_CMD_OK_PROJECT);
 			$this->_project = $name;
 		}
 	}
@@ -263,20 +263,20 @@ class XSServer extends XSComponent
 	 */
 	public function setTimeout($sec)
 	{
-		$cmd = array('cmd' => CMD_TIMEOUT, 'arg' => $sec);
-		$this->execCommand($cmd, CMD_OK_TIMEOUT_SET);
+		$cmd = array('cmd' => XS_CMD_TIMEOUT, 'arg' => $sec);
+		$this->execCommand($cmd, XS_CMD_OK_TIMEOUT_SET);
 	}
 
 	/**
 	 * 执行服务端指令并获取返回值
 	 * @param mixed $cmd 要提交的指令, 若不是 XSCommand 实例则作为构造函数的第一参数创建对象
-	 * @param int $res_arg 要求的响应参数, 默认为 CMD_NONE 即不检测, 若检测结果不符
+	 * @param int $res_arg 要求的响应参数, 默认为 XS_CMD_NONE 即不检测, 若检测结果不符
 	 *        则认为命令调用失败, 会返回 false 并设置相应的出错信息
-	 * @param int $res_cmd 要求的响应指令, 默认为 CMD_OK 即要求结果必须正确.
+	 * @param int $res_cmd 要求的响应指令, 默认为 XS_CMD_OK 即要求结果必须正确.
 	 * @return mixed 若无需要检测结果则返回 true, 其它返回响应的 XSCommand 对象
 	 * @throw XSException 操作失败或响应命令不正确时抛出异常
 	 */
-	public function execCommand($cmd, $res_arg = CMD_NONE, $res_cmd = CMD_OK)
+	public function execCommand($cmd, $res_arg = XS_CMD_NONE, $res_cmd = XS_CMD_OK)
 	{
 		// create command object
 		if (!$cmd instanceof XSCommand) {
@@ -303,11 +303,11 @@ class XSServer extends XSComponent
 		$res = $this->getRespond();
 
 		// check respond
-		if ($res->cmd === CMD_ERR && $res_cmd != CMD_ERR) {
+		if ($res->cmd === XS_CMD_ERR && $res_cmd != XS_CMD_ERR) {
 			throw new XSException($res->buf, $res->arg);
 		}
 		// got unexpected respond command
-		if ($res->cmd != $res_cmd || ($res_arg != CMD_NONE && $res->arg != $res_arg)) {
+		if ($res->cmd != $res_cmd || ($res_arg != XS_CMD_NONE && $res->arg != $res_arg)) {
 			throw new XSException('Unexpected respond {CMD:' . $res->cmd . ', ARG:' . $res->arg . '}');
 		}
 		return $res;

@@ -42,7 +42,7 @@ $scws_multi = XSUtil::getOpt(null, 'scws-multi');
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
 		|| (!$custom_dict && !$stop_rebuild && !$flush && !$flush_log
 		&& !$info && !$clean && !$source && !$add_synonym && !$del_synonym && !$scws_multi)) {
-	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
+	$version = XS_PACKAGE_NAME . '/' . XS_PACKAGE_VERSION;
 	echo <<<EOF
 Indexer - 索引批量管理、导入工具 ($version)
 
@@ -166,10 +166,10 @@ try {
 	// special actions
 	if ($info !== null) {
 		echo "---------- SERVER INFO BEGIN ----------\n";
-		$res = $index->execCommand(CMD_DEBUG);
+		$res = $index->execCommand(XS_CMD_DEBUG);
 		echo $res->buf;
 		echo "\n---------- SERVER INFO END ----------\n";
-		$res = $index->execCommand(CMD_INDEX_GET_DB);
+		$res = $index->execCommand(XS_CMD_INDEX_GET_DB);
 		$res = json_decode($res->buf);
 		echo "数据库名：" . sprintf('%s[0x%04x]', $res->name, $res->flag) . "\n";
 		echo "队列数据：" . $res->count . "条\n";

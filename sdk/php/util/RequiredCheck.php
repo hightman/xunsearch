@@ -101,16 +101,15 @@ out_line();
 共计 <?php echo $num_ok; ?> 项通过，<?php echo $num_warning; ?> 项警告，<?php echo $num_error; ?> 项错误。
 
 <?php if ($num_error > 0): ?>
-	您的服务器配置不符合 Xunsearch/PHP-SDK 的最低要求。
-	请仔细查看上面表格中结果为 ERROR 的项目，并针对性的做出修改和调整。
+您的服务器配置不符合 Xunsearch/PHP-SDK 的最低要求。
+请仔细查看上面表格中结果为 ERROR 的项目，并针对性的做出修改和调整。
 <?php else: ?>
-	您的服务器配置符合 Xunsearch/PHP-SDK 的最低要求。
-	<?php if ($num_warning > 0): ?>
-		如果您需要使用特定的功能，请关注上述的 WARNING 项。 
-	<?php endif; ?>
+您的服务器配置符合 Xunsearch/PHP-SDK 的最低要求。
+<?php if ($num_warning > 0): ?>
+如果您需要使用特定的功能，请关注上述的 WARNING 项。 
+<?php endif; ?>
 <?php endif; ?>
 <?php
-
 // check conv
 function check_conv()
 {

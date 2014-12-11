@@ -51,7 +51,7 @@ EOF;
 
 		include_once $this->root . '/lib/xs_cmd.inc.php';
 		$vfile = $this->root . '/../../VERSION';
-		$this->version = file_exists($vfile) ? trim(file_get_contents($vfile)) : PACKAGE_VERSION;
+		$this->version = file_exists($vfile) ? trim(file_get_contents($vfile)) : XS_PACKAGE_VERSION;
 
 		if (isset($args[1])) {
 			$output = $args[1];

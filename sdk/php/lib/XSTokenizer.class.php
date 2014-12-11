@@ -255,7 +255,7 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setIgnore($yes = true)
 	{
-		$this->_setting['ignore'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_IGNORE, $yes === false
+		$this->_setting['ignore'] = new XSCommand(XS_CMD_SEARCH_SCWS_SET, XS_CMD_SCWS_SET_IGNORE, $yes === false
 							? 0 : 1);
 		return $this;
 	}
@@ -270,7 +270,7 @@ class XSTokenizerScws implements XSTokenizer
 	public function setMulti($mode = 3)
 	{
 		$mode = intval($mode) & self::MULTI_MASK;
-		$this->_setting['multi'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_MULTI, $mode);
+		$this->_setting['multi'] = new XSCommand(XS_CMD_SEARCH_SCWS_SET, XS_CMD_SCWS_SET_MULTI, $mode);
 		return $this;
 	}
 
@@ -285,7 +285,7 @@ class XSTokenizerScws implements XSTokenizer
 		if (!is_int($mode)) {
 			$mode = stripos($fpath, '.txt') !== false ? SCWS_XDICT_TXT : SCWS_XDICT_XDB;
 		}
-		$this->_setting['set_dict'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DICT, $mode, $fpath);
+		$this->_setting['set_dict'] = new XSCommand(XS_CMD_SEARCH_SCWS_SET, XS_CMD_SCWS_SET_DICT, $mode, $fpath);
 		unset($this->_setting['add_dict']);
 		return $this;
 	}
@@ -304,7 +304,7 @@ class XSTokenizerScws implements XSTokenizer
 		if (!isset($this->_setting['add_dict'])) {
 			$this->_setting['add_dict'] = array();
 		}
-		$this->_setting['add_dict'][] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_ADD_DICT, $mode, $fpath);
+		$this->_setting['add_dict'][] = new XSCommand(XS_CMD_SEARCH_SCWS_SET, XS_CMD_SCWS_ADD_DICT, $mode, $fpath);
 		return $this;
 	}
 
@@ -315,7 +315,7 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function setDuality($yes = true)
 	{
-		$this->_setting['duality'] = new XSCommand(CMD_SEARCH_SCWS_SET, CMD_SCWS_SET_DUALITY, $yes === false
+		$this->_setting['duality'] = new XSCommand(XS_CMD_SEARCH_SCWS_SET, XS_CMD_SCWS_SET_DUALITY, $yes === false
 							? 0 : 1);
 		return $this;
 	}
@@ -326,8 +326,8 @@ class XSTokenizerScws implements XSTokenizer
 	 */
 	public function getVersion()
 	{
-		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_GET_VERSION);
-		$res = self::$_server->execCommand($cmd, CMD_OK_INFO);
+		$cmd = new XSCommand(XS_CMD_SEARCH_SCWS_GET, XS_CMD_SCWS_GET_VERSION);
+		$res = self::$_server->execCommand($cmd, XS_CMD_OK_INFO);
 		return $res->buf;
 	}
 
@@ -340,8 +340,8 @@ class XSTokenizerScws implements XSTokenizer
 	{
 		$words = array();
 		$text = $this->applySetting($text);
-		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_GET_RESULT, 0, $text);
-		$res = self::$_server->execCommand($cmd, CMD_OK_SCWS_RESULT);
+		$cmd = new XSCommand(XS_CMD_SEARCH_SCWS_GET, XS_CMD_SCWS_GET_RESULT, 0, $text);
+		$res = self::$_server->execCommand($cmd, XS_CMD_OK_SCWS_RESULT);
 		while ($res->buf !== '') {
 			$tmp = unpack('Ioff/a4attr/a*word', $res->buf);
 			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
@@ -362,8 +362,8 @@ class XSTokenizerScws implements XSTokenizer
 	{
 		$words = array();
 		$text = $this->applySetting($text);
-		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_GET_TOPS, $limit, $text, $xattr);
-		$res = self::$_server->execCommand($cmd, CMD_OK_SCWS_TOPS);
+		$cmd = new XSCommand(XS_CMD_SEARCH_SCWS_GET, XS_CMD_SCWS_GET_TOPS, $limit, $text, $xattr);
+		$res = self::$_server->execCommand($cmd, XS_CMD_OK_SCWS_TOPS);
 		while ($res->buf !== '') {
 			$tmp = unpack('Itimes/a4attr/a*word', $res->buf);
 			$tmp['word'] = XS::convert($tmp['word'], self::$_charset, 'UTF-8');
@@ -382,8 +382,8 @@ class XSTokenizerScws implements XSTokenizer
 	public function hasWord($text, $xattr)
 	{
 		$text = $this->applySetting($text);
-		$cmd = new XSCommand(CMD_SEARCH_SCWS_GET, CMD_SCWS_HAS_WORD, 0, $text, $xattr);
-		$res = self::$_server->execCommand($cmd, CMD_OK_INFO);
+		$cmd = new XSCommand(XS_CMD_SEARCH_SCWS_GET, XS_CMD_SCWS_HAS_WORD, 0, $text, $xattr);
+		$res = self::$_server->execCommand($cmd, XS_CMD_OK_INFO);
 		return $res->buf === 'OK';
 	}
 

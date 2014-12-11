@@ -558,19 +558,20 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			$e1 = null;
 			$search->setDb(null);
 		} catch (XSException $e1) {
-			
+			// reopen error
 		}
 		$search->reopen(true);
 		try {
 			$e2 = null;
 			$search->setDb('db');
 		} catch (XSException $e2) {
-			
+			// fixed not exists
 		}
-		$this->assertNull($e1);
+		$this->assertInstanceOf('XSException', $e1);
+		$this->assertEquals(XS_CMD_ERR_XAPIAN, $e1->getCode());
 		$this->assertNull($e2);
 		//$this->assertInstanceOf('XSException', $e2);
-		//$this->assertEquals(CMD_ERR_XAPIAN, $e2->getCode());
+		//$this->assertEquals(XS_CMD_ERR_XAPIAN, $e2->getCode());
 	}
 
 	public function testCustomDict()

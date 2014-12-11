@@ -34,7 +34,7 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 	{
 		$this->object->open(8383);
 		$this->object->open('localhost:8384');
-		$this->object->open(ini_get('mysql.default_socket'));
+		$this->object->open(ini_get('pdo_mysql.default_socket'));
 		$this->object->close();
 	}
 
@@ -50,21 +50,21 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 
 		clearstatcache();
 		$this->assertEquals(0, filesize($file));
-		$this->object->sendCommand(CMD_NONE);
+		$this->object->sendCommand(XS_CMD_NONE);
 
 		clearstatcache();
 		$this->assertEquals(8, filesize($file));
 
 		clearstatcache();
-		$this->assertTrue($this->object->execCommand(CMD_DOC_INDEX));
+		$this->assertTrue($this->object->execCommand(XS_CMD_DOC_INDEX));
 		$this->assertEquals(8, filesize($file));
 
 		clearstatcache();
-		$this->assertTrue($this->object->execCommand(CMD_DEBUG));
+		$this->assertTrue($this->object->execCommand(XS_CMD_DEBUG));
 		$this->assertEquals(24, filesize($file));
 
 		clearstatcache();
-		$this->assertTrue($this->object->execCommand(CMD_DOC_TERM));
+		$this->assertTrue($this->object->execCommand(XS_CMD_DOC_TERM));
 		$this->assertEquals(24, filesize($file));
 
 		clearstatcache();
@@ -87,14 +87,14 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 		$this->object->setTimeout(0);
 
 		$this->assertFalse($this->object->hasRespond());
-		$this->object->sendCommand(CMD_OK);
+		$this->object->sendCommand(XS_CMD_OK);
 		$this->assertFalse($this->object->hasRespond());
 
-		$this->object->sendCommand(CMD_SEARCH_GET_DB);
+		$this->object->sendCommand(XS_CMD_SEARCH_GET_DB);
 		usleep(50000);
 		$this->assertTrue($this->object->hasRespond());
 		$res = $this->object->respond;
-		$this->assertEquals(CMD_OK_DB_INFO, $res->arg);
+		$this->assertEquals(XS_CMD_OK_DB_INFO, $res->arg);
 		$this->assertEquals('Database()', $res->buf);
 
 		// read timeout		
@@ -110,15 +110,15 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 		// send cmd
 		$this->object->reopen();
 		$this->object->project = 'demo';
-		$cmd = new XSCommand(array('cmd' => CMD_QUERY_GET_STRING, 'buf' => 'hello'));
+		$cmd = new XSCommand(array('cmd' => XS_CMD_QUERY_GET_STRING, 'buf' => 'hello'));
 		$res = $this->object->execCommand($cmd);
-		$this->assertEquals(CMD_OK_QUERY_STRING, $res->arg);
+		$this->assertEquals(XS_CMD_OK_QUERY_STRING, $res->arg);
 		$this->assertEquals('Xapian::Query(Zhello:(pos=1))', $res->buf);
 
 		// test unimp cmd
 		try {
 			$e = null;
-			$this->object->execCommand(array('cmd' => CMD_INDEX_SUBMIT));
+			$this->object->execCommand(array('cmd' => XS_CMD_INDEX_SUBMIT));
 		} catch (XSException $e) {
 			
 		}
@@ -130,7 +130,7 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 			$e = null;
 			$err = error_reporting(0);
 			fclose($this->object->socket);
-			$this->object->sendCommand(CMD_INDEX_SUBMIT);
+			$this->object->sendCommand(XS_CMD_INDEX_SUBMIT);
 		} catch (XSException $e) {
 			
 		}

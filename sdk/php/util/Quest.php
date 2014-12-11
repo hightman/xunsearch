@@ -37,7 +37,7 @@ $sort = XSUtil::getOpt('s', 'sort');
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
 	|| (!$info && !$hot && !$synonyms && !is_string($query))) {
-	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
+	$version = XS_PACKAGE_NAME . '/' . XS_PACKAGE_VERSION;
 	echo <<<EOF
 Quest - 搜索查询和测试工具 ($version)
 
@@ -138,11 +138,11 @@ try {
 	} elseif ($info !== null) {
 		// server info
 		echo "---------- SERVER INFO BEGIN ----------\n";
-		$res = $search->execCommand(CMD_DEBUG);
+		$res = $search->execCommand(XS_CMD_DEBUG);
 		echo $res->buf;
 		echo "\n---------- SERVER INFO END ----------\n";
 		// thread pool
-		$res = $search->execCommand(CMD_SEARCH_DRAW_TPOOL);
+		$res = $search->execCommand(XS_CMD_SEARCH_DRAW_TPOOL);
 		echo $res->buf;
 	} elseif (is_string($synonyms) && $synonyms !== 'stemmed') {
 		echo "列出\033[7m" . $synonyms . "\033[m的同义词：\n";

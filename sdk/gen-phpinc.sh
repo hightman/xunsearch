@@ -5,9 +5,9 @@
 
 echo "<?php"
 echo "/* Automatically generated at "`date +"%Y/%m/%d %H:%M" `" */"
-grep "^#define[	 ]CMD_" ../src/xs_cmd.h | grep -v "[\"(]" | awk '{ print "define(\047" $2 "\047,\t" $3 ");" }'
+grep "^#define[	 ]CMD_" ../src/xs_cmd.h | grep -v "[\"(]" | awk '{ print "define(\047" $2 "\047,\t" $3 ");" }' | sed 's/CMD_/XS_CMD_/g'
 if test -f ../config.h ; then
-  grep "PACKAGE_" ../config.h | grep -v "STRING" | awk '{ print "define(\047" $2 "\047,\t" $3 ");" }'
+  grep "PACKAGE_" ../config.h | grep -v "STRING" | awk '{ print "define(\047XS_" $2 "\047,\t" $3 ");" }'
 fi
 echo "/* end the cmd defination */"
 

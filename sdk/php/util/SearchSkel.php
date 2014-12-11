@@ -17,7 +17,7 @@ XSUtil::parseOpt(array('p', 'o', 'project', 'output'));
 $project = XSUtil::getOpt('p', 'project', true);
 
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)) {
-	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
+	$version = XS_PACKAGE_NAME . '/' . XS_PACKAGE_VERSION;
 	echo <<<EOF
 SearchSkel - 搜索骨架代码生成工具 ($version)
 
@@ -74,8 +74,8 @@ try {
 	$vars['@xs_lib_root@'] = XS_LIB_ROOT;
 	$vars['@date_time@'] = date('Y-m-d H:i:s');
 	$vars['@project_name@'] = ucfirst($xs->name);
-	$vars['@package_name@'] = PACKAGE_NAME;
-	$vars['@package_version@'] = PACKAGE_VERSION;
+	$vars['@package_name@'] = XS_PACKAGE_NAME;
+	$vars['@package_version@'] = XS_PACKAGE_VERSION;
 
 	// fields
 	$vars['@set_filter@'] = '';

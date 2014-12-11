@@ -18,7 +18,7 @@ class XSCommandTest extends PHPUnit_Framework_TestCase
 	 */
 	protected function setUp()
 	{
-		$this->object = new XSCommand(CMD_NONE);
+		$this->object = new XSCommand(XS_CMD_NONE);
 	}
 
 	/**

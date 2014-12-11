@@ -22,14 +22,14 @@ if (php_sapi_name() != 'cli') {
 // load defined constant of commands
 $DEFINES = array();
 foreach (get_defined_constants() as $key => $value) {
-	if (strncmp($key, 'CMD_', 4) || isset($DEFINES[$value])) {
+	if (strncmp($key, 'XS_CMD_', 7) || isset($DEFINES[$value])) {
 		continue;
 	}
 	$DEFINES[$value] = $key;
 }
 
 // welcome message
-echo "欢迎使用 " . PACKAGE_NAME . "/" . PACKAGE_VERSION . " 服务端交互式测试工具!\n";
+echo "欢迎使用 " . XS_PACKAGE_NAME . "/" . XS_PACKAGE_VERSION . " 服务端交互式测试工具!\n";
 echo "您可以随时输入 `help' 列出可用命令和使用帮助\n>>";
 flush();
 
@@ -100,7 +100,7 @@ function cmd_help($args = '')
 	echo "                 - 设置当前活动的 project name 和 home\n";
 	echo "  send <cmd>[ <arg1>[ <arg2>[ <buf>[ <buf1>]]]]\n";
 	echo "                 - 往服务器端发送指令并获取响应, 若不需要响应请用 send2 \n";
-	echo "                   <cmd>是整数或是 CMD_xxx 这样的预定义变量, 其中 CMD_可以省略\n";
+	echo "                   <cmd>是整数或是 XS_CMD_xxx 这样的预定义变量, 其中 XS_CMD_可以省略\n";
 	echo "                   <arg1>,<arg2> 均为0~255的数值\n";
 	echo "                   <buf> 字符串, 若包含空格则必须用引号括起来, 中间的引号则需用\\\"进行转义\n";
 	echo "                   <buf1> 同上 (最大长度 255, 跟 buf 一样均不得包含换行, 如需换行请用\\n)\n";
@@ -232,12 +232,12 @@ function cmd_recv($args = '')
 		$res = $server->getRespond();
 
 		// force to decode som command(unpack)
-		if ($res->cmd == CMD_OK && strlen($res->buf) == 4
-				&& ($res->arg == CMD_OK_SEARCH_TOTAL || $res->arg == CMD_OK_DB_TOTAL)) {
+		if ($res->cmd == XS_CMD_OK && strlen($res->buf) == 4
+				&& ($res->arg == XS_CMD_OK_SEARCH_TOTAL || $res->arg == XS_CMD_OK_DB_TOTAL)) {
 			$tmp = unpack('Icount', $res->buf);
 			$res->buf = '{count:' . $tmp['count'] . '}';
 		}
-		if ($res->cmd == CMD_SEARCH_RESULT_DOC && strlen($res->buf) == 20) {
+		if ($res->cmd == XS_CMD_SEARCH_RESULT_DOC && strlen($res->buf) == 20) {
 			$tmp = unpack('Idocid/Irank/Iccount/ipercent/fweight', $res->buf);
 			$res->buf = sprintf('{docid:%u, rank:%d, ccount:%d, percent:%d%%, weight:%.2f}', $tmp['docid'],
 					$tmp['rank'], $tmp['ccount'], $tmp['percent'], $tmp['weight']);
@@ -245,10 +245,10 @@ function cmd_recv($args = '')
 		// output
 		printf("<<<CMD: %s\n<<<ARG: %s\n<<<BUF1(%d): %s\n<<<BUF(%d): %s\n<<<END\n",
 				_get_cmd_def($res->cmd),
-				$res->cmd == CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1),
+				$res->cmd == XS_CMD_SEARCH_RESULT_FIELD ? $res->arg : _get_cmd_def($res->arg), strlen($res->buf1),
 				$res->buf1, strlen($res->buf), $res->buf);
 		// break
-		if ($wait == 0 || $res->cmd == CMD_ERR || $res->cmd == $wait) {
+		if ($wait == 0 || $res->cmd == XS_CMD_ERR || $res->cmd == $wait) {
 			break;
 		}
 	}
@@ -281,7 +281,7 @@ function _check_server()
 }
 
 /**
- * 把 CMD_xxx 定义的整型值显示为字符串
+ * 把 XS_CMD_xxx 定义的整型值显示为字符串
  * @param int $cmd
  * @return string
  */
@@ -306,14 +306,14 @@ function _get_def_cmd($cmd)
 		global $DEFINES;
 		$cmd = intval($cmd);
 		return isset($DEFINES[$cmd]) ? $cmd : 0;
-	} elseif (defined('CMD_' . $cmd2)) {
-		return constant('CMD_' . $cmd2);
-	} elseif (defined('CMD_SEARCH_' . $cmd2)) {
-		return constant('CMD_SEARCH_' . $cmd2);
-	} elseif (defined('CMD_INDEX_' . $cmd2)) {
-		return constant('CMD_INDEX_' . $cmd2);
-	} elseif (defined('CMD_QUERY_' . $cmd2)) {
-		return constant('CMD_QUERY_' . $cmd2);
+	} elseif (defined('XS_CMD_' . $cmd2)) {
+		return constant('XS_CMD_' . $cmd2);
+	} elseif (defined('XS_CMD_SEARCH_' . $cmd2)) {
+		return constant('XS_CMD_SEARCH_' . $cmd2);
+	} elseif (defined('XS_CMD_INDEX_' . $cmd2)) {
+		return constant('XS_CMD_INDEX_' . $cmd2);
+	} elseif (defined('XS_CMD_QUERY_' . $cmd2)) {
+		return constant('XS_CMD_QUERY_' . $cmd2);
 	}
 	return 0;
 }

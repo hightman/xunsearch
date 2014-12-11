@@ -59,7 +59,7 @@ EOF;
 		echo "开始加载文件 ... ";
 		$root = dirname(__FILE__) . '/../../lib';
 		$content = @file_get_contents($root . '/xs_cmd.inc.php');
-		if ($content === false || strpos($content, 'CMD_NONE') === false) {
+		if ($content === false || strpos($content, 'XS_CMD_NONE') === false) {
 			echo "ERROR: xs_cmd.inc.php 文件不存在或包含无效内容。\n";
 			exit(0);
 		}

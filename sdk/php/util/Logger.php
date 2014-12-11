@@ -38,7 +38,7 @@ if ($query === null && $put === null && $del === null
 if (XSUtil::getOpt('h', 'help') !== null || !is_string($project)
 		|| ($import !== null && !is_string($import)) || ($query !== null && !is_string($query))
 		|| ($put !== null && !is_string($put)) || ($del !== null && !is_string($del))) {
-	$version = PACKAGE_NAME . '/' . PACKAGE_VERSION;
+	$version = XS_PACKAGE_NAME . '/' . XS_PACKAGE_VERSION;
 	echo <<<EOF
 Logger - 搜索日志管理工具 ($version)
 

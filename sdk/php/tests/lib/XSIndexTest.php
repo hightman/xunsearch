@@ -53,7 +53,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 
 	public function testClean()
 	{
-		$this->setExpectedException('XSException', '', CMD_ERR_NODB);
+		$this->setExpectedException('XSException', '', XS_CMD_ERR_NODB);
 		$this->object->xs->search->getDbTotal();
 	}
 
@@ -158,7 +158,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 			
 		}
 		$this->assertNotNull($e);
-		$this->assertEquals(CMD_ERR_REBUILDING, $e->getCode());
+		$this->assertEquals(XS_CMD_ERR_REBUILDING, $e->getCode());
 		$this->object->add($doc);
 		$this->assertEquals(2, $search->reopen(true)->dbTotal);
 		$this->object->endRebuild();

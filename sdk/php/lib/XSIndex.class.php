@@ -41,7 +41,7 @@ class XSIndex extends XSServer
 	 * 执行服务端指令并获取返回值
 	 * 重写此方法是为了同步到额外增加的多个索引服务端
 	 */
-	public function execCommand($cmd, $res_arg = CMD_NONE, $res_cmd = CMD_OK)
+	public function execCommand($cmd, $res_arg = XS_CMD_NONE, $res_cmd = XS_CMD_OK)
 	{
 		$res = parent::execCommand($cmd, $res_arg, $res_cmd);
 		foreach (self::$_adds as $srv) {
@@ -58,7 +58,7 @@ class XSIndex extends XSServer
 	 */
 	public function clean()
 	{
-		$this->execCommand(CMD_INDEX_CLEAN_DB, CMD_OK_DB_CLEAN);
+		$this->execCommand(XS_CMD_INDEX_CLEAN_DB, XS_CMD_OK_DB_CLEAN);
 		return $this;
 	}
 
@@ -97,9 +97,9 @@ class XSIndex extends XSServer
 		}
 
 		// request cmd
-		$cmd = new XSCommand(CMD_INDEX_REQUEST, CMD_INDEX_REQUEST_ADD);
+		$cmd = new XSCommand(XS_CMD_INDEX_REQUEST, XS_CMD_INDEX_REQUEST_ADD);
 		if ($add !== true) {
-			$cmd->arg1 = CMD_INDEX_REQUEST_UPDATE;
+			$cmd->arg1 = XS_CMD_INDEX_REQUEST_UPDATE;
 			$cmd->arg2 = $fid->vno;
 			$cmd->buf = $key;
 		}
@@ -109,21 +109,21 @@ class XSIndex extends XSServer
 		foreach ($this->xs->getAllFields() as $field) /* @var $field XSFieldMeta */ {
 			// value
 			if (($value = $doc->f($field)) !== null) {
-				$varg = $field->isNumeric() ? CMD_VALUE_FLAG_NUMERIC : 0;
+				$varg = $field->isNumeric() ? XS_CMD_VALUE_FLAG_NUMERIC : 0;
 				$value = $field->val($value);
 				if (!$field->hasCustomTokenizer()) {
 					// internal tokenizer
-					$wdf = $field->weight | ($field->withPos() ? CMD_INDEX_FLAG_WITHPOS : 0);
+					$wdf = $field->weight | ($field->withPos() ? XS_CMD_INDEX_FLAG_WITHPOS : 0);
 					if ($field->hasIndexMixed()) {
-						$cmds[] = new XSCommand(CMD_DOC_INDEX, $wdf, XSFieldScheme::MIXED_VNO, $value);
+						$cmds[] = new XSCommand(XS_CMD_DOC_INDEX, $wdf, XSFieldScheme::MIXED_VNO, $value);
 					}
 					if ($field->hasIndexSelf()) {
-						$wdf |= $field->isNumeric() ? 0 : CMD_INDEX_FLAG_SAVEVALUE;
-						$cmds[] = new XSCommand(CMD_DOC_INDEX, $wdf, $field->vno, $value);
+						$wdf |= $field->isNumeric() ? 0 : XS_CMD_INDEX_FLAG_SAVEVALUE;
+						$cmds[] = new XSCommand(XS_CMD_DOC_INDEX, $wdf, $field->vno, $value);
 					}
 					// add value
 					if (!$field->hasIndexSelf() || $field->isNumeric()) {
-						$cmds[] = new XSCommand(CMD_DOC_VALUE, $varg, $field->vno, $value);
+						$cmds[] = new XSCommand(XS_CMD_DOC_VALUE, $varg, $field->vno, $value);
 					}
 				} else {
 					// add index
@@ -131,29 +131,29 @@ class XSIndex extends XSServer
 						$terms = $field->getCustomTokenizer()->getTokens($value, $doc);
 						// self: [bool term, NOT weight, NOT stem, NOT pos]
 						if ($field->hasIndexSelf()) {
-							$wdf = $field->isBoolIndex() ? 1 : ($field->weight | CMD_INDEX_FLAG_CHECKSTEM);
+							$wdf = $field->isBoolIndex() ? 1 : ($field->weight | XS_CMD_INDEX_FLAG_CHECKSTEM);
 							foreach ($terms as $term) {
 								if (strlen($term) > 200) {
 									continue;
 								}
 								$term = strtolower($term);
-								$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf, $field->vno, $term);
+								$cmds[] = new XSCommand(XS_CMD_DOC_TERM, $wdf, $field->vno, $term);
 							}
 						}
 						// mixed: [use default tokenizer]
 						if ($field->hasIndexMixed()) {
 							$mtext = implode(' ', $terms);
-							$cmds[] = new XSCommand(CMD_DOC_INDEX, $field->weight, XSFieldScheme::MIXED_VNO, $mtext);
+							$cmds[] = new XSCommand(XS_CMD_DOC_INDEX, $field->weight, XSFieldScheme::MIXED_VNO, $mtext);
 						}
 					}
 					// add value
-					$cmds[] = new XSCommand(CMD_DOC_VALUE, $varg, $field->vno, $value);
+					$cmds[] = new XSCommand(XS_CMD_DOC_VALUE, $varg, $field->vno, $value);
 				}
 			}
 			// process add terms
 			if (($terms = $doc->getAddTerms($field)) !== null) {
 				// ignore weight for bool index
-				$wdf1 = $field->isBoolIndex() ? 0 : CMD_INDEX_FLAG_CHECKSTEM;
+				$wdf1 = $field->isBoolIndex() ? 0 : XS_CMD_INDEX_FLAG_CHECKSTEM;
 				foreach ($terms as $term => $wdf) {
 					$term = strtolower($term);
 					if (strlen($term) > 200) {
@@ -161,34 +161,34 @@ class XSIndex extends XSServer
 					}
 					$wdf2 = $field->isBoolIndex() ? 1 : $wdf * $field->weight;
 					while ($wdf2 > XSFieldMeta::MAX_WDF) {
-						$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf1 | XSFieldMeta::MAX_WDF, $field->vno, $term);
+						$cmds[] = new XSCommand(XS_CMD_DOC_TERM, $wdf1 | XSFieldMeta::MAX_WDF, $field->vno, $term);
 						$wdf2 -= XSFieldMeta::MAX_WDF;
 					}
-					$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf1 | $wdf2, $field->vno, $term);
+					$cmds[] = new XSCommand(XS_CMD_DOC_TERM, $wdf1 | $wdf2, $field->vno, $term);
 				}
 			}
 			// process add text
 			if (($text = $doc->getAddIndex($field)) !== null) {
 				if (!$field->hasCustomTokenizer()) {
-					$wdf = $field->weight | ($field->withPos() ? CMD_INDEX_FLAG_WITHPOS : 0);
-					$cmds[] = new XSCommand(CMD_DOC_INDEX, $wdf, $field->vno, $text);
+					$wdf = $field->weight | ($field->withPos() ? XS_CMD_INDEX_FLAG_WITHPOS : 0);
+					$cmds[] = new XSCommand(XS_CMD_DOC_INDEX, $wdf, $field->vno, $text);
 				} else {
 					// NOT pos
-					$wdf = $field->isBoolIndex() ? 1 : ($field->weight | CMD_INDEX_FLAG_CHECKSTEM);
+					$wdf = $field->isBoolIndex() ? 1 : ($field->weight | XS_CMD_INDEX_FLAG_CHECKSTEM);
 					$terms = $field->getCustomTokenizer()->getTokens($text, $doc);
 					foreach ($terms as $term) {
 						if (strlen($term) > 200) {
 							continue;
 						}
 						$term = strtolower($term);
-						$cmds[] = new XSCommand(CMD_DOC_TERM, $wdf, $field->vno, $term);
+						$cmds[] = new XSCommand(XS_CMD_DOC_TERM, $wdf, $field->vno, $term);
 					}
 				}
 			}
 		}
 
 		// submit cmd
-		$cmds[] = new XSCommand(CMD_INDEX_SUBMIT);
+		$cmds[] = new XSCommand(XS_CMD_INDEX_SUBMIT);
 
 		// execute cmd
 		if ($this->_bufSize > 0) {
@@ -197,7 +197,7 @@ class XSIndex extends XSServer
 			for ($i = 0; $i < count($cmds) - 1; $i++) {
 				$this->execCommand($cmds[$i]);
 			}
-			$this->execCommand($cmds[$i], CMD_OK_RQST_FINISHED);
+			$this->execCommand($cmds[$i], XS_CMD_OK_RQST_FINISHED);
 		}
 
 		// after submit
@@ -227,17 +227,17 @@ class XSIndex extends XSServer
 		$terms = is_array($term) ? array_unique($term) : array($term);
 		$terms = XS::convert($terms, 'UTF-8', $this->xs->getDefaultCharset());
 		foreach ($terms as $term) {
-			$cmds[] = new XSCommand(CMD_INDEX_REMOVE, 0, $field->vno, strtolower($term));
+			$cmds[] = new XSCommand(XS_CMD_INDEX_REMOVE, 0, $field->vno, strtolower($term));
 		}
 
 		// combine multi commands into exdata
 		if ($this->_bufSize > 0) {
 			$this->appendBuffer(implode('', $cmds));
 		} elseif (count($cmds) == 1) {
-			$this->execCommand($cmds[0], CMD_OK_RQST_FINISHED);
+			$this->execCommand($cmds[0], XS_CMD_OK_RQST_FINISHED);
 		} else {
-			$cmd = array('cmd' => CMD_INDEX_EXDATA, 'buf' => implode('', $cmds));
-			$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+			$cmd = array('cmd' => XS_CMD_INDEX_EXDATA, 'buf' => implode('', $cmds));
+			$this->execCommand($cmd, XS_CMD_OK_RQST_FINISHED);
 		}
 		return $this;
 	}
@@ -258,17 +258,17 @@ class XSIndex extends XSServer
 		}
 
 		// try to check allowed (BUG: check the first cmd only):
-		// CMD_IMPORT_HEADER, CMD_INDEX_REQUEST, CMD_INDEX_REMOVE, CMD_INDEX_EXDATA
+		// XS_CMD_IMPORT_HEADER, XS_CMD_INDEX_REQUEST, XS_CMD_INDEX_REMOVE, XS_CMD_INDEX_EXDATA
 		$first = ord(substr($data, 0, 1));
-		if ($first != CMD_IMPORT_HEADER
-				&& $first != CMD_INDEX_REQUEST && $first != CMD_INDEX_SYNONYMS
-				&& $first != CMD_INDEX_REMOVE && $first != CMD_INDEX_EXDATA) {
+		if ($first != XS_CMD_IMPORT_HEADER
+				&& $first != XS_CMD_INDEX_REQUEST && $first != XS_CMD_INDEX_SYNONYMS
+				&& $first != XS_CMD_INDEX_REMOVE && $first != XS_CMD_INDEX_EXDATA) {
 			throw new XSException('Invalid start command of exdata (CMD:' . $first . ')');
 		}
 
 		// create cmd & execute it
-		$cmd = array('cmd' => CMD_INDEX_EXDATA, 'buf' => $data);
-		$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+		$cmd = array('cmd' => XS_CMD_INDEX_EXDATA, 'buf' => $data);
+		$this->execCommand($cmd, XS_CMD_OK_RQST_FINISHED);
 		return $this;
 	}
 
@@ -285,11 +285,11 @@ class XSIndex extends XSServer
 		$raw = strval($raw);
 		$synonym = strval($synonym);
 		if ($raw !== '' && $synonym !== '') {
-			$cmd = new XSCommand(CMD_INDEX_SYNONYMS, CMD_INDEX_SYNONYMS_ADD, 0, $raw, $synonym);
+			$cmd = new XSCommand(XS_CMD_INDEX_SYNONYMS, XS_CMD_INDEX_SYNONYMS_ADD, 0, $raw, $synonym);
 			if ($this->_bufSize > 0) {
 				$this->appendBuffer(strval($cmd));
 			} else {
-				$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+				$this->execCommand($cmd, XS_CMD_OK_RQST_FINISHED);
 			}
 		}
 		return $this;
@@ -308,11 +308,11 @@ class XSIndex extends XSServer
 		$raw = strval($raw);
 		$synonym = $synonym === null ? '' : strval($synonym);
 		if ($raw !== '') {
-			$cmd = new XSCommand(CMD_INDEX_SYNONYMS, CMD_INDEX_SYNONYMS_DEL, 0, $raw, $synonym);
+			$cmd = new XSCommand(XS_CMD_INDEX_SYNONYMS, XS_CMD_INDEX_SYNONYMS_DEL, 0, $raw, $synonym);
 			if ($this->_bufSize > 0) {
 				$this->appendBuffer(strval($cmd));
 			} else {
-				$this->execCommand($cmd, CMD_OK_RQST_FINISHED);
+				$this->execCommand($cmd, XS_CMD_OK_RQST_FINISHED);
 			}
 		}
 		return $this;
@@ -332,7 +332,7 @@ class XSIndex extends XSServer
 	{
 		$level = intval($level);
 		if ($level >= 0 && $level < 16) {
-			$cmd = array('cmd' => CMD_SEARCH_SCWS_SET, 'arg1' => CMD_SCWS_SET_MULTI, 'arg2' => $level);
+			$cmd = array('cmd' => XS_CMD_SEARCH_SCWS_SET, 'arg1' => XS_CMD_SCWS_SET_MULTI, 'arg2' => $level);
 			$this->execCommand($cmd);
 		}
 		return $this;
@@ -346,8 +346,8 @@ class XSIndex extends XSServer
 	 */
 	public function getScwsMulti()
 	{
-		$cmd = array('cmd' => CMD_SEARCH_SCWS_GET, 'arg1' => CMD_SCWS_GET_MULTI);
-		$res = $this->execCommand($cmd, CMD_OK_INFO);
+		$cmd = array('cmd' => XS_CMD_SEARCH_SCWS_GET, 'arg1' => XS_CMD_SCWS_GET_MULTI);
+		$res = $this->execCommand($cmd, XS_CMD_OK_INFO);
 		return intval($res->buf);
 	}
 
@@ -390,7 +390,7 @@ class XSIndex extends XSServer
 	 */
 	public function beginRebuild()
 	{
-		$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 0), CMD_OK_DB_REBUILD);
+		$this->execCommand(array('cmd' => XS_CMD_INDEX_REBUILD, 'arg1' => 0), XS_CMD_OK_DB_REBUILD);
 		$this->_rebuild = true;
 		return $this;
 	}
@@ -405,7 +405,7 @@ class XSIndex extends XSServer
 	{
 		if ($this->_rebuild === true) {
 			$this->_rebuild = false;
-			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 1), CMD_OK_DB_REBUILD);
+			$this->execCommand(array('cmd' => XS_CMD_INDEX_REBUILD, 'arg1' => 1), XS_CMD_OK_DB_REBUILD);
 		}
 		return $this;
 	}
@@ -420,10 +420,10 @@ class XSIndex extends XSServer
 	public function stopRebuild()
 	{
 		try {
-			$this->execCommand(array('cmd' => CMD_INDEX_REBUILD, 'arg1' => 2), CMD_OK_DB_REBUILD);
+			$this->execCommand(array('cmd' => XS_CMD_INDEX_REBUILD, 'arg1' => 2), XS_CMD_OK_DB_REBUILD);
 			$this->_rebuild = false;
 		} catch (XSException $e) {
-			if ($e->getCode() !== CMD_ERR_WRONGPLACE) {
+			if ($e->getCode() !== XS_CMD_ERR_WRONGPLACE) {
 				throw $e;
 			}
 		}
@@ -438,7 +438,7 @@ class XSIndex extends XSServer
 	 */
 	public function setDb($name)
 	{
-		$this->execCommand(array('cmd' => CMD_INDEX_SET_DB, 'buf' => $name), CMD_OK_DB_CHANGED);
+		$this->execCommand(array('cmd' => XS_CMD_INDEX_SET_DB, 'buf' => $name), XS_CMD_OK_DB_CHANGED);
 		return $this;
 	}
 
@@ -449,9 +449,9 @@ class XSIndex extends XSServer
 	public function flushLogging()
 	{
 		try {
-			$this->execCommand(CMD_FLUSH_LOGGING, CMD_OK_LOG_FLUSHED);
+			$this->execCommand(XS_CMD_FLUSH_LOGGING, XS_CMD_OK_LOG_FLUSHED);
 		} catch (XSException $e) {
-			if ($e->getCode() === CMD_ERR_BUSY) {
+			if ($e->getCode() === XS_CMD_ERR_BUSY) {
 				return false;
 			}
 			throw $e;
@@ -466,9 +466,9 @@ class XSIndex extends XSServer
 	public function flushIndex()
 	{
 		try {
-			$this->execCommand(CMD_INDEX_COMMIT, CMD_OK_DB_COMMITED);
+			$this->execCommand(XS_CMD_INDEX_COMMIT, XS_CMD_OK_DB_COMMITED);
 		} catch (XSException $e) {
-			if ($e->getCode() === CMD_ERR_BUSY || $e->getCode() === CMD_ERR_RUNNING) {
+			if ($e->getCode() === XS_CMD_ERR_BUSY || $e->getCode() === XS_CMD_ERR_RUNNING) {
 				return false;
 			}
 			throw $e;
@@ -483,7 +483,7 @@ class XSIndex extends XSServer
 	 */
 	public function getCustomDict()
 	{
-		$res = $this->execCommand(CMD_INDEX_USER_DICT, CMD_OK_INFO);
+		$res = $this->execCommand(XS_CMD_INDEX_USER_DICT, XS_CMD_OK_INFO);
 		return $res->buf;
 	}
 
@@ -494,8 +494,8 @@ class XSIndex extends XSServer
 	 */
 	public function setCustomDict($content)
 	{
-		$cmd = array('cmd' => CMD_INDEX_USER_DICT, 'arg1' => 1, 'buf' => $content);
-		$this->execCommand($cmd, CMD_OK_DICT_SAVED);
+		$cmd = array('cmd' => XS_CMD_INDEX_USER_DICT, 'arg1' => 1, 'buf' => $content);
+		$this->execCommand($cmd, XS_CMD_OK_DICT_SAVED);
 	}
 
 	/**
