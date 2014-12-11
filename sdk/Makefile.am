@@ -46,7 +46,9 @@ uninstall: uninstall-am uninstall-sdk
 install-sdk:
 	$(MKDIR_P) "$(DESTDIR)$(phpdir)"
 	-cp -rf php/README.md php/util php/doc $(DESTDIR)$(phpdir)/
+	-ln -sf $(DESTDIR)$(phpdir)/util/xs $(bindir)/xs-php
 	chmod 0755 $(DESTDIR)$(phpdir)/util/*.php
+	chmod 0755 $(DESTDIR)$(phpdir)/util/xs
 
 uninstall-sdk:
 	-rmdir $(phpappdir) $(phplibdir)
