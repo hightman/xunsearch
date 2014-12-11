@@ -9,7 +9,11 @@
  * @license http://www.xunsearch.com/license/
  * @version $Id$ 
  */
-require_once dirname(__FILE__) . '/../lib/XS.php';
+$lib_file = dirname(__FILE__) . '/../lib/XS.php';
+if (!file_exists($lib_file)) {
+	$lib_file = dirname(__FILE__) . '/../lib/XS.class.php';
+}
+require_once $lib_file;
 require_once dirname(__FILE__) . '/XSUtil.class.php';
 
 // check arguments
