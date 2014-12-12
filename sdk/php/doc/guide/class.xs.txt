@@ -16,6 +16,9 @@ $xs = new XS('demo');	// 自动使用 $prefix/sdk/php/app/demo.ini 作项目配�
 $xs = new XS('/path/to/demo.ini');	// 使用 /path/to/demo.ini
 ~~~
 
+> note: 自 v1.4.9 起，可以通过定义常量 XS_APP_ROOT 或设置这个环境变量来改变黑夜项目配置目录。
+
+
 重要属性
 --------
 

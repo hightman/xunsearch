@@ -284,7 +284,11 @@ class XS extends XSComponent
 	public function __construct($file)
 	{
 		if (strlen($file) < 255 && !is_file($file)) {
-			$file2 = XS_LIB_ROOT . '/../app/' . $file . '.ini';
+			$appRoot = defined('XS_APP_ROOT') ? XS_APP_ROOT : getenv('XS_APP_ROOT');
+			if ($appRoot === false) {
+				$appRoot = XS_LIB_ROOT . '/../app';
+			}
+			$file2 = $appRoot . '/' . $file . '.ini';
 			if (is_file($file2)) {
 				$file = $file2;
 			}

@@ -12,6 +12,7 @@
 $commands = array(
 	'index' => 'Indexer.php',
 	'search' => 'Quest.php',
+	'quest' => 'Quest.php',
 	'log' => 'Logger.php',
 	'check' => 'RequiredCheck.php',
 	'skel' => 'SearchSkel.php',
@@ -35,7 +36,7 @@ if ($cmd !== 'help' && $cmd !== '-h' && $cmd !== '--help') {
 	
 支持的命令如下：
     index        索引管理、导入工具
-    search       搜索查询及测试工具
+    search|quest 搜索查询及测试工具
     log          搜索日志管理工具
     skel         搜索骨架代码生成工具
     check        运行需求检查报告

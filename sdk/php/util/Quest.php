@@ -95,7 +95,7 @@ EOF;
 }
 
 // create xs project
-$ini = file_exists($project) ? $project : dirname(__FILE__) . '/../app/' . $project . '.ini';
+$ini = XSUtil::toProjectIni($project);
 if (!file_exists($ini)) {
 	echo "错误：无效的项目名称 ($project)，不存在相应的配置文件。\n";
 	exit(-1);

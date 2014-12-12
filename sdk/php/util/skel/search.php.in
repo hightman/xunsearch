@@ -8,7 +8,7 @@
  * 默认编码：@charset@
  */
 // 加载 XS 入口文件
-require_once '@xs_lib_root@/XS.php';
+require_once '@xs_lib_file@';
 error_reporting(E_ALL ^ E_NOTICE);
 
 //

@@ -7,7 +7,7 @@
  * 创建时间：@date_time@
  */
 // 加载 XS 入口文件
-require_once '@xs_lib_root@/XS.php';
+require_once '@xs_lib_file@';
 
 // Prefix Query is: term (by jQuery-ui)
 $q = isset($_GET['term']) ? trim($_GET['term']) : '';

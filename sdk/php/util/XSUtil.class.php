@@ -22,12 +22,30 @@ class XSUtil
 	private static $charset = null;
 
 	/**
+	 * 将项目参数转换为有效的 ini 文件
+	 * @param string $project 用户输入的项目参数
+	 * @return string 有效的 ini 配置文件路径
+	 */
+	public static function toProjectIni($project)
+	{
+		if (!is_file($project)) {
+			$appRoot = defined('XS_APP_ROOT') ? XS_APP_ROOT : getenv('XS_APP_ROOT');
+			if ($appRoot === false) {
+				$appRoot = (defined('XS_LIB_ROOT') ? XS_LIB_ROOT : dirname(__FILE__)) . '/../app';
+			}
+			return $appRoot . '/' . $project . '.ini';
+		} else {
+			return $project;
+		}
+	}
+
+	/**
 	 * 修正字符串至固定宽度
 	 * 其中一个全角符号、汉字的宽度为半角字符的 2 倍。
 	 * @param string $text 要修正的字符串
 	 * @param int $size 修正的目标宽度
 	 * @param string $pad 用于填充补足的字符
-	 * @return type 
+	 * @return string
 	 */
 	public static function fixWidth($text, $size, $pad = ' ')
 	{

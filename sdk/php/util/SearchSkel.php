@@ -54,11 +54,18 @@ if (!is_writable($output)) {
 	exit(-1);
 }
 
+// create xs project
+$ini = XSUtil::toProjectIni($project);
+if (!file_exists($ini)) {
+	echo "错误：无效的项目名称 ($project)，不存在相应的配置文件。\n";
+	exit(-1);
+}
+
 // execute the search
 try {
 	// create xs object
 	echo "初始化项目对象 ...\n";
-	$xs = new XS($project);
+	$xs = new XS($ini);
 
 	// generate varialbes
 	echo "解析字段，生成变量清单 ...\n";
@@ -76,6 +83,7 @@ try {
 		$vars['@charset@'] = 'UTF-8';
 	}
 	$vars['@xs_lib_root@'] = XS_LIB_ROOT;
+	$vars['@xs_lib_file@'] = realpath($lib_file);
 	$vars['@date_time@'] = date('Y-m-d H:i:s');
 	$vars['@project_name@'] = ucfirst($xs->name);
 	$vars['@package_name@'] = XS_PACKAGE_NAME;

@@ -53,8 +53,9 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 
 	public function testClean()
 	{
-		$this->setExpectedException('XSException', '', XS_CMD_ERR_NODB);
-		$this->object->xs->search->getDbTotal();
+		$search = $this->object->xs->search;
+		//$this->setExpectedException('XSException', '', XS_CMD_ERR_NODB);
+		$this->assertEquals(0, $search->getDbTotal());
 	}
 
 	public function testChange()
