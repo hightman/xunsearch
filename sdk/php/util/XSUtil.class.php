@@ -29,9 +29,9 @@ class XSUtil
 	public static function toProjectIni($project)
 	{
 		if (!is_file($project)) {
-			$appRoot = defined('XS_APP_ROOT') ? XS_APP_ROOT : getenv('XS_APP_ROOT');
+			$appRoot = getenv('XS_APP_ROOT');
 			if ($appRoot === false) {
-				$appRoot = (defined('XS_LIB_ROOT') ? XS_LIB_ROOT : dirname(__FILE__)) . '/../app';
+				$appRoot = defined('XS_APP_ROOT') ? XS_APP_ROOT : dirname(__FILE__) . '/../app';
 			}
 			return $appRoot . '/' . $project . '.ini';
 		} else {
