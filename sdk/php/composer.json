@@ -25,7 +25,7 @@
 		"lib-pcre": "*"
 	},
 	"autoload": {
-		"classmap": ["lib/"],
+		"classmap": ["lib/", "wrapper/yii-ext/"],
 		"psr-4": {
 			"hightman\\xunsearch\\": "wrapper/yii2-ext/"
 		}
