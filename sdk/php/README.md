@@ -103,7 +103,7 @@ require_once 'vendor/autoload.php';
 
 然后就可以通过 `Yii::app()->search` 来访问 `EXunSearch` 对象，进行索引管理或检索。
 
-添加、修改索引数据，使用方法参照 [XSIndex](http://www.xunsearch.com/doc/php/api/XSIndex)。
+添加、修改索引数据，使用方法参照 [XSIndex][2]。
 对于 ActiveRecord 对象来讲，建议在相关的 `afterSave` 和 `afterDelete` 中进行索引同步。
 
 ```php
@@ -113,8 +113,7 @@ Yii::app()->search->update($data);	// 更新文档
 Yii::app()->search->del('1234');	// 删除文档
 ```
 
-使用检索功能时，可以将 `Yii::app()->search` 当作 [XSSearch](http://www.xunsearch.com/doc/php/api/XSSearch)
-对象一样直接使用它的全部方法。
+使用检索功能时，可以将 `Yii::app()->search` 当作 [XSSearch][3] 对象一样直接使用它的全部方法。
 
 ```php
 Yii::app()->search->setQuery('subject:标题');
@@ -123,5 +122,138 @@ $docs = Yii::app()->search->setLimit(5, 10)->search();	// 取得搜索结果文�
 
 ### Yii-2.x 用法
 
-TBD.
+在 yii2 中，除了提供类似 yii-1.x 的调用方式外，我们还支持 ActiveRecord 方式来操作。首先，
+请在应用配置文件的 `components` 中添加以下代码，通常是 `config/web.php`
 
+```php
+	// application components
+	'components => [
+		// ... other components ...
+		'xunsearch' => [
+			'class' => 'hightman\xunsearch\Connection',	// 此行必须
+			'iniDirectory' => '@app/config',	// 指定搜索项目 ini 文件的存放目录
+			'charset' => 'utf-8',	// 指定项目使用的默认编码，默认即时 utf-8，可不指定
+		],
+	],
+```
+
+接下来，你可以通过以下代码获取到 `hightman\xunsearch\Database` 对象，该对像和 yii-1.x 的
+`EXunSearch` 用法很相似，通过魔术方法，能够依次检索以下对象的方法列表而直接调用：
+
+- [XS][1] 优先调用该对象方法，如有必要，可直接通过 `hightman\xunsearch\Database::$xs` 属性访问。
+- [XSIndex][2] 紧接着检查索引管理方法，如有必要，可直接通过 `hightman\xunsearch\Database::$index` 属性访问。
+- [XSSearch][3] 紧接着检查索引管理方法，如有必要，可直接通过 `hightman\xunsearch\Database::$search` 属性访问。
+
+具体用法不再赘述，下面重点讲讲如何通过 ActiveRecord 方法来检索和创建索引，由于遵循 yii2 的思想进行开发设计，
+使用起来非常方便和简单。
+
+#### 创建 AR 对象
+首先必须创建一个继承自 `hightman\xunsearch\ActiveRecord` 的模型类，默认情况下会以全小写的类名字作为
+ini 文件名。如需指定，请自行覆盖编写 `hightman\xunsearch\ActiveRecord::projectName()`。通常代码如下：
+
+```php
+class Demo extens \hightman\xunsearch\ActiveRecord
+{
+    /*public static function projectName() {
+        return 'another_name';	// 这将使用 @app/config/another_name.ini 作为项目名
+    }*/
+}
+```
+
+由此可见，如果命名规范模型类几乎不需要任何额外代码，上述代码会自动采用 `demo.ini` 并自动装载字段配置。
+
+#### 添加或更新索引
+
+为避免数据重复，底层统一通过 `XSIndex::update()` 方法进行提交的。
+
+```php
+// 添加索引，也可以通过 $model->setAttributes([...]) 批量赋值
+$model = new Demo;
+$model->pid = 321;
+$model->subject = 'hello world';
+$model->message = 'just for testing...';
+$model->save();
+
+// 更新索引
+$model = Demo::findOne(321);
+$model->message .= ' + updated';
+$model->save();
+
+
+// 添加或更新索引还支持以方法添加索引词或文本
+// 这样做的目的是使得可以通过这些关键词检索到数据，但并非数据的字段值
+// 用法与 XSDocument::addTerm() 和 XSDocument::addIndex() 等同。
+$model->addTerm('subject', 'hi');
+$model->addIndex('subject', '你好，世界');
+
+// 如需删除数据则可直接
+$model->delete();
+
+```
+
+如需要做批量删除或更新，请参见以下代码文档：`ActiveRecord::updateAll()` 和 `ActiveRecord::deleteAll()`。
+
+#### 检索对象
+
+重点先介绍一下 `ActiveQuery::where()` 系列搜索条件函数的用法，和 yii2 其它的 ActiveRecord 类似：
+
+```php
+$query = Demo::find(); // 返回 ActiveQuery 对象
+$condition = 'hello world';	// 字符串原样保持，可包含 subject:xxx 这种形式
+$condition = ['WILD', 'key1', 'key2' ... ];	// 通过空格将多个查询条件连接
+$condition = ['AND', 'key1', 'key2' ... ]; // 通过 AND 连接，转换为：key1 AND key2
+$condition = ['OR', 'key1', 'key2' ... ]; // 通过 OR 连接
+$condition = ['XOR', 'key1', 'key2' ... ]; // 通过  XOR 连接
+$condition = ['NOT', 'key']; // 排除匹配 key 的结果
+$condition = ['pid' => '123', 'subject' => 'hello']; // 转换为：pid:123 subject:hello
+$condition = ['pid' => ['123', '456']]; // 相当于 IN，转换为：pid:123 OR pid:456
+$condition = ['IN', 'pid', ['123', '456']]; // 转换结果同上
+$condition = ['NOT IN', 'pid', ['123', '456']]; // 转换为：NOT (pid:123 OR pid:456)
+$condition = ['BETWEEN', 'chrono', 14918161631, 15918161631]; // 相当于 XSSearch::addRange(...)
+$condition = ['WEIGHT', 'subject', 'hello', 0.5]; // 相当于额外调用 XSSearch::addWeight('subject', 'hello', 0.5);
+$query->where($condition);
+```
+
+对于 `hightman\xunsearch\ActiveQuery` 对象，主要支持以下几个方法获取和操作：
+
+- [[asArray()]]: 以数组形式返回数据
+- [[one()]]: 返回一行数据
+- [[all()]]: 返回全部数据
+- [[count()]]: 统计数据匹配数据，是估算的并不是完全准确
+- [[exists()]]: 判断查询条件是否存在数据
+- [[where()]]: 指定搜索条件
+- [[orderBy()]]: 指定排序方式，默认为相关性排序
+- [[limit()]], [[offfset()]]: 指定获取数据量和偏移，用于分页检索
+- [[with()]], [[indexBy]] ...
+- [[buildOther(function(\XSSearch $search){})]] 可通过此方法定制检索选项
+
+此外，ActiveQuery 还提供了一个名为 `beforeSearch` 的事件，可在执行搜索前再次对 `ActiveQuery::getSearch()`
+所返回的 `XSSearch` 对象进行调整。
+
+
+如果以 AR 对象获得数据，可通过以下几个方法获取搜索结果元数据，参照 `XSDocument` 相关用法。
+
+```php
+$model = Demo::findOne(321);
+$model->docid(); //Xapian数据 ID
+$model->rank(); //序号
+$model->percent(); //匹配百分比
+$model->ccount(); //折叠数量，须在 XSSearch::setCollapse() 指定后才有效
+$model->matched(); //获得匹配词汇
+```
+
+ActiveRecord 对象实现了绝大多数据接口，完全可以像使用普通数据库模型一样使用它。如果需要
+访问原始的 xunsearch 对象，请通过以下方式获取 `Database` 对象：
+
+```php
+$db = Demo::getDb();
+$search = $db->getSearch();
+$index = $db->getIndex();
+// 如有必要，还可以获得 scws 分词对象
+$scws = $db->getScws();
+```
+
+
+[1]: http://www.xunsearch.com/doc/php/api/XS
+[2]: http://www.xunsearch.com/doc/php/api/XSIndex
+[3]: http://www.xunsearch.com/doc/php/api/XSSearch
