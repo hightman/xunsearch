@@ -2,6 +2,11 @@
 # $Id: $
 # Distribute hook script, run by make automatically
 
+# update subtree
+echo "Updating substree xs-sdk-php ..."
+git subtree push --prefix=sdk/php --squash local-sdk-php master > /dev/null 2>&1
+(cd ../xs-sdk-php; git push)
+
 # get fileinfo & version
 fileinfo=
 filetype=BETA
@@ -12,6 +17,7 @@ if test -z "$devel" ; then
   if test $? -ne 0 ; then
     exit -1
   fi
+  (cd ../xs-sdk-php; git tag $fileinfo -a -m "Release: $fileinfo"; git push --tags)
   fileinfo2=`echo $fileinfo | sed 's/[a-zA-Z]//g'`
   if test "$fileinfo" = "$fileinfo2" ; then
     filetype=RELEASE
