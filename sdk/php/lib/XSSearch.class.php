@@ -207,11 +207,11 @@ class XSSearch extends XSServer
 		$cmd = new XSCommand(XS_CMD_QUERY_GET_STRING, 0, $this->_defaultOp, $query);
 		$res = $this->execCommand($cmd, XS_CMD_OK_QUERY_STRING);
 		if (strpos($res->buf, 'VALUE_RANGE') !== false) {
-			$regex = '/(VALUE_RANGE) (\d+) (\S+) (\S+?)(?=\))/';
+			$regex = '/(VALUE_RANGE) (\d+) (\S+) (.+?)(?=\))/';
 			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
 		}
 		if (strpos($res->buf, 'VALUE_GE') !== false || strpos($res->buf, 'VALUE_LE') !== false) {
-			$regex = '/(VALUE_[GL]E) (\d+) (\S+?)(?=\))/';
+			$regex = '/(VALUE_[GL]E) (\d+) (.+?)(?=\))/';
 			$res->buf = preg_replace_callback($regex, array($this, 'formatValueRange'), $res->buf);
 		}
 		return XS::convert($res->buf, $this->_charset, 'UTF-8');
@@ -1216,6 +1216,11 @@ class XSSearch extends XSServer
 		return $field->name . ':[' . $val1 . ',' . $val2 . ']';
 	}
 
+	private function numfromstr($str, $index)
+	{
+		return $index < strlen($str) ? ord($str[$index]) : 0;
+	}
+
 	/**
 	 * Convert a string encoded by xapian to a floating point number
 	 * @param string $value
@@ -1245,7 +1250,7 @@ class XSSearch extends XSServer
 				$exponent ^= 0x07;
 			}
 		} else {
-			$c = ord($value[++$i]);
+			$c = $this->numfromstr($value, ++$i);
 			$exponent <<= 6;
 			$exponent |= ($c >> 2);
 			if ($negative ^ $exponent_negative) {
@@ -1254,16 +1259,16 @@ class XSSearch extends XSServer
 		}
 
 		$word1 = ($c & 0x03) << 24;
-		$word1 |= ord($value[++$i]) << 16;
-		$word1 |= ord($value[++$i]) << 8;
-		$word1 |= ord($value[++$i]);
+		$word1 |= $this->numfromstr($value, ++$i) << 16;
+		$word1 |= $this->numfromstr($value, ++$i) << 8;
+		$word1 |= $this->numfromstr($value, ++$i);
 
 		$word2 = 0;
 		if ($i < strlen($value)) {
-			$word2 = ord($value[++$i]) << 24;
-			$word2 |= ord($value[++$i]) << 16;
-			$word2 |= ord($value[++$i]) << 8;
-			$word2 |= ord($value[++$i]);
+			$word2 = $this->numfromstr($value, ++$i) << 24;
+			$word2 |= $this->numfromstr($value, ++$i) << 16;
+			$word2 |= $this->numfromstr($value, ++$i) << 8;
+			$word2 |= $this->numfromstr($value, ++$i);
 		}
 
 		if (!$negative) {
