@@ -273,6 +273,16 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 	}
 
 	/**
+	 * @inheritdoc
+	 */
+	public function where($condition)
+	{
+		$this->query = null;
+		$this->where = $condition;
+		return $this;
+	}
+
+	/**
 	 * Converts the found docs into the format as specified by this query.
 	 * @param \XSDocument[] $docs the raw query result from database
 	 * @return array|ActiveRecord[] the converted query result

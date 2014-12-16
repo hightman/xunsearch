@@ -39,14 +39,14 @@ Composer 支持
 可以直接运行
 
 ```
-composer require --prefer-dist hightman/xunsearc "*"
+composer require --prefer-dist hightman/xunsearch "*@beta"
 ```
 
 或者将以下内容添加到您的项目根目录 `composer.json` 中的 `require` 章节，
 然后运行 `composer install`
 
 ```
-"hightman/xunsearch": "*"
+"hightman/xunsearch": "*@beta"
 ```
 
 > tip: 如果您打算用代码仓库中的最新版本，请将星号改为 dev-master。
@@ -141,6 +141,14 @@ $docs = Yii::app()->search->setLimit(5, 10)->search();	// 取得搜索结果文�
 接下来，你可以通过以下代码获取到 `hightman\xunsearch\Database` 对象，该对像和 yii-1.x 的
 `EXunSearch` 用法很相似，通过魔术方法，能够依次检索以下对象的方法列表而直接调用：
 
+```php
+$db = \Yii::$app->xunsearch->getDatabase('demo');
+$db = \Yii::$app->xunsearch('demo');
+$xs = $db->xs;
+$search = $db->getSearch();
+$index = $db->getIndex();
+```
+
 - [XS][1] 优先调用该对象方法，如有必要，可直接通过 `hightman\xunsearch\Database::$xs` 属性访问。
 - [XSIndex][2] 紧接着检查索引管理方法，如有必要，可直接通过 `hightman\xunsearch\Database::$index` 属性访问。
 - [XSSearch][3] 紧接着检查索引管理方法，如有必要，可直接通过 `hightman\xunsearch\Database::$search` 属性访问。
@@ -153,7 +161,7 @@ $docs = Yii::app()->search->setLimit(5, 10)->search();	// 取得搜索结果文�
 ini 文件名。如需指定，请自行覆盖编写 `hightman\xunsearch\ActiveRecord::projectName()`。通常代码如下：
 
 ```php
-class Demo extens \hightman\xunsearch\ActiveRecord
+class Demo extends \hightman\xunsearch\ActiveRecord
 {
     /*public static function projectName() {
         return 'another_name';	// 这将使用 @app/config/another_name.ini 作为项目名

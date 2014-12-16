@@ -12,7 +12,6 @@ namespace hightman\xunsearch;
 
 use Yii;
 use yii\base\Component;
-use XS;
 
 /**
  * xunsearch Connection is used to manage XS objects
@@ -73,6 +72,9 @@ class Connection extends Component
 	 */
 	public function getVersion()
 	{
+		if (!defined('XS_PACKAGE_VERSION')) {
+			new \XSException('');
+		}
 		return XS_PACKAGE_VERSION;
 	}
 

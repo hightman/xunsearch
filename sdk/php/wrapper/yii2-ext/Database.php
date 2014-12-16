@@ -62,7 +62,7 @@ class Database extends Object
 	public function getScws()
 	{
 		if ($this->_scws === null) {
-			$this->_scws = new XSTokenizerScws;
+			$this->_scws = new \XSTokenizerScws;
 		}
 		return $this->_scws;
 	}
