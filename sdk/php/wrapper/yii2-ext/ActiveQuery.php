@@ -209,7 +209,7 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 		$query = $this->query;
 		$search = $this->buildSearch($db);
 		$this->beforeSearch();
-		$profile = 'findAll#' . $this->query;
+		$profile = $db->getName() . '.findAll#' . $this->query;
 		Yii::beginProfile($profile, __METHOD__);
 		$docs = $search->search($query);
 		Yii::endProfile($profile, __METHOD__);
@@ -229,7 +229,7 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 		$query = $this->query;
 		$search = $this->buildSearch($db)->setLimit(1);
 		$this->beforeSearch();
-		$profile = 'findOne#' . $this->query;
+		$profile = $db->getName() . '.findOne#' . $this->query;
 		Yii::beginProfile($profile, __METHOD__);
 		$docs = $search->search($query);
 		Yii::endProfile($profile, __METHOD__);
@@ -255,7 +255,7 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 		}
 		$query = $this->query;
 		$search = $this->buildSearch($db);
-		$profile = 'count#' . $this->query;
+		$profile = $db->getName() . '.count#' . $this->query;
 		Yii::beginProfile($profile, __METHOD__);
 		$count = $search->count($query);
 		Yii::endProfile($profile, __METHOD__);
@@ -325,7 +325,7 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 	 * @param Database $db the database used to perform search.
 	 * @return \XSSearch ready XS search object
 	 */
-	private function buildSearch($db = null)
+	private function buildSearch(&$db)
 	{
 		if ($db === null) {
 			$db = $this->getDb();

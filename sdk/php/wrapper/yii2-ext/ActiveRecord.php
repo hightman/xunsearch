@@ -135,7 +135,7 @@ class ActiveRecord extends BaseActiveRecord
 			return 0;
 		}
 		$db = static::getDb();
-		$profile = 'deleteAll#' . $db->getName() . '#' . implode(',', $pks);
+		$profile = $db->getName() . '.deleteAll#' . implode(',', $pks);
 
 		Yii::beginProfile($profile, __METHOD__);
 		$db->getIndex()->del($pks);
@@ -289,7 +289,7 @@ class ActiveRecord extends BaseActiveRecord
 			return false;
 		}
 		$db = static::getDb();
-		$profile = 'insert#' . $db->getName() . '#' . $this->getPrimaryKey();
+		$profile = $db->getName() . '.insert#' . $this->getPrimaryKey();
 		$values = $this->getDirtyAttributes($attributes);
 
 		Yii::beginProfile($profile, __METHOD__);
@@ -352,7 +352,7 @@ class ActiveRecord extends BaseActiveRecord
 			return 0;
 		}
 		$db = static::getDb();
-		$profile = 'update#' . $db->getName() . '#' . $this->getPrimaryKey();
+		$profile = $db->getName() . '.update#' . $this->getPrimaryKey();
 
 		Yii::beginProfile($profile, __METHOD__);
 		$this->getInternalDoc()->setFields($this->getAttributes($attributes));
@@ -389,7 +389,7 @@ class ActiveRecord extends BaseActiveRecord
 		if (($result = $this->beforeDelete()) !== false) {
 			$pk = $this->getPrimaryKey();
 			$db = static::getDb();
-			$profile = 'delete#' . $db->getName() . '#' . $pk;
+			$profile = $db->getName() . '.delete#' . $pk;
 
 			Yii::beginProfile($profile, __METHOD__);
 			$db->getIndex()->del($pk);

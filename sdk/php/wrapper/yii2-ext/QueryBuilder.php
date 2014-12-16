@@ -62,15 +62,15 @@ class QueryBuilder extends Object
 	 */
 	public function build($query)
 	{
-		$profile = 'build#' . $this->db->getName();
-		Yii::beginProfile($profile, __METHOD__);
-		$search = $this->db->getSearch();
-		$search->setFuzzy($query->fuzzy)->setAutoSynonyms($query->synonyms);
 		$others = [];
 		if ($query->query === null) {
 			$query->query = $this->buildWhere($query->where, $others);
 		}
-		Yii::trace('Built query string: ' . $query->query, __CLASS__);
+
+		$profile = $this->db->getName() . '.build#' . $query->query;
+		Yii::beginProfile($profile, __METHOD__);
+		$search = $this->db->getSearch();
+		$search->setFuzzy($query->fuzzy)->setAutoSynonyms($query->synonyms);
 		$search->setQuery($query->query);
 		if (isset($others['range'])) {
 			$this->buildRange($others['range']);
@@ -83,7 +83,7 @@ class QueryBuilder extends Object
 		}
 		$this->buildLimit($query->limit, $query->offset);
 		$this->buildOrderBy($query->orderBy);
-		Yii::beginProfile($profile, __METHOD__);
+		Yii::endProfile($profile, __METHOD__);
 		return $search;
 	}
 

@@ -21,6 +21,7 @@ $Id$
 强烈推荐在线阅读我们的文档：<http://www.xunsearch.com/doc/>
 
 最简单使用方法就是下载全部源码压缩包，然后引入入口文件即可。
+出现异常则抛出 \XSException 异常实例。
 
 
 Composer 支持
@@ -131,7 +132,7 @@ $docs = Yii::app()->search->setLimit(5, 10)->search();	// 取得搜索结果文�
 		// ... other components ...
 		'xunsearch' => [
 			'class' => 'hightman\xunsearch\Connection',	// 此行必须
-			'iniDirectory' => '@app/config',	// 指定搜索项目 ini 文件的存放目录
+			'iniDirectory' => '@app/config',	// 搜索 ini 文件目录，默认：@vendor/hightman/xunsearch/app
 			'charset' => 'utf-8',	// 指定项目使用的默认编码，默认即时 utf-8，可不指定
 		],
 	],
@@ -253,7 +254,37 @@ $index = $db->getIndex();
 $scws = $db->getScws();
 ```
 
+#### 使用 xunsearch DebugPanel
+
+为便于调试，还提供了一个 `hightman\xunsearch\DebugPanel` 对象，可以集成到 debug 模块中，
+可在调试工具条和面板中显示 `xunsearch` 有关的查询以及耗时情况。
+
+要想启用这个很容易，只要在主配置文件中加入以下代码：
+
+```php
+    // ...
+    'bootstrap' => ['debug'],
+    'modules' => [
+        'debug' => [
+            'class' => 'yii\\debug\\Module',
+            'panels' => [
+                'xunsearch' => [
+                    'class' => 'hightman\\xunsearch\\DebugPanel',
+                ],
+            ],
+        ],
+    ],
+    // ...
+```
+
+
+#### 其它用法
+
+TBD. 如关联等，参见其它 AR 用法即可
+
+
 
 [1]: http://www.xunsearch.com/doc/php/api/XS
 [2]: http://www.xunsearch.com/doc/php/api/XSIndex
 [3]: http://www.xunsearch.com/doc/php/api/XSSearch
+
