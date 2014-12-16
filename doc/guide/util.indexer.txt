@@ -1,0 +1,299 @@
+索引管理器
+==========
+
+`Indexer` 作为索引管理工具，提供了批量索引导入、清空索引、刷新索引队列、日志等各项功能，
+导入索引支持数据源包括：`csv, json, mysql, sqlite` 等，也可以自定义数据源。
+
+运行脚本工具的 --help 选项可查看内置的帮助和说明，如乱码可在选项后加入 -c gbk 试试。
+
+~~~
+$prefix/sdk/php/util/Indexer.php --help
+~~~
+
+
+主要参数和选项
+-------------
+
+要使用索引工具，必须先指定的项目名称或配置文件，所有的操作都将是作用于该项目，主要选项如下：
+
+  * _-p|--project <name|file>_ 指定项目名称或配置文件路径，参数名可以省略不写，
+    如果仅指定项目名称，那么将使用 $prefix/sdk/php/app/<name>.ini 文件。
+
+  * _-c|--charset <gbk|utf-8>_ 指定当前环境、数据源的字符集，默认情况下，
+    索引工具输出的字符集为 utf-8，并把数据源字符集视为项目的默认字符集。
+
+  * _--source <..source..>_ 用于指定数据源，数据源有以下 2 种情况。  
+    凡是包含冒号的数据源均视为 SQL 数据源，自动将 _--sql_ 选项的值作为参数传递给数据源；  
+    其它情况则为文件数据源，自动将 _--file_ 选项的值作为参数传递给数据源对象。
+
+  * _--flush_、_--flush-log_、_--info_ 是一些功能选项，与 _--source_ 分开使用。
+
+  * _-d|--db <..name..>_ 指定要更新的索引数据库名称，默认是名为 db 的库。
+
+  * _--filter_ 指定数据过滤器，针对资深用户使用，在提交索引前可以处理一次数据。
+
+  * _--add-synonym=<raw1:synonym1[,raw2:synonym2]...>_ 添加同义词。
+
+  * _--del-synonym=<raw1[:synonym1[,raw2[:synonym2]]]...>_ 删除同义词。
+ 
+  * _--stop-rebuild_ 停止异常中断的重建任务。
+
+
+经典用法示例
+-----------
+
+以下是一些经典用法举例：
+
+~~~
+# 清空 demo 项目的索引数据 
+util/Indexer.php --clean demo
+
+# 导入 JSON 数据文件 file.json 到 demo 项目
+util/Indexer.php --source=json demo file.json
+
+# 导入 MySQL 数据库的 dbname.tbl_post 表到 demo 项目中，并且平滑重建
+util/Indexer.php --rebuild --source=mysql://root:pass@localhost/dbname --sql="SELECT * FROM tbl_post" --project=demo
+
+# 查看 demo 项目在服务端的相关信息
+util/Indexer.php --info -p demo
+
+# 强制刷新 demo 项目的搜索日志
+util/Indexer.php --flush-log --project demo
+
+# 强制停止重建
+util/Indexer.php --stop-rebuild demo
+~~~
+
+
+导入 SQL 数据库
+--------------
+
+要导入 SQL 类的数据库，必须使用 `--source` 指定数据源，视情况用 `--sql` 选项指定查询语句。
+其中数据源的格式如下：
+
+~~~
+dbtype://[user[:passwd]@]host/dbname[/table]
+dbtype://dbpath
+~~~
+
+`dbtype` 就是相应的数据源名称，目前支持的有：mysql、sqlite、sqlite3、mysqli、pdo.mysql、pdo.sqlite 。
+如果您还需要更多的数据库类型，请参见后面的自定义数据源自行扩充，对于嵌入式的数据库，
+仅支持在数据源中设置路径。
+
+数据源仅仅指定了数据库连接的有关参数，您应当通过 `--sql` 选项指定查询语句，
+查询得到的每行数据就会被转换为关联数组，并作为一条完整的文档数据提交到索引库中。
+查询语句中允许使用表连接和 LIMIT, OFFSET 等行为，即便数据量很大，内部会作出相应优化。
+
+> info: 如果您在数据源中指定了 `table`，那么可以省略 `--sql` 选项，系统自动把该表的数据导入索引库。  
+> 相当于指定了这样一条 SQL 语句：SELECT * FROM _table_
+>
+> 如果您的数据表过于庞大和复杂，强烈建建议您编写 SQL 语句，仅 SELECT 搜索相关的字段即可，
+> 如果字段名称有变动，请用 AS 修改它。
+
+用法示例：
+
+~~~
+# 导入 mysql 数据源
+util/Indexer.php --source=mysql://root@localhost/test --sql="select * from tbl_post"
+
+# 导入 sqlite 数据源
+util/Indexer.php --source=sqlite:///tmp/test.db --sql="select * from tbl_post"
+~~~
+
+导入 CSV 数据
+-------------
+
+要导入 CSV 数据库文件，必须使用 `--source=csv` 来指定数据源，然后使用 `--file` 
+指定数据文件的路径，如果没有指定则自动从标准输入读取数据。
+
+对于 CSV 文件，要求必须每行一条数据，字段之间用半角的逗号分开。可以在首行指定字段名称列表，
+但要求所有字段均必须是项目中的有效字段；如果没有指定字段列表，则自动按照默认的所有字段顺序读取。
+这里所指的**行**是以 `\n (ASCII: 0x0a)` 换行符界定的。
+
+> info: 如果您的 CSV 文件字段分割符不是逗号，您可以使用 `--csv-delimiter` 
+> 选项来指定分割符，制表符使用 `\t` 表示，而如果是 `|` 这种引起 shell 解析冲突的，
+> 请使用引号将它包起来。
+>
+> ~~~
+> util/Indexer.php --source=csv --csv-delimiter="\t" demo   # 使用 \t
+> util/Indexer.php --source=csv --csv-delimiter="\\\\" demo   # 使用 \ 分割
+> ~~~
+>
+
+
+导入 JSON 数据
+-------------
+
+要导入 JSON 数据库文件，必须使用 `--source=json` 来指定数据源，然后使用 `--file` 
+指定数据文件的路径，如果没有指定则自动从标准输入读取数据。
+
+对于 JSON 文件，要求必须每行一条数据完整的 JSON 数据记录，将自动被转换为文档添加到索引中。
+这里所指的**行**是以 `\n (ASCII: 0x0a)` 换行符界定的。
+
+
+清空、重建索引
+-------------
+
+在批量导入各种数据源时，您可以加入 `--clean` 选项，该工具就会先清空现有索引数据库。
+
+> info: 清空数据库可以单独使用，不一定要搭配导入操作。
+
+由于清空立即生效会导致搜索中断或不可用一段时间，对于线上服务，建议使用 `--rebuild`
+选项实现平滑重建，在导入完成后再将新数据库替换为原数据库。
+
+
+自定义数据过滤器
+---------------
+
+自从 1.1.1 版本起，在索引工具中引入了过滤器的概念，通过 `--filter` 选项来指定。
+这项功能以便于批量导入数据时，在数据提交到索引前有一次机会可以处理数据，常见的操作有
+格式化数据，清除无效的标记标签等。
+
+内置的过滤器只有一个，就是 `debug`，它相当于在数据提交前执行一次 print_r 函数，
+打印出数据的实际内容，可用于调试。
+
+我们要求所有自定义过滤器必须实现 [XSDataFilter] 这个接口，里面需要实现以下方法：
+
+- [XSDataFilter::process] 字段数据预处理，在此进行数据调整和过滤不相关的内容然后返回数据
+- [XSDataFilter::processDoc] 索引文档处理，在好习惯进行索引相关调整（自 1.3.4 起有效）
+
+> note: 当过滤器的 `process` 方法返回 false 时，索引工具不会将此条数据添加到索引库。
+
+编写好的过滤器必须单独以类名为文件名保存，比如您的过滤器对象名称为 XSXyzFilter，那么
+请将代码命名为 XSXyzFilter.php 保存，在索引工具中使用参数 `--filter=/paht/to/XSXyzFilter`
+来指定这个过滤器。
+
+典型过滤器写法如下，文件保存为 XSXyzFilter.php
+~~~
+[php]
+class XSXyzFilter implements XSDataFilter
+{
+	public function process($data, $cs)
+	{
+		print_r($data);
+		return $data;
+	}
+	public function processDoc($doc)
+	{
+		// $doc->addTerm('subject', '特殊词');
+	}
+}
+~~~
+
+
+自定义数据源
+-----------
+
+目前数据源有两种类型，一种是文件数据源（如 JSON、CSV），另一种是 SQL 数据库源（如 MySQL，SQLite）。
+
+自定义数据源均要求必须是抽象类 [XSDataSource] 的子类，建议单独编写相应的类定义文件并放入 
+`$prefix/sdk/php/lib` 目录，以便脚本在使用时自动加载。
+
+数据源对象中包含两个 `protected` 属性，可以在初始化时使用它们：
+
+  - [XSDataSource::type] 对应命令行中 _--source_ 选项的值
+  - [XSDataSource::arg] 则为相应的 _--sql_ 或 _--file_ 选项的值。
+
+#### 文件数据源 ####
+
+对于文件数据源，请直接扩展 [XSDataSource]，对于名称为 `Xyz` 的数据源，请命名为 
+`XSXyzDataSource` 并重载以下方法：
+
+  - protected [XSDataSource::init] 开始读取数据时调用，用于初始化数据源的相关资源。
+  - protected [XSDataSource::deinit] 读取数据结束时调用，释放相关资源。
+  - protected [XSDataSource::getDataList] 读取一批数据，可以是一条或若干条，组成数组返回，没有更多数据时返回 false 。
+  - public [XSDataSource::getCharset] 返回精准的数据源字符集，如果不能确定请返回 false 或不重载。
+
+#### 数据库数据源 ####
+
+对于数据库数据源，请直接扩展 [XSDatabase]，对于名称为 `Xyz` 的数据源，请命名为 
+`XSDatabaseXyz` 并重载以下方法：
+
+  - protected [XSDatabase::connect] 连接数据库，参数是一个数组，包含连接相关的参数(host,user,pass,dbname,table)、数据库路径(path)
+  - protected [XSDatabase::close] 关闭数据库连接
+  - protected [XSDatabase::query] 执行数据库查询，对于 SELECT 类的操作请将搜索结果以数组方式返回，其它请直接返回 true/false 代表成功/失败
+  - protected [XSDatabase::setUtf8] 尝试将数据库输出字符集强制设为  UTF-8 ，如数据库不支持此功能请返回 false 或不重载。
+
+#### PDO 数据库数据源 ####
+
+对于 PDO 扩展的数据源，请直接扩展 [XSDatabasePDO]，对于名称为 `Xyz` 的数据源，请命名为 
+`XSDatabasePDO_Xyz` 并重载以下方法：
+
+  - protected [XSDatabasePDO::makeDsn] 生成 PDO 连接字符串，参数和 [XSDatabase::connect] 一样。
+  - protected [XSDatabase::setUtf8] 尝试将数据库输出字符集强制设为  UTF-8 ，如数据库不支持此功能请返回 false 或不重载。
+
+> note: 由于我们使用 [parse_url][1] 解析 SQL 数据源连接参数，它并不支持用下划线作 scheme 。
+> 如果要直接使用 PDO 数据源，请把 dbtype 设为 pdo.xxx 而不是 pdo_xxx 。
+
+
+同义词管理
+----------
+
+通常每条记录包含“原词(标准词)“和”同义词”两个元素，同义词记录是和当前索引库绑定的，并非和项目绑定。
+如果您通过 [XSIndex::setDb] 修改了当前索引库名，那么您所进行的同义词变动将作用到该库上。
+
+#### 添加同义词 ####
+
+通过带参数的选项 `--add-synonym` 来实现，参数值为单条或多条同义词记录，每条记录之间用冒号(:)
+分隔原词和同义词，多条记录之间用逗号分割。您可以对同一个“原词”增加多个不同的“同义词”，
+如果库内已存在完全一致的记录，则指令不起作用也不会报错。用法如下：
+
+~~~
+# 给 search 增加同义词 find
+util/Indexer.php demo --add-synonym search:find
+
+# 再给 search 增加另一个同义词 seek
+util/Indexer.php demo --add-synonym search:seek
+
+# 给 "搜索" 增加 "检索" "查找" 两个同义词
+util/Indexer.php demo -add-synonym 搜索:检索,搜索:查找
+
+# 给 "Hello world" 增加同义词 "你好"，参数含空格请用引号包围
+util/Indexer.php demo --add-synonym "Hello world:你好"
+~~~
+
+#### 删除同义词 ####
+
+删除同义词作法和添加同义词很相似，只不过采用选项 `--del-synonym`，同时参数中的同义词可以
+省略表示删除该“原词”的所有同义词记录。用法如下：
+
+~~~
+# 删除 search 的全部同义词、同时删除 "搜索" 的同义词 "检索"
+util/Indexer.php demo --del-synonym search,搜索:检索
+~~~
+
+#### 浏览全部同义词 ####
+
+查看同义词列表的功能请参见 [Quest 搜索工具](util.Quest#ch2)
+
+
+> tip: 同义词功能是 *1.3.0* 版本引入的新功能，详情参见[同义词专题文档](special.synonym)。  
+> 通常**原词(标准词)**和**同义词**都必须是独立的词汇，也就是最小的索引单位。但对于纯英文字母**原词**，
+> 允许用空格连接多个单词，英文字母都会统一转换为**小写**。
+>
+> 单个英文原词会同时保存词根同义词记录。如：设置 `find` 是 _search_ 的同义词，那么检索 _searching_
+> 也会匹配包含 `finding` 或 `finds` 等同根词的结果。
+
+
+存取项目自定义词库
+-----------------
+
+您也可以通过命令行查看和修改项目的自定义词库，具体用法如下：
+
+~~~
+# 查看 demo 项目的自定义词库
+util/Indexer.php demo --custom-dict
+
+# 将已有自定义词库文件 d.txt 设置为 demo 项目的自定义词库，结合 --file 选项
+util/Indexer.php demo --custom-dict --file /path/to/d.txt
+
+# 清空/删除自定义词库，用 /dev/null
+util/Indexer.php demo --custom-dict --file /dev/null
+~~~
+
+> note: 项目自定义词库是 *1.3.4* 引入的新功能
+
+
+[1]: http://php.net/manual/en/function.parse-url.php
+
+<div class="revision">$Id$</div>

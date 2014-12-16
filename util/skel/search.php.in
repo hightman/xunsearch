@@ -1,0 +1,160 @@
+<?php
+/**
+ * search.php 
+ * @project_name@ 搜索项目入口文件
+ * 
+ * 该文件由 xunsearch PHP-SDK 工具自动生成，请根据实际需求进行修改
+ * 创建时间：@date_time@
+ * 默认编码：@charset@
+ */
+// 加载 XS 入口文件
+require_once '@xs_lib_file@';
+error_reporting(E_ALL ^ E_NOTICE);
+
+//
+// 支持的 GET 参数列表
+// q: 查询语句
+// m: 开启模糊搜索，其值为 yes/no
+// f: 只搜索某个字段，其值为字段名称，要求该字段的索引方式为 self/both
+// s: 排序字段名称及方式，其值形式为：xxx_ASC 或 xxx_DESC
+// p: 显示第几页，每页数量为 XSSearch::PAGE_SIZE 即 10 条
+// ie: 查询语句编码，默认为 @charset@
+// oe: 输出编码，默认为 @charset@
+// xml: 是否将搜索结果以 XML 格式输出，其值为 yes/no
+//
+// variables
+$eu = '';
+$__ = array('q', 'm', 'f', 's', 'p', 'ie', 'oe', 'syn', 'xml');
+foreach ($__ as $_) {
+	$$_ = isset($_GET[$_]) ? $_GET[$_] : '';
+}
+
+// input encoding
+if (!empty($ie) && !empty($q) && strcasecmp($ie, '@charset@')) {
+	$q = XS::convert($q, $cs, $ie);
+	$eu .= '&ie=' . $ie;
+}
+
+// output encoding
+if (!empty($oe) && strcasecmp($oe, '@charset@')) {
+
+	function xs_output_encoding($buf)
+	{
+		return XS::convert($buf, $GLOBALS['oe'], '@charset@');
+	}
+	ob_start('xs_output_encoding');
+	$eu .= '&oe=' . $oe;
+} else {
+	$oe = '@charset@';
+}
+
+// recheck request parameters
+$q = get_magic_quotes_gpc() ? stripslashes($q) : $q;
+$f = empty($f) ? '_all' : $f;
+${'m_check'} = ($m == 'yes' ? ' checked' : '');
+${'syn_check'} = ($syn == 'yes' ? ' checked' : '');
+${'f_' . $f} = ' checked';
+${'s_' . $s} = ' selected';
+
+// base url
+$bu = $_SERVER['SCRIPT_NAME'] . '?q=' . urlencode($q) . '&m=' . $m . '&f=' . $f . '&s=' . $s . $eu;
+
+// other variable maybe used in tpl
+$count = $total = $search_cost = 0;
+$docs = $related = $corrected = $hot = array();
+$error = $pager = '';
+$total_begin = microtime(true);
+
+// perform the search
+try {
+	$xs = new XS('@project@');
+	$search = $xs->search;
+	$search->setCharset('@charset@');
+
+	if (empty($q)) {
+		// just show hot query
+		$hot = $search->getHotQuery();
+	} else {
+		// fuzzy search
+		$search->setFuzzy($m === 'yes');
+
+		// synonym search
+		$search->setAutoSynonyms($syn === 'yes');
+
+		// set query
+		if (!empty($f) && $f != '_all') {
+			$search->setQuery($f . ':(' . $q . ')');
+		} else {
+			$search->setQuery($q);
+		}
+
+		// set sort
+		if (($pos = strrpos($s, '_')) !== false) {
+			$sf = substr($s, 0, $pos);
+			$st = substr($s, $pos + 1);
+			$search->setSort($sf, $st === 'ASC');
+		}
+
+		// set offset, limit
+		$p = max(1, intval($p));
+		$n = XSSearch::PAGE_SIZE;
+		$search->setLimit($n, ($p - 1) * $n);
+
+		// get the result
+		$search_begin = microtime(true);
+		$docs = $search->search();
+		$search_cost = microtime(true) - $search_begin;
+
+		// get other result
+		$count = $search->getLastCount();
+		$total = $search->getDbTotal();
+
+		if ($xml !== 'yes') {
+			// try to corrected, if resul too few
+			if ($count < 1 || $count < ceil(0.001 * $total)) {
+				$corrected = $search->getCorrectedQuery();
+			}
+			// get related query
+			$related = $search->getRelatedQuery();
+		}
+
+		// gen pager
+		if ($count > $n) {
+			$pb = max($p - 5, 1);
+			$pe = min($pb + 10, ceil($count / $n) + 1);
+			$pager = '';
+			do {
+				$pager .= ($pb == $p) ? '<li class="disabled"><a>' . $p . '</a></li>' : '<li><a href="' . $bu . '&p=' . $pb . '">' . $pb . '</a></li>';
+			} while (++$pb < $pe);
+		}
+	}
+} catch (XSException $e) {
+	$error = strval($e);
+}
+
+// calculate total time cost
+$total_cost = microtime(true) - $total_begin;
+
+// XML OUPUT
+if ($xml === 'yes' && !empty($q)) {
+	header("Content-Type: text/xml; charset=$oe");
+	echo "<?xml version=\"1.0\" encoding=\"$oe\" ?>\n";
+	echo "<xs:result count=\"$count\" total=\"$total\" cost=\"$total_cost\" xmlns:xs=\"http://www.xunsearch.com\">\n";
+	if ($error !== '') {
+		echo "  <error><![CDATA[" . $error . "]]></error>\n";
+	}
+	foreach ($docs as $doc) {
+		echo "  <doc index=\"" . $doc->rank() . "\" percent=\"" . $doc->percent() . "%\">\n";
+		foreach ($doc as $k => $v) {
+			echo "    <$k>";
+			echo is_numeric($v) ? $v : "\n      <![CDATA[" . $v . "]]>\n    ";
+			echo "</$k>\n";
+		}
+		echo "  </doc>\n";
+	}
+	echo "</xs:result>\n";
+	exit(0);
+}
+
+// output the data
+include dirname(__FILE__) . '/search.tpl';
