@@ -15,8 +15,10 @@ if HAVE_SDK_PHP_DEV
 phplib_FILES += php/lib/xs_cmd.inc.php php/lib/*.class.php
 endif HAVE_SDK_PHP_DEV
 
+phpdoc_EXTRA = php/doc/guide/special.composer.txt
+
 EXTRA_DIST = gen-phpinc.sh php/README.md php/doc php/app/demo.ini php/lib/XS.php php/util
-EXTRA_DIST += php/wrapper
+EXTRA_DIST += php/wrapper ${phpdoc_EXTRA}
 
 php/lib/xs_cmd.inc.php: ../config.h ../src/xs_cmd.h
 	sh gen-phpinc.sh > $@
@@ -25,6 +27,10 @@ php/lib/XS.php: $(phplib_FILES)
 	@echo "Regenerating XS library class file ..."
 	@php php/dev/build.php lite > /dev/null 2>&1
 
+php/doc/guide/special.composer.txt: php/README.md
+	@echo "Regenerating special.composer ..."
+	@cp -f php/README.md $@
+
 dist-hook: 
 	@echo "Regenerating offline documents ..."
 	@rm -rf $(distdir)/php/doc
@@ -32,7 +38,7 @@ dist-hook:
 	@echo "Regenerating XS library class file ..."
 	@php php/dev/build.php lite > /dev/null 2>&1
 	
-php-web-doc:
+php-web-doc: $(phpdoc_EXTRA)
 	@echo "Regenerating online documents ..."
 	@rm -rf php/doc/api
 	@php php/dev/build.php doc online > /dev/null 2>&1

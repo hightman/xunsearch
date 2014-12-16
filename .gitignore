@@ -27,6 +27,7 @@ src/xs_cmd.inc.php
 sdk/php/lib/XS.php
 sdk/php/dev/tmp
 sdk/php/doc/html
+sdk/php/doc/guide/special.composer.txt
 *.o
 *.lo
 .libs

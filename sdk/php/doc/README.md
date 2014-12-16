@@ -21,6 +21,8 @@ Xunsearch 包含了后端服务、前端开发包（即 SDK）两大部分，在
 
 [最新功能和变动][6] 是为老用户提供的了解最新功能和特点专用渠道。
 
+[通过 composer 使用 PHP-SDK][9] 尤其是对于 yii2 用户，我提供了 AR 方式来访问索引。
+
 
 API 文档
 ---------
@@ -50,5 +52,6 @@ Wiki 技巧、经验
 [6]: http://www.xunsearch.com/doc/php/guide/start.changelog
 [7]: http://www.xunsearch.com/download/xs_quickstart.pdf
 [8]: http://www.xunsearch.com/download/xs_php_manual.chm
+[9]: https://github.com/hightman/xs-sdk-php/
 
 <div class="revision">$Id$</div>
