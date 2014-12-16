@@ -183,7 +183,8 @@ $model->save();
 
 // 添加或更新索引还支持以方法添加索引词或文本
 // 这样做的目的是使得可以通过这些关键词检索到数据，但并非数据的字段值
-// 用法与 XSDocument::addTerm() 和 XSDocument::addIndex() 等同。
+// 用法与 XSDocument::addTerm() 和 XSDocument::addIndex() 等同
+// 通常在 ActiveRecord::beforeSave() 中做这些操作
 $model->addTerm('subject', 'hi');
 $model->addIndex('subject', '你好，世界');
 
@@ -217,16 +218,16 @@ $query->where($condition);
 
 对于 `hightman\xunsearch\ActiveQuery` 对象，主要支持以下几个方法获取和操作：
 
-- [[asArray()]]: 以数组形式返回数据
-- [[one()]]: 返回一行数据
-- [[all()]]: 返回全部数据
-- [[count()]]: 统计数据匹配数据，是估算的并不是完全准确
-- [[exists()]]: 判断查询条件是否存在数据
-- [[where()]]: 指定搜索条件
-- [[orderBy()]]: 指定排序方式，默认为相关性排序
-- [[limit()]], [[offfset()]]: 指定获取数据量和偏移，用于分页检索
-- [[with()]], [[indexBy]] ...
-- [[buildOther(function(\XSSearch $search){})]] 可通过此方法定制检索选项
+- **asArray()**: 以数组形式返回数据
+- **one()**: 返回一行数据
+- **all()**: 返回全部数据
+- **count()**: 统计数据匹配数据，是估算的并不是完全准确
+- **exists()**: 判断查询条件是否存在数据
+- **where()**: 指定搜索条件
+- **orderBy()**: 指定排序方式，默认为相关性排序
+- **limit()**, **offfset()**: 指定获取数据量和偏移，用于分页检索
+- **with()**, **indexBy** ...
+- **buildOther(function(\XSSearch $search){})** 可通过此方法定制检索选项
 
 此外，ActiveQuery 还提供了一个名为 `beforeSearch` 的事件，可在执行搜索前再次对 `ActiveQuery::getSearch()`
 所返回的 `XSSearch` 对象进行调整。
@@ -280,7 +281,10 @@ $scws = $db->getScws();
 
 #### 其它用法
 
-TBD. 如关联等，参见其它 AR 用法即可
+TBD. 如关联等，参见其它 AR 用法即可。
+
+> note: 相关的 AR 索引操作均非实时的，如需实时更新索引，请通过 `Database::getIndex()->flushIndex()` 刷新。
+> 关于查询日志有关的功能，也建议通过原生的 `XSSearch` 和 `XSIndex` 对象来操作。
 
 
 
