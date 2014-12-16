@@ -1,0 +1,114 @@
+@charset "utf-8";
+/* CSS Document */
+body {
+	width: 100%;
+	height: 100%;
+}
+.condition {
+	margin-top: 10px;
+}
+.condition input {
+	_width: auto;
+}
+.form-search .input-append .search-query {
+	_height:24px;
+	_line-height:24px;
+}
+#q-options .radio.inline, #q-options .checkbox.inline {   
+    padding-top: 0;
+	margin-left: 0;
+	margin-right: 5px;
+}
+.condition select {
+	width: auto;
+}
+.condition span {
+	vertical-align: middle;
+}
+#q-input input.tips { 
+	color: #aaa;
+}
+.link {
+    background-color: #F5F5F5;
+    border-top: 1px solid #E5E5E5;
+	border-bottom: 1px solid #E5E5E5;
+    margin-top: 70px;
+    padding: 30px 0;
+}
+.link p {
+    color: #777777;
+    margin-bottom: 0;
+	display: inline;
+	width: 780px;
+	float: left;
+}
+.link h4 {
+	display: inline;
+	float: left;
+	vertical-align: top;
+	margin: 0;
+}
+.link span {
+	margin-left: 30px;
+	float: left; 
+	display: inline;
+}
+footer {
+	margin-top: 10px;
+}
+footer p {
+    color: #777777;
+}
+.result {
+	color: #5d5d5d;
+	font-size: 12px;
+}
+.result b {
+	margin: 0 10px;
+	color: #333;
+}
+.result-list dt {
+	margin-top: 30px;
+}
+.field-info span {
+	margin-right: 10px;
+}
+.field-info strong {
+	margin-right: 4px;
+	font-weight: normal;
+	font-style: italic;
+	font-size: 90%;
+}
+.demo-error {
+	font-weight: 900;	
+}
+.demo-error ul {
+	list-style: none outside none;
+	font-weight: 400;
+	margin-left: 30px;
+	font-size: 12px;
+}
+.demo-error2 ul li {
+	display: inline;
+	list-style-type: none;
+	margin-right: 8px;
+}
+.result-list h4 em {
+	color:red;
+}
+.corrected {
+	margin: 10px 0 30px;
+	padding: 10px;
+	overflow: hidden;
+}
+.corrected h4 {
+	font-size: 14px;
+	font-style: italic;
+	font-weight: normal;
+}
+.corrected span {
+	margin-left: 10px;
+}
+.ui-autocomplete li.ui-menu-item {
+	font-size: 12px; 
+}

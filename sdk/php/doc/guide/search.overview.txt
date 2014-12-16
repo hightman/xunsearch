@@ -1,0 +1,116 @@
+搜索概述
+=======
+
+在索引库建立完成后，现在开始学习使用搜索功能，这也是最核心的部分。
+
+如何开始使用搜索？
+---------------
+
+在 `PHP-SDK` 中，搜索功能由类型为 [XSSearch] 的对象所维护。在 [XS] 项目中，通过读取
+[XS::search] 属性来获取搜索操作对象，然后展开使用，而不是自行创建对象。后面章节中的
+相关测试代码如果没有特别编写，其中的 `$search` 均为通过类似以下的方式获取的索引对象：
+
+~~~
+[php]
+require '$prefix/sdk/php/lib/XS.php';
+$xs = new XS('demo'); // 建立 XS 对象，项目名称为：demo
+$search = $xs->search; // 获取 搜索对象
+~~~
+
+> info: 搜索对象内置了字符集智能转换，如果您使用的字符集和项目默认的字符集 [XS::defaultCharset]
+> 不一致，请调用 [XSSearch::setCharset] 在开始其它搜索前设置正确的字符集。
+
+典型搜索做法
+-----------
+
+一个典型的搜索基本流程是把构建好的搜索语句，通过合适的 `API` 进行必要的修饰，
+再传递给底层的搜索服务器进行处理，然后把匹配的结果返回。具体包括以下步骤：
+
+  * 构建搜索查询语句 `query`，然后调用 [XSSearch::setQuery] 设定它
+  * 根据需要设置附加的查询条件：通过 [XSSearch::addWeight] 干扰排名权重，
+    通过 [XSSearch::addRange] 添加字段搜索区间或范围，
+    通过 [XSSearch::setFuzzy] 开启模糊匹配，以获取更多搜索结果
+  * 进行必要的搜索结果限定：通过 [XSSearch::setLimit] 设置搜索结果数量和偏移，
+    通过 [XSSearch::setSort] 设置搜索结果的排序方式，等等
+  * 执行搜索，并获取搜索结果，关于搜索结果的处理详见后面的章节
+
+代码如下：
+~~~
+[php]
+$query = '项目测试'; // 这里的搜索语句很简单，就一个短语
+
+$search->setQuery($query); // 设置搜索语句
+$search->addWeight('subject', 'xunsearch'); // 增加附加条件：提升标题中包含 'xunsearch' 的记录的权重
+$search->setLimit(5, 10); // 设置返回结果最多为 5 条，并跳过前 10 条
+
+$docs = $search->search(); // 执行搜索，将搜索结果文档保存在 $docs 数组中
+$count = $search->count(); // 获取搜索结果的匹配总数估算值
+~~~
+
+> tip: 除了调用 [XSSearch::search] 获取搜索结果外，在某些情况我们可能只想知道结果的命中数量，
+> 那么可以直接调用 [XSSearch::count] 来获取。但要指出的是，这个结果计数只是一个估算值。
+
+
+关于快捷搜索
+-----------
+
+除了上述的典型搜索方式外，我们还提供一种称为快捷搜索的方式。其实就是直接将 `query` 语句作为参数传递给相应的
+`API` 调用 [XSSearch::count] 和 [XSSSearch::search]。由于不经过 `setQuery` 因此有些其它辅助的功能受到
+限制，比如不能进行结果高亮、不能通过 `addWeight`、`addRange` 增加辅助搜索条件。
+
+~~~
+[php]
+$count = $search->count('项目测试'); 
+$docs = $search->search('项目测试');
+~~~
+
+
+搜索中的串接操作
+---------------
+
+由于 `Xunsearch PHP-SDK` 全面采用面向对象的编程思想，在搜索对象中对部分搜索语句构建、
+搜索结果修饰加入了串接操作支持。支持串接操作的方法有：
+
+  * `addDB($name)` - 用于多库搜索，添加数据库名称
+  * `addRange($field, $from, $to)` - 添加搜索过滤区间或范围
+  * `addWeight($field, $term)` - 添加权重索引词
+  * `setCharset($charset)` - 设置字符集
+  * `setCollapse($field, $num = 1)` - 设置搜索结果按字段值折叠
+  * `setDb($name)` - 设置搜索库名称，默认则为 `db`
+  * `setFuzzy()` - 设置开启模糊搜索, 传入参数 false 可关闭模糊搜索
+  * `setLimit($limit, $offset = 0)` - 设置搜索结果返回的数量和偏移
+  * `setQuery($query)` - 设置搜索语句
+  * `setSort($field, $asc = false)` - 设置搜索结果按字段值排序
+
+如果采用串接操作，那么上面的搜索语句可以改写如下，有种一气呵成的感觉：
+
+~~~
+[php]
+$docs = $search->setQuery('项目测试')->addWeight('subject', 'xunsearch')->setLimit(5, 10)->search();
+~~~
+
+搜索日志
+--------
+
+在每一次正常搜索之后，系统内部均对相应的关键词做了记录和一并分析。但这个行为并不是实时的，
+而是积累一定的量后再统一分析和处理。
+
+搜索日志保存在 `$prefix/项目名/log_db` 中，它是一个独立的索引库，通过它实现了包括相关搜索、
+拼音搜索、纠错建议等功能。
+
+> tip: 如果您需要强制同步搜索日志库，请参见 [Indexer 索引管理工具](util.indexer) 的 `--flush-log` 选项。  
+> 此外，只有当您的搜索代码中调用了 [XSSearch::setQuery] 并配合不带参数的 [XSSearch::search] 调用，
+> 才会记录本次搜索关键词。
+
+
+如何进行多库搜索？
+---------------
+
+在[索引概述](index.overview)中我们曾经提到，如果您的索引数据量非常大，那么应当适当
+考虑分割数据，在服务端采用多个库来保存索引数据。您可以调用 [XSSearch::addDb] 添加
+其它搜索库。
+
+关于超大数据量的多库搜索及分布式设计，由于涉及的知识和范围比较广。我们提供了专门的商业支持方案，
+在论坛中也会开辟专门的讨论，在此略过不述。
+
+<div class="revision">$Id$</div>

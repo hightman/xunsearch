@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Xunsearch PHP-SDK 命令行工具集入口
+ *
+ * @author hightman
+ * @link http://www.xunsearch.com/
+ * @copyright Copyright &copy; 2011 HangZhou YunSheng Network Technology Co., Ltd.
+ * @license http://www.xunsearch.com/license/
+ * @version $Id$
+ */
+$commands = array(
+	'index' => 'Indexer.php',
+	'search' => 'Quest.php',
+	'quest' => 'Quest.php',
+	'log' => 'Logger.php',
+	'check' => 'RequiredCheck.php',
+	'skel' => 'SearchSkel.php',
+);
+$cmd = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : 'help';
+if ($cmd !== 'help' && $cmd !== '-h' && $cmd !== '--help') {
+	if (isset($commands[$cmd])) {
+		$_SERVER['argv'][1] = $_SERVER['argv'][0] . ' ' . $cmd;
+		array_shift($_SERVER['argv']);
+		ob_start('strip_head_line');
+		require dirname(__FILE__) . '/' . $commands[$cmd];
+		ob_end_flush();
+	} else {
+		echo $_SERVER['argv'][0] . '：未定义的指令 \'' . $cmd . '\'，详见：\'' . $_SERVER['argv'][0] . ' help\'。';
+		echo "\n";
+		exit(-1);
+	}
+} else {
+	echo <<<EOF
+用法：{$_SERVER['argv'][0]} <cmd> [args]
+	
+支持的命令如下：
+    index        索引管理、导入工具
+    search|quest 搜索查询及测试工具
+    log          搜索日志管理工具
+    skel         搜索骨架代码生成工具
+    check        运行需求检查报告
+    help         显示本页帮助信息
+
+除 'help' 外，其它命令均可传入 -h 或 --help 参数查看具体的使用说明。
+
+
+EOF;
+	exit(0);
+}
+
+// strip head line
+function strip_head_line($buf)
+{
+	if (!strncmp($buf, '#!/usr/bin', 10)) {
+		$buf = substr($buf, strpos($buf, "\n") + 1);
+	}
+	return $buf;
+}

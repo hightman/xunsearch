@@ -1,0 +1,28 @@
+<?php
+/**
+ * suggest.php 
+ * @project_name@ 提取搜索建议(输出JSON)
+ * 
+ * 该文件由 xunsearch PHP-SDK 工具自动生成，请根据实际需求进行修改
+ * 创建时间：@date_time@
+ */
+// 加载 XS 入口文件
+require_once '@xs_lib_file@';
+
+// Prefix Query is: term (by jQuery-ui)
+$q = isset($_GET['term']) ? trim($_GET['term']) : '';
+$q = get_magic_quotes_gpc() ? stripslashes($q) : $q;
+$terms = array();
+if (!empty($q) && strpos($q, ':') === false) {
+	try {
+		$xs = new XS('@project@');
+		$terms = $xs->search->setCharset('UTF-8')->getExpandedQuery($q);
+	} catch (XSException $e) {
+		
+	}
+}
+
+// output json
+header("Content-Type: application/json; charset=utf-8");
+echo json_encode($terms);
+exit(0);

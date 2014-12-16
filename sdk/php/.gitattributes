@@ -1,0 +1,4 @@
+# Ignore some useless directories
+dev/	export-ignore
+doc/	export-ignore
+tests/	export-ignore
