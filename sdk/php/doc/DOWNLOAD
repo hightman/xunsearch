@@ -19,7 +19,7 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
     <tr>
       <th>最新稳定版</th>
       <td>
-        <a href="http://www.xunsearch.com/site/downfile?file=xunsearch-full-latest.tar.bz2" target="_blank">xunsearch-full-latest.tar.bz2</a>
+        <a href="/download/xunsearch-full-latest.tar.bz2" target="_blank">xunsearch-full-latest.tar.bz2</a>
         ($RELEASE，<a href="https://github.com/hightman/xunsearch/commits/$RELEASE0" target="_blank">修改日志</a>)
       </td>
     </tr>
@@ -49,7 +49,7 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
     </tr>
     <tr>
       <th>终止维护</th>
-      <td>2014-12-31 (活跃开发中，视情况延长)</td>
+      <td>活跃开发中，长期维护支持！</td>
     </tr>
     <tr>
       <th>最新开发版</th>
