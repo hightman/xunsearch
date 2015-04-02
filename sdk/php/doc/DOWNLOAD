@@ -27,7 +27,7 @@ Xunsearch 真正全面开源，并使用最流行的开源许可协议 GPL 发�
       <th>SDK单独下载</th>
       <td>
         <a href="/download/xunsearch-sdk-latest.zip" target="_blank">xunsearch-sdk-latest.zip</a>
-        ($RELEASE0，PHP-SDK，不含服务端)
+        ($RELEASE0，不含服务端，通过 <a href="https://packagist.org/packages/hightman/xunsearch" target="_blank">composer</a> 安装)
       </td>
     </tr>
 	<!--
