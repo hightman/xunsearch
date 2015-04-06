@@ -21,6 +21,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'message' => '项目测试是一个很有意思的行为！',
 				'chrono' => 214336158,
 				'other' => 'master',
+				'lon' => 116.451,
+				'lat' => 39.94,
 			),
 			array(
 				'pid' => 11,
@@ -28,6 +30,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'message' => '这里是第二篇文章的内容',
 				'chrono' => 1314336168,
 				'other' => 'slave',
+				'lon' => 117.3,
+				'lat' => 39.94,
 			),
 			array(
 				'pid' => 21,
@@ -35,6 +39,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'message' => '俗话说，无三不成礼，所以就有了第三篇',
 				'chrono' => 314336178,
 				'other' => 'master',
+				'lon' => 116.4,
+				'lat' => 39.94,
 			)
 		);
 
@@ -111,7 +117,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 */
 	protected function tearDown()
 	{
-		
+
 	}
 
 	public function testFacets()
@@ -153,7 +159,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(3, $search->setFuzzy()->count('subject:项目测试'));
 	}
 
-	/** 	 
+	/**
 	 * @dataProvider queryProvider
 	 */
 	public function testQuery($raw, $parsed)
@@ -231,6 +237,34 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		// other (asc) + chrono(asc)
 		$docs = $search->setMultiSort(array('other' => true, 'chrono' => true))->setLimit(1)->search('subject:测试');
 		$this->assertEquals(3, $docs[0]->pid);
+	}
+
+	public function testSetGeodistSort()
+	{
+		$search = self::$xs->search;
+
+		// exception fields
+		try {
+			$search->setGeodistSort('lat');
+		} catch (Exception $e) {
+
+		}
+		$this->assertInstanceOf('XSException', $e);
+		$this->assertContains('should be an array', $e->getMessage());
+		try {
+			$search->setGeodistSort(array('pid' => 1, 'lat' => 33.1));
+		} catch (Exception $e) {
+
+		}
+		$this->assertInstanceOf('XSException', $e);
+		$this->assertContains('shoud be numeric', $e->getMessage());
+
+		// normal test
+		$geo = array('lon' => 116.45, 'lat' => '39.96');
+		$docs = $search->setGeodistSort($geo)->setLimit(1)->search('subject:测试');
+		$this->assertEquals(3, $docs[0]->pid);
+		$docs = $search->setGeodistSort($geo, true)->setLimit(1)->search('subject:测试');
+		$this->assertEquals(11, $docs[0]->pid);
 	}
 
 	public function testCollapse()
@@ -473,8 +507,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// test fuzzy multi query
 		$search->setFuzzy();
-		$this->testQuery('中华人民共和国',
-				'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
+		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
 		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');
 		$search->setFuzzy(false);
 
@@ -530,7 +563,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$search = self::$xs->search; /* @var $search XSSearch */
 		// without mathced
 		$docs = $search->setFuzzy()->setSort('chrono')
-						->setQuery('subject:项目测试')->setLimit(1)->search();
+				->setQuery('subject:项目测试')->setLimit(1)->search();
 		try {
 			$docs[0]->matched();
 		} catch (Exception $e) {
@@ -540,7 +573,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$this->assertContains('undefined method', $e->getMessage());
 		// with matched
 		$docs = $search->setFuzzy()->setSort('chrono')->setRequireMatchedTerm()
-						->setQuery('subject:项目测试')->setLimit(1)->search();
+				->setQuery('subject:项目测试')->setLimit(1)->search();
 		$terms = $docs[0]->matched();
 		$this->assertInternalType('array', $terms);
 		$this->assertEquals(1, count($terms));
@@ -591,14 +624,13 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))',
-				$query);
+		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
 	}
 
 	public function testScwsMulti()
 	{
 		$search = self::$xs->search;
-		// default scws		
+		// default scws
 		$this->assertEquals(array('管理制度', '管理', '制度'), $search->terms('管理制度'));
 		// multi = 0
 		$search->setScwsMulti(0);

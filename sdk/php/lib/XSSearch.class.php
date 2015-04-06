@@ -16,7 +16,7 @@
  * $xs->search->setQuery($str)->setLimit(10, 10)->search();
  * $xs->close();
  * </pre>
- * 
+ *
  * @property string $query 默认搜索语句
  * @property-read int $dbTotal 数据库内的数据总量
  * @property-read int $lastCount 最近那次搜索的匹配总量估值
@@ -235,6 +235,52 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置地理位置距离排序方式
+	 *
+	 * 请务必先以 numeric 类型字段定义经纬度坐标字段，例如用 lon 代表经度、lat 代表纬度，
+	 * 那么设置排序代码如下：
+	 * <pre>
+	 * $search->setGeodistSort(array('lon' => 39.18, 'lat' => 120.51));
+	 * </pre>
+	 * @param array $fields 在此定义地理位置信息原点坐标信息，数组至少必须包含2个值
+	 * @param bool $reverse 是否由远及近排序, 默认为由近及远
+	 * @param bool $relevance_first 是否优先相关性排序, 默认为否
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.4.10
+	 */
+	public function setGeodistSort($fields, $reverse = false, $relevance_first = false)
+	{
+		if (!is_array($fields) || count($fields) < 2) {
+			throw new XSException("Fields of `setGeodistSort' should be an array contain two or more elements");
+		}
+		// [vno][vlen][vbuf] ...
+		$buf = '';
+		foreach ($fields as $key => $value) {
+			$field = $this->xs->getField($key, true);
+			if (!$field->isNumeric()) {
+				throw new XSException("Type of GeoField `$key' shoud be numeric");
+			}
+			$vno = $field->vno;
+			$vbuf = strval(floatval($value));
+			$vlen = strlen($vbuf);
+			if ($vlen >= 255) {
+				throw new XSException("Value of `$key' too long");
+			}
+			$buf .= chr($vno) . chr($vlen) . $vbuf;
+		}
+		$type = XS_CMD_SORT_TYPE_GEODIST;
+		if ($relevance_first) {
+			$type |= XS_CMD_SORT_FLAG_RELEVANCE;
+		}
+		if (!$reverse) {
+			$type |= XS_CMD_SORT_FLAG_ASCENDING;
+		}
+		$cmd = new XSCommand(XS_CMD_SEARCH_SET_SORT, $type, 0, $buf);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
 	 * 设置多字段组合排序方式
 	 * 当您需要根据多个字段的值按不同的方式综合排序时, 请使用这项
 	 * @param array $fields 排序依据的字段数组, 以字段名称为键, true/false 为值表示正序或逆序
@@ -327,7 +373,7 @@ class XSSearch extends XSServer
 	 * 注意, 每当调用 {@link setDb} 或 {@link addDb} 修改当前数据库时会重置此项设置
 	 * @param string $field 依据该字段的值折叠搜索结果, 设为 null 则取消折叠
 	 * @param int $num 折叠后只是返最匹配的数据数量, 默认为 1, 最大值 255
-	 * @return XSSearch 返回对象本身以支持串接操作	 	 
+	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function setCollapse($field, $num = 1)
 	{
@@ -343,7 +389,7 @@ class XSSearch extends XSServer
 	 * 添加搜索过滤区间或范围
 	 * @param string $field
 	 * @param mixed $from 起始值(不包含), 若设为 null 则相当于匹配 <= to (字典顺序)
-	 * @param mixed $to 结束值(包含), 若设为 null 则相当于匹配 >= from (字典顺序)	 
+	 * @param mixed $to 结束值(包含), 若设为 null 则相当于匹配 >= from (字典顺序)
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function addRange($field, $from, $to)
@@ -381,7 +427,7 @@ class XSSearch extends XSServer
 	 * @param string $term 索引词
 	 * @param float $weight 权重计算缩放比例
 	 * @return XSSearch 返回对象本身以支持串接操作
-	 * @see addQueryTerm	 
+	 * @see addQueryTerm
 	 */
 	public function addWeight($field, $term, $weight = 1)
 	{
@@ -390,7 +436,7 @@ class XSSearch extends XSServer
 
 	/**
 	 * 设置分面搜索记数
-	 * 用于记录匹配搜索结果中按字段值分组的数量统计, 每次调用 {@link search} 后会还原设置 
+	 * 用于记录匹配搜索结果中按字段值分组的数量统计, 每次调用 {@link search} 后会还原设置
 	 * 对于多次调用 $exact 参数以最后一次为准, 只支持字段值不超过 255 字节的情况
 	 * @param mixed $field 要进行分组统计的字段或字段组成的数组, 最多同时支持 8 个
 	 * @param bool $exact 是否要求绝对精确搜索, 这会造成较大的系统开销
@@ -456,7 +502,7 @@ class XSSearch extends XSServer
 	 * 用于搜索结果分页, 每次调用 {@link search} 后会还原这2个变量到初始值
 	 * @param int $limit 数量上限, 若设为 0 则启用默认值 self::PAGE_SIZE
 	 * @param int $offset 偏移量, 即跳过的结果数量, 默认为 0
-	 * @return XSSearch 返回对象本身以支持串接操作	 
+	 * @return XSSearch 返回对象本身以支持串接操作
 	 */
 	public function setLimit($limit, $offset = 0)
 	{
@@ -665,7 +711,7 @@ class XSSearch extends XSServer
 	}
 
 	/**
-	 * 获取热门搜索词列表	 
+	 * 获取热门搜索词列表
 	 * @param int $limit 需要返回的热门搜索数量上限, 默认为 6, 最大值为 50
 	 * @param string $type 排序类型, 默认为 total(搜索总量), 可选值还有 lastnum(上周), currnum(本周)
 	 * @return array 返回以搜索词为键, 搜索指数为值的关联数组
@@ -937,8 +983,8 @@ class XSSearch extends XSServer
 	 * 增加默认搜索语句
 	 * @param string $query 搜索语句
 	 * @param int $addOp 与旧语句的结合操作符, 如果无旧语句或为空则这此无意义, 支持的操作符有:
-	 *        XS_CMD_QUERY_OP_AND	
-	 *        XS_CMD_QUERY_OP_OR			
+	 *        XS_CMD_QUERY_OP_AND
+	 *        XS_CMD_QUERY_OP_OR
 	 *        XS_CMD_QUERY_OP_AND_NOT
 	 *        XS_CMD_QUERY_OP_XOR
 	 *        XS_CMD_QUERY_OP_AND_MAYBE

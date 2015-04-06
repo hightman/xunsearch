@@ -156,6 +156,57 @@ struct search_result
 #endif
 	unsigned int facets_len; // data length of facets result
 };
+/**
+ * Geodist keymaker
+ */
+#include <math.h>
+#define	DEG2RAD(x)	((x) * M_PI / 180)
+
+class GeodistKeyMaker : public Xapian::KeyMaker {
+	Xapian::valueno lat_vno, lon_vno;
+	double lat_value, lon_value;
+
+public:
+
+	GeodistKeyMaker() {
+	}
+	virtual string operator()(const Xapian::Document & doc) const;
+
+	void set_latitude(Xapian::valueno vno, double value) {
+		lat_vno = vno;
+		lat_value = value;
+	}
+
+	void set_longitude(Xapian::valueno vno, double value) {
+		lon_vno = vno;
+		lon_value = value;
+	}
+};
+
+string GeodistKeyMaker::operator()(const Xapian::Document & doc) const {
+	string result;
+	double lat_value2 = Xapian::sortable_unserialise(doc.get_value(lat_vno));
+	double lon_value2 = Xapian::sortable_unserialise(doc.get_value(lon_vno));
+	
+	/* Haversine algorithm */
+#ifdef	USE_HAVERSINE
+	double hsinX = sin(DEG2RAD(lon_value - lon_value2) * 0.5);
+	double hsinY = sin(DEG2RAD(lat_value - lat_value2) * 0.5);
+	double h = hsinY * hsinY + (cos(DEG2RAD(lat_value)) * cos(DEG2RAD(lat_value2)) * hsinX * hsinX);
+	double dist = 2 * atan2(sqrt(h), sqrt(1 - h)) * 6367000.0;
+#else
+	/* Referer: http://www.cocoachina.com/ios/20141118/10238.html */
+	double dx = lon_value - lon_value2; // 经度差值
+    double dy = lat_value - lat_value2; // 纬度差值
+	double b = (lat_value + lat_value2) * 0.5; // 平均纬度
+	double lx = 6367000.0 * DEG2RAD(dx) * cos(DEG2RAD(b)); // 东西距离
+	double ly = 6367000.0 * DEG2RAD(dy); // 南北距离
+	double dist = sqrt(lx * lx + ly * ly);  // 用平面的矩形对角距离公式计算总距离   
+#endif
+	result = Xapian::sortable_serialise(dist);
+	return result;
+}
+
 
 /**
  * @param conn
@@ -504,8 +555,8 @@ static inline void zarg_cleanup(struct search_zarg *zarg)
 			log_debug("delete (Xapian::ValueRangeProcessor *) %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::ValueRangeProcessor *);
 		} else if (oc->type == OTYPE_KEYMAKER) {
-			log_debug("delete (Xapian::MultiValueKeyMaker *) %p", oc->val);
-			DELETE_PTT(oc->val, Xapian::MultiValueKeyMaker *);
+			log_debug("delete (Xapian::KeyMaker *) %p", oc->val);
+			DELETE_PTT(oc->val, Xapian::KeyMaker *);
 		}
 		if (oc->key != NULL) {
 			free(oc->key);
@@ -587,6 +638,24 @@ static int zcmd_task_default(XS_CONN *conn)
 					}
 					zarg_add_object(zarg, OTYPE_KEYMAKER, NULL, sorter);
 					log_debug_conn("new (Xapian::MultiValueKeyMaker *) %p", sorter);
+					if (rv_first == true) {
+						zarg->eq->set_sort_by_relevance_then_key(sorter, reverse);
+					} else {
+						zarg->eq->set_sort_by_key_then_relevance(sorter, reverse);
+					}
+				} else if (type == CMD_SORT_TYPE_GEODIST) {
+					unsigned char *buf = (unsigned char *) XS_CMD_BUF(cmd);
+					int i = buf[2] + 2;
+					Xapian::valueno lon_vno = buf[0];
+					Xapian::valueno lat_vno = buf[i];
+					string lon_value = string((char *) buf + 2, (int) buf[2]);
+					string lat_value = string((char *) buf + i + 2, (int) buf[i + 2]);
+					
+					GeodistKeyMaker *sorter = new GeodistKeyMaker();
+					sorter->set_longitude(lon_vno, strtod(lon_value.data(), NULL));					
+					sorter->set_latitude(lat_vno, strtod(lat_value.data(), NULL));
+					zarg_add_object(zarg, OTYPE_KEYMAKER, NULL, sorter);
+					log_debug_conn("new (GeodistKeyMaker *) %p", sorter);
 					if (rv_first == true) {
 						zarg->eq->set_sort_by_relevance_then_key(sorter, reverse);
 					} else {

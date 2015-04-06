@@ -33,11 +33,11 @@ tokenizer = full
 
 [other]
 index = mixed
-			
+
 ',
 	// test2
 	'/tmp/xs_test2.ini' => '
-project.name = test2			
+project.name = test2
 project.default_charset = gbk
 server.search = localhost:8384
 
@@ -70,6 +70,12 @@ type = string
 index = both
 weight = 0
 phrase = yes
+
+[lon]
+type = numeric
+
+[lat]
+type = numeric
 
 ');
 

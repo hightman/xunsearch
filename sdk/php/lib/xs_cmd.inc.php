@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2015/04/02 21:51 */
+/* Automatically generated at 2015/04/06 15:50 */
 define('XS_CMD_NONE',	0);
 define('XS_CMD_DEFAULT',	XS_CMD_NONE);
 define('XS_CMD_PROTOCOL',	20110707);
@@ -67,6 +67,7 @@ define('XS_CMD_SORT_TYPE_RELEVANCE',	0);
 define('XS_CMD_SORT_TYPE_DOCID',	1);
 define('XS_CMD_SORT_TYPE_VALUE',	2);
 define('XS_CMD_SORT_TYPE_MULTI',	3);
+define('XS_CMD_SORT_TYPE_GEODIST',	4);
 define('XS_CMD_SORT_TYPE_MASK',	0x3f);
 define('XS_CMD_SORT_FLAG_RELEVANCE',	0x40);
 define('XS_CMD_SORT_FLAG_ASCENDING',	0x80);
