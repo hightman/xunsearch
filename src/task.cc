@@ -645,11 +645,11 @@ static int zcmd_task_default(XS_CONN *conn)
 					}
 				} else if (type == CMD_SORT_TYPE_GEODIST) {
 					unsigned char *buf = (unsigned char *) XS_CMD_BUF(cmd);
-					int i = buf[2] + 2;
+					int i = buf[1] + 2;
 					Xapian::valueno lon_vno = buf[0];
 					Xapian::valueno lat_vno = buf[i];
-					string lon_value = string((char *) buf + 2, (int) buf[2]);
-					string lat_value = string((char *) buf + i + 2, (int) buf[i + 2]);
+					string lon_value = string((char *) buf + 2, (int) buf[1]);
+					string lat_value = string((char *) buf + i + 2, (int) buf[i + 1]);
 					
 					GeodistKeyMaker *sorter = new GeodistKeyMaker();
 					sorter->set_longitude(lon_vno, strtod(lon_value.data(), NULL));					

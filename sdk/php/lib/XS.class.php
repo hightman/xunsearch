@@ -31,7 +31,7 @@
  *   $doc->title = '您好, 世界!';
  *   $doc->setFields(array('content' => '英文说法是: Hello, the world!'));
  *   $xs->index->add($doc);
- * 
+ *
  *   $doc->title = '世界, 你好!';
  *   $xs->index->update($doc);
  *
@@ -52,7 +52,7 @@ include_once XS_LIB_ROOT . '/xs_cmd.inc.php';
 
 /**
  * XS 异常类定义, XS 所有操作过程发生异常均抛出该实例
- * 
+ *
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
  * @package XS
@@ -113,7 +113,7 @@ class XSException extends Exception
 
 /**
  * XS 错误异常类定义, XS 所有操作过程发生错误均抛出该实例
- * 
+ *
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
  * @package XS
@@ -236,7 +236,7 @@ class XSComponent
 
 /**
  * XS 搜索项目主类
- * 
+ *
  * @property XSFieldScheme $scheme 当前在用的字段方案
  * @property string $defaultCharset 默认字符集编码
  * @property-read string $name 项目名称
@@ -387,7 +387,7 @@ class XS extends XSComponent
 	public function getDefaultCharset()
 	{
 		return isset($this->_config['project.default_charset']) ?
-				strtoupper($this->_config['project.default_charset']) : 'UTF-8';
+			strtoupper($this->_config['project.default_charset']) : 'UTF-8';
 	}
 
 	/**
@@ -506,7 +506,7 @@ class XS extends XSComponent
 	/**
 	 * 获取项目字段元数据
 	 * @param mixed $name 字段名称(string) 或字段序号(vno, int)
-	 * @param bool $throw 当字段不存在时是否抛出异常, 默认为 true	 
+	 * @param bool $throw 当字段不存在时是否抛出异常, 默认为 true
 	 * @return XSFieldMeta 字段元数据对象
 	 * @throw XSException 当字段不存在并且参数 throw 为 true 时抛出异常
 	 * @see XSFieldScheme::getField
@@ -575,6 +575,24 @@ class XS extends XSComponent
 	}
 
 	/**
+	 * 计算经纬度距离
+	 * @param float $lon1 原点经度
+	 * @param float $lat1 原点纬度
+	 * @param float $lon2 目标点经度
+	 * @param float $lat2 目标点纬度
+	 * @return float 两点大致距离，单位：米
+	 */
+	public static function geoDistance($lon1, $lat1, $lon2, $lat2)
+	{
+		$dx = $lon1 - $lon2;
+		$dy = $lat1 - $lat2;
+		$b = ($lat1 + $lat2) / 2;
+		$lx = 6367000.0 * deg2rad($dx) * cos(deg2rad($b));
+		$ly = 6367000.0 * deg2rad($dy);
+		return sqrt($lx * $lx + $ly * $ly);
+	}
+
+	/**
 	 * 解析INI配置文件
 	 * 由于 PHP 自带的 parse_ini_file 存在一些不兼容，故自行简易实现
 	 * @param string $data 文件内容
@@ -633,7 +651,7 @@ class XS extends XSComponent
 				$cache_write = 'eaccelerator_put';
 			}
 			if ($cache && isset($cache['mtime']) && isset($cache['scheme'])
-					&& filemtime($file) <= $cache['mtime']) {
+				&& filemtime($file) <= $cache['mtime']) {
 				// cache HIT
 				$this->_scheme = $this->_bindScheme = unserialize($cache['scheme']);
 				$this->_config = $cache['config'];

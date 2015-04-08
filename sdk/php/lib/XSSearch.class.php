@@ -238,7 +238,7 @@ class XSSearch extends XSServer
 	 * 设置地理位置距离排序方式
 	 *
 	 * 请务必先以 numeric 类型字段定义经纬度坐标字段，例如用 lon 代表经度、lat 代表纬度，
-	 * 那么设置排序代码如下：
+	 * 那么设置排序代码如下，必须将经度定义在前纬度在后：
 	 * <pre>
 	 * $search->setGeodistSort(array('lon' => 39.18, 'lat' => 120.51));
 	 * </pre>
