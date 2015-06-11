@@ -143,7 +143,7 @@ $docs = Yii::app()->search->setLimit(5, 10)->search();	// 取得搜索结果文�
 
 ```php
 $db = \Yii::$app->xunsearch->getDatabase('demo');
-$db = \Yii::$app->xunsearch('demo');
+$db = (\Yii::$app->xunsearch)('demo');
 $xs = $db->xs;
 $search = $db->getSearch();
 $index = $db->getIndex();
