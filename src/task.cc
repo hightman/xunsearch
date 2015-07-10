@@ -207,6 +207,37 @@ string GeodistKeyMaker::operator()(const Xapian::Document & doc) const {
 	return result;
 }
 
+/**
+ * TermCountMatchSpy
+ * for multi-value facets
+ */
+class TermCountMatchSpy : public Xapian::ValueCountMatchSpy {
+
+public:
+
+	TermCountMatchSpy(Xapian::valueno slot_) : Xapian::ValueCountMatchSpy(slot_) {
+	}
+	void operator()(const Xapian::Document &doc, Xapian::weight wt);
+};
+
+void TermCountMatchSpy::operator()(const Xapian::Document &doc, Xapian::weight wt) {
+	++(internal->total);
+	string val(doc.get_value(internal->slot));
+	if (!val.empty()) {
+		++(internal->values[val]);
+	} else {
+		Xapian::TermIterator ti = doc.termlist_begin();
+		while (ti != doc.termlist_end()) {
+			string tt = *ti++;
+			if (tt[0] != PREFIX_CHAR_ZZZ && prefix_to_vno((char *) tt.data()) == internal->slot) {
+				tt = tt.substr(tt[1] >= 'A' && tt[1] <= 'Z' ? 2 : 1);
+				if (!tt.empty()) {
+					++(internal->values[tt]);
+				}
+			}
+		}
+	}
+}
 
 /**
  * @param conn
@@ -1091,7 +1122,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 	// check cache flag
 	if (!(cache_flag & CACHE_VALID)) {
-		Xapian::ValueCountMatchSpy * spy[MAX_SEARCH_FACETS];
+		TermCountMatchSpy * spy[MAX_SEARCH_FACETS];
 		unsigned int off2, limit2;
 		int i, facets_len = 0;
 		unsigned char *ptr;
@@ -1104,7 +1135,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		memset(spy, 0, sizeof(spy));
 		for (i = 1; facets[i] != '\0'; i++) {
 			log_debug_conn("add match spy (VNO:%d)", facets[i] - 1);
-			spy[i - 1] = new Xapian::ValueCountMatchSpy(facets[i] - 1);
+			spy[i - 1] = new TermCountMatchSpy(facets[i] - 1);
 			zarg->eq->add_matchspy(spy[i - 1]);
 		}
 

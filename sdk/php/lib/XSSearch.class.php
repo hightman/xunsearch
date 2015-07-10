@@ -438,6 +438,8 @@ class XSSearch extends XSServer
 	 * 设置分面搜索记数
 	 * 用于记录匹配搜索结果中按字段值分组的数量统计, 每次调用 {@link search} 后会还原设置
 	 * 对于多次调用 $exact 参数以最后一次为准, 只支持字段值不超过 255 字节的情况
+	 *
+	 * 自 v1.4.10 起自动对空值的字段按 term 分面统计（相当于多值）	 
 	 * @param mixed $field 要进行分组统计的字段或字段组成的数组, 最多同时支持 8 个
 	 * @param bool $exact 是否要求绝对精确搜索, 这会造成较大的系统开销
 	 * @return XSSearch 返回对象本身以支持串接操作

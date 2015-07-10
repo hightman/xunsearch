@@ -34,6 +34,9 @@ tokenizer = full
 [other]
 index = mixed
 
+[null]
+
+
 ',
 	// test2
 	'/tmp/xs_test2.ini' => '
@@ -76,6 +79,8 @@ type = numeric
 
 [lat]
 type = numeric
+
+[null]
 
 ');
 
