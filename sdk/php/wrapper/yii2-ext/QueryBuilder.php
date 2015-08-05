@@ -124,7 +124,7 @@ class QueryBuilder extends Object
 	protected function buildLimit($limit, $offset)
 	{
 		$limit = intval($limit);
-		$offset = min(0, intval($offset));
+		$offset = max(0, intval($offset));
 		if ($limit > 0) {
 			$this->db->getSearch()->setLimit($limit, $offset);
 		}
