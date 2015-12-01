@@ -48,7 +48,7 @@ set_force="no"
 set_no_clean="no"
 mk_add_option=
 xs_add_option=
-freebsd=`uname -a | grep FreeBSD`
+os=`uname -s`
 
 i=0
 while [ $i -lt $# ] ; do
@@ -139,13 +139,12 @@ prefix=$set_prefix
 echo $prefix > $HOME/.xs_installed
 
 # compile flags
-if test -n "$freebsd"; then
-  export CFLAGS="-O2 -fPIC"
-  export CXXFLAGS="-O2 -fPIC"
-else 
-  export CFLAGS="-O2"
-  export CXXFLAGS="-O2"
+CFLAGS=-O2
+if test "$os" = "FreeBSD"; then
+   CFLAGS="$CFLAGS -fPIC"
 fi
+export CFLAGS=$CFLAGS
+export CXXFLAGS=$CFLAGS
 echo -n > setup.log
 
 # error function
@@ -190,7 +189,7 @@ if test "$do_install" = "yes" ; then
   tar -xjf ./packages/scws-${new_version}.tar.bz2
   cd scws-$new_version
   echo "Configuring scws ..."
-  if test -n "$freebsd" ; then
+  if test "$os" = "FreeBSD"; then
     ./configure --host=x86_64-xunsearch-kfreebsd-gnu --prefix=$prefix >> ../setup.log 2>&1
   else 
     ./configure --prefix=$prefix >> ../setup.log 2>&1
