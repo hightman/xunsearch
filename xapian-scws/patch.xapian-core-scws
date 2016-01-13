@@ -1,9 +1,9 @@
 -n
-*** xapian-core-1.2.20/configure.ac	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/configure.ac	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/configure.ac	2015-12-29 17:20:10.000000000 +0800
+--- xapian-core-scws-1.2.22/configure.ac	2016-01-13 13:41:48.000000000 +0800
 ***************
-*** 1094,1099 ****
---- 1094,1155 ----
+*** 1177,1182 ****
+--- 1177,1238 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -66,11 +66,11 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.2.20/include/xapian/queryparser.h	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/include/xapian/queryparser.h	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/include/xapian/queryparser.h	2015-12-29 17:20:10.000000000 +0800
+--- xapian-core-scws-1.2.22/include/xapian/queryparser.h	2016-01-13 13:41:48.000000000 +0800
 ***************
-*** 559,564 ****
---- 559,597 ----
+*** 575,580 ****
+--- 575,613 ----
        */
       void set_max_wildcard_expansion(Xapian::termcount limit);
   
@@ -110,11 +110,11 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.2.20/include/xapian/termgenerator.h	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/include/xapian/termgenerator.h	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/include/xapian/termgenerator.h	2015-12-29 17:20:10.000000000 +0800
+--- xapian-core-scws-1.2.22/include/xapian/termgenerator.h	2016-01-13 13:41:48.000000000 +0800
 ***************
-*** 91,96 ****
---- 91,120 ----
+*** 105,110 ****
+--- 105,134 ----
       /// Stemming strategies, for use with set_stemming_strategy().
       typedef enum { STEM_NONE, STEM_SOME, STEM_ALL, STEM_ALL_Z } stem_strategy;
   
@@ -145,11 +145,11 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.2.20/api/omqueryinternal.cc	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/api/omqueryinternal.cc	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/api/omqueryinternal.cc	2015-12-29 17:20:10.000000000 +0800
+--- xapian-core-scws-1.2.22/api/omqueryinternal.cc	2016-01-13 13:41:48.000000000 +0800
 ***************
-*** 370,375 ****
---- 370,380 ----
+*** 371,376 ****
+--- 371,381 ----
   	// Not a leaf, concatenate results from all subqueries.
   	for (subquery_list::const_iterator i = subqs.begin(); i != end; ++i) {
   	    (*i)->accumulate_terms(terms);
@@ -161,8 +161,8 @@
   	}
       }
   }
-*** xapian-core-1.2.20/queryparser/queryparser_internal.h	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/queryparser_internal.h	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/queryparser_internal.h	2015-12-29 17:20:11.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/queryparser_internal.h	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -213,8 +213,8 @@
   };
   
   }
-*** xapian-core-1.2.20/queryparser/termgenerator_internal.h	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/termgenerator_internal.h	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/termgenerator_internal.h	2015-12-29 17:20:11.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/termgenerator_internal.h	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 26,31 ****
 --- 26,35 ----
@@ -254,8 +254,8 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.2.20/queryparser/queryparser.cc	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/queryparser.cc	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/queryparser.cc	2015-12-29 17:20:11.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/queryparser.cc	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 22,27 ****
 --- 22,28 ----
@@ -329,8 +329,8 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.2.20/queryparser/queryparser_internal.cc	2015-03-04 12:45:30.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/queryparser_internal.cc	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/queryparser_internal.cc	2015-12-29 17:25:13.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/queryparser_internal.cc	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 160,165 ****
 --- 160,168 ----
@@ -664,8 +664,8 @@
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 ***************
-*** 1451,1462 ****
---- 1655,1682 ----
+*** 1456,1467 ****
+--- 1660,1687 ----
   
   	    // Use the position of the first term for the synonyms.
   	    Xapian::termpos pos = (*begin)->pos;
@@ -695,8 +695,8 @@
   	    subqs.push_back(Query(Query::OP_SYNONYM,
   				  q_original_terms, q_synonym_terms));
 ***************
-*** 1618,1623 ****
---- 1838,1848 ----
+*** 1623,1628 ****
+--- 1843,1853 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -709,8 +709,8 @@
       string t;
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
-*** 1626,1631 ****
---- 1851,1857 ----
+*** 1631,1636 ****
+--- 1856,1862 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -718,8 +718,8 @@
   
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
-*** xapian-core-1.2.20/queryparser/termgenerator.cc	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/termgenerator.cc	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/termgenerator.cc	2015-12-29 17:20:11.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/termgenerator.cc	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 74,79 ****
 --- 74,111 ----
@@ -761,8 +761,8 @@
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.2.20/queryparser/termgenerator_internal.cc	2015-03-04 12:36:07.000000000 +0800
---- xapian-core-scws-1.2.20/queryparser/termgenerator_internal.cc	2015-04-02 21:14:15.000000000 +0800
+*** xapian-core-1.2.22/queryparser/termgenerator_internal.cc	2015-12-29 17:20:11.000000000 +0800
+--- xapian-core-scws-1.2.22/queryparser/termgenerator_internal.cc	2016-01-13 13:41:48.000000000 +0800
 ***************
 *** 117,122 ****
 --- 117,156 ----
