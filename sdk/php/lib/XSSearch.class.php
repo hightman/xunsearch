@@ -439,7 +439,7 @@ class XSSearch extends XSServer
 	 * 用于记录匹配搜索结果中按字段值分组的数量统计, 每次调用 {@link search} 后会还原设置
 	 * 对于多次调用 $exact 参数以最后一次为准, 只支持字段值不超过 255 字节的情况
 	 *
-	 * 自 v1.4.10 起自动对空值的字段按 term 分面统计（相当于多值）	 
+	 * 自 v1.4.10 起自动对空值的字段按 term 分面统计（相当于多值）
 	 * @param mixed $field 要进行分组统计的字段或字段组成的数组, 最多同时支持 8 个
 	 * @param bool $exact 是否要求绝对精确搜索, 这会造成较大的系统开销
 	 * @return XSSearch 返回对象本身以支持串接操作
@@ -1007,20 +1007,31 @@ class XSSearch extends XSServer
 	/**
 	 * 增加默认搜索词汇
 	 * @param string $field 索引词所属的字段, 若为混合区词汇可设为 null 或 body 型的字段名
-	 * @param string $term 索引词 (强制转为小写)
+	 * @param string|array $term 索引词或列表
 	 * @param int $addOp 与旧语句的结合操作符, 如果无旧语句或为空则这此无意义, 支持的操作符有:
 	 * @param float $scale 权重计算缩放比例, 默认为 1表示不缩放, 其它值范围 0.xx ~ 655.35
 	 * @return XSSearch 返回对象本身以支持串接操作
 	 * @see addQueryString
+	 *
+	 * 注：自 v1.4.10 起，允许传入数组，多词之间通过 defaultOp 连接，并且这些词不会再被分词。
 	 */
 	public function addQueryTerm($field, $term, $addOp = XS_CMD_QUERY_OP_AND, $scale = 1)
 	{
-		$term = strtolower($term);
 		$term = XS::convert($term, 'UTF-8', $this->_charset);
 		$bscale = ($scale > 0 && $scale != 1) ? pack('n', intval($scale * 100)) : '';
 		$vno = $field === null ? XSFieldScheme::MIXED_VNO : $this->xs->getField($field, true)->vno;
-
-		$cmd = new XSCommand(XS_CMD_QUERY_TERM, $addOp, $vno, $term, $bscale);
+		$cmd = XS_CMD_QUERY_TERM;
+		if (is_array($term)) {
+			if (count($term) === 0) {
+				return $this;
+			} elseif (count($term) === 1) {
+				$term = current($term);
+			} else {
+				$term = implode("\t", $term);
+				$cmd = XS_CMD_QUERY_TERMS;
+			}
+		}
+		$cmd = new XSCommand($cmd, $addOp, $vno, $term, $bscale);
 		$this->execCommand($cmd);
 		return $this;
 	}

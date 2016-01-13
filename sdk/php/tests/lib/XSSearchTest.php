@@ -653,4 +653,19 @@ EOF;
 		$search->setScwsMulti(2);
 		$this->assertEquals(array('管理制度', '管理', '理制', '制度'), $search->terms('管理制度'));
 	}
+
+	public function testQueryTerm()
+	{
+		$search = self::$xs->search;
+		// add term
+		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_XOR);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) XOR B管理+制度))', $search->query);
+		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_AND, 0.5);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND 0.5 * B管理+制度))', $search->query);
+		// add terms
+		$search->setFuzzy(true)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE (B管理+制度 OR B测测看 OR B对不对)))', $search->query);
+		$search->setFuzzy(false)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE, 0.1);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE 0.10000000000000000555 * (B管理+制度 AND B测测看 AND B对不对)))', $search->query);
+	}
 }

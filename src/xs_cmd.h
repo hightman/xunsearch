@@ -451,6 +451,7 @@ struct xs_import_hdr
  * arg1:add_op, arg2:vno, blen:term_len, blen1:2/0, buf:term, buf1:(u_short)(scale*100)
  */
 #define	CMD_QUERY_TERM		226
+#define	CMD_QUERY_TERMS		232	// multi terms, join with '\t'
 
 /**
  * Register range processor
