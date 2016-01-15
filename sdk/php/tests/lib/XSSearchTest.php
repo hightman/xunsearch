@@ -667,5 +667,13 @@ EOF;
 		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE (B管理+制度 OR B测测看 OR B对不对)))', $search->query);
 		$search->setFuzzy(false)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE, 0.1);
 		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE 0.10000000000000000555 * (B管理+制度 AND B测测看 AND B对不对)))', $search->query);
+		// set fuzzy = true
+		$search->setQuery(null)->setFuzzy(true)->addQueryString('');
+		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
+		$this->assertEquals('Xapian::Query((B管理+制度 OR B测测看 OR B对不对))', $search->query);
+		// set fuzzy = false
+		$search->setQuery(null)->setFuzzy(false)->addQueryString('');
+		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
+		$this->assertEquals('Xapian::Query((B管理+制度 AND B测测看 AND B对不对))', $search->query);
 	}
 }
