@@ -1428,6 +1428,11 @@ static int zcmd_task_add_query(XS_CONN *conn)
 				qstr.data(), flag, cmd->arg1, cmd->arg2);
 	}
 
+	// skip empty query
+	if (q2.empty()) {
+		return CMD_RES_CONT;
+	}
+
 	// check to do OP_SCALE_WEIGHT
 	if (XS_CMD_BLEN1(cmd) == 2
 			&& (cmd->cmd == CMD_QUERY_TERM || cmd->cmd == CMD_QUERY_TERMS || cmd->cmd == CMD_QUERY_PARSE)) {
