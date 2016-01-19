@@ -787,6 +787,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			}
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
+			zarg->qp->add_valuerangeprocessor(vrp);
 			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
 		}
 			break;

@@ -557,7 +557,7 @@ class XSSearch extends XSServer
 	/**
 	 * 获取搜索语句中的高亮词条列表
 	 * @param string $query 搜索语句, 若传入 null 使用默认语句, 最大长度为 80 字节
-	 * @param bool $raw 是否进行编码转换, 默认为 true
+	 * @param bool $convert 是否进行编码转换, 默认为 true
 	 * @return array 可用于高亮显示的词条列表
 	 */
 	public function terms($query = null, $convert = true)
