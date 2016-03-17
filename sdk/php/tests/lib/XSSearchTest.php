@@ -23,6 +23,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'other' => 'master',
 				'lon' => 116.451,
 				'lat' => 39.94,
+				'null' => '',	// null term: 0, 3
 			),
 			array(
 				'pid' => 11,
@@ -32,6 +33,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'other' => 'slave',
 				'lon' => 117.3,
 				'lat' => 39.94,
+				// null term: 2, 3, 1
 			),
 			array(
 				'pid' => 21,
@@ -41,6 +43,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 				'other' => 'master',
 				'lon' => 116.4,
 				'lat' => 39.94,
+				// null term: 0, 1
 			)
 		);
 
@@ -54,6 +57,9 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		foreach ($data as $tmp) {
 			$doc->setFields(null);
 			$doc->setFields($tmp);
+			$doc->addTerm('null', $doc->pid % 3);
+			$doc->addTerm('null', $doc->pid % 4);
+			$doc->addTerm('null', $doc->pid % 5);
 			$index->add($doc);
 		}
 		$index->addSynonym('project', '项目');
@@ -123,7 +129,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	public function testFacets()
 	{
 		$search = self::$xs->search;
-		$docs = $search->setQuery('subject:测试')->setFacets(array('other'))->search();
+		$docs = $search->setQuery('subject:测试')->setFacets(array('other', 'null'))->search();
 
 		$this->assertEquals(3, count($docs));
 		$this->assertEquals('测试第二篇', $docs[0]->subject);
@@ -131,6 +137,14 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$facets = $search->getFacets('other');
 		$this->assertEquals($facets['master'], 2);
 		$this->assertEquals($facets['slave'], 1);
+
+		// 0,3  2,3,1, 0,1
+		$facets = $search->getFacets('null');
+		$this->assertEquals($facets['0'], 2);
+		$this->assertEquals($facets['1'], 2);
+		$this->assertEquals($facets['2'], 1);
+		$this->assertEquals($facets['3'], 2);
+
 	}
 
 	public function testCharset()
@@ -638,5 +652,28 @@ EOF;
 		// multi = 2
 		$search->setScwsMulti(2);
 		$this->assertEquals(array('管理制度', '管理', '理制', '制度'), $search->terms('管理制度'));
+	}
+
+	public function testQueryTerm()
+	{
+		$search = self::$xs->search;
+		// add term
+		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_XOR);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) XOR B管理+制度))', $search->query);
+		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_AND, 0.5);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND 0.5 * B管理+制度))', $search->query);
+		// add terms
+		$search->setFuzzy(true)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE (B管理+制度 OR B测测看 OR B对不对)))', $search->query);
+		$search->setFuzzy(false)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE, 0.1);
+		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE 0.10000000000000000555 * (B管理+制度 AND B测测看 AND B对不对)))', $search->query);
+		// set fuzzy = true
+		$search->setQuery(null)->setFuzzy(true)->addQueryString('');
+		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
+		$this->assertEquals('Xapian::Query((B管理+制度 OR B测测看 OR B对不对))', $search->query);
+		// set fuzzy = false
+		$search->setQuery(null)->setFuzzy(false)->addQueryString('');
+		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
+		$this->assertEquals('Xapian::Query((B管理+制度 AND B测测看 AND B对不对))', $search->query);
 	}
 }

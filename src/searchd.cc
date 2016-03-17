@@ -144,6 +144,7 @@ static int worker_zcmd_exec(XS_CONN *conn)
 		case CMD_QUERY_INIT:
 		case CMD_QUERY_PARSE:
 		case CMD_QUERY_TERM:
+		case CMD_QUERY_TERMS:
 		case CMD_QUERY_RANGEPROC:
 		case CMD_QUERY_RANGE:
 		case CMD_QUERY_VALCMP:

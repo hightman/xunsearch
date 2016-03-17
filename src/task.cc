@@ -207,6 +207,37 @@ string GeodistKeyMaker::operator()(const Xapian::Document & doc) const {
 	return result;
 }
 
+/**
+ * TermCountMatchSpy
+ * for multi-value facets
+ */
+class TermCountMatchSpy : public Xapian::ValueCountMatchSpy {
+
+public:
+
+	TermCountMatchSpy(Xapian::valueno slot_) : Xapian::ValueCountMatchSpy(slot_) {
+	}
+	void operator()(const Xapian::Document &doc, Xapian::weight wt);
+};
+
+void TermCountMatchSpy::operator()(const Xapian::Document &doc, Xapian::weight wt) {
+	++(internal->total);
+	string val(doc.get_value(internal->slot));
+	if (!val.empty()) {
+		++(internal->values[val]);
+	} else {
+		Xapian::TermIterator ti = doc.termlist_begin();
+		while (ti != doc.termlist_end()) {
+			string tt = *ti++;
+			if (tt[0] != PREFIX_CHAR_ZZZ && prefix_to_vno((char *) tt.data()) == internal->slot) {
+				tt = tt.substr(tt[1] >= 'A' && tt[1] <= 'Z' ? 2 : 1);
+				if (!tt.empty()) {
+					++(internal->values[tt]);
+				}
+			}
+		}
+	}
+}
 
 /**
  * @param conn
@@ -756,6 +787,7 @@ static int zcmd_task_default(XS_CONN *conn)
 			}
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
+			zarg->qp->add_valuerangeprocessor(vrp);
 			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
 		}
 			break;
@@ -1091,7 +1123,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 
 	// check cache flag
 	if (!(cache_flag & CACHE_VALID)) {
-		Xapian::ValueCountMatchSpy * spy[MAX_SEARCH_FACETS];
+		TermCountMatchSpy * spy[MAX_SEARCH_FACETS];
 		unsigned int off2, limit2;
 		int i, facets_len = 0;
 		unsigned char *ptr;
@@ -1104,7 +1136,7 @@ static int zcmd_task_get_result(XS_CONN *conn)
 		memset(spy, 0, sizeof(spy));
 		for (i = 1; facets[i] != '\0'; i++) {
 			log_debug_conn("add match spy (VNO:%d)", facets[i] - 1);
-			spy[i - 1] = new Xapian::ValueCountMatchSpy(facets[i] - 1);
+			spy[i - 1] = new TermCountMatchSpy(facets[i] - 1);
 			zarg->eq->add_matchspy(spy[i - 1]);
 		}
 
@@ -1345,6 +1377,29 @@ static int zcmd_task_add_query(XS_CONN *conn)
 		q2 = Xapian::Query(qstr);
 		log_debug_conn("add query term (TERM:%s, ADD_OP:%d, VNO:%d)",
 				qstr.data(), cmd->arg1, cmd->arg2);
+	} else if (cmd->cmd == CMD_QUERY_TERMS) {
+		string prefix("");
+		if (cmd->arg2 != XS_DATA_VNO) {
+			char _prefix[3];
+			vno_to_prefix(cmd->arg2, _prefix);
+			prefix = string(_prefix);
+		}
+		std::vector<Xapian::Query> terms;
+		string::size_type pos1, pos2 = 0;
+		string::size_type len = qstr.size();
+		for (pos2 = 0; pos2 < len; pos2 = pos1 + 1) {
+			pos1 = qstr.find('\t', pos2);
+			if (pos1 == pos2) {
+				continue;
+			}
+			if (pos1 == string::npos) {
+				pos1 = len;
+			}
+			terms.push_back(Xapian::Query(prefix + qstr.substr(pos2, pos1 - pos2)));
+		}
+		q2 = Xapian::Query(zarg->qp->get_default_op(), terms.begin(), terms.end());
+		log_debug_conn("add query terms (TERMS:%s, ADD_OP:%d, VNO:%d)",
+				qstr.data(), cmd->arg1, cmd->arg2);
 	} else if (cmd->cmd == CMD_QUERY_RANGE) {
 		string qstr1 = string(XS_CMD_BUF1(cmd), XS_CMD_BLEN1(cmd));
 		log_debug_conn("add query range (VNO:%d, FROM:%s, TO:%s, ADD_OP:%d)",
@@ -1374,9 +1429,14 @@ static int zcmd_task_add_query(XS_CONN *conn)
 				qstr.data(), flag, cmd->arg1, cmd->arg2);
 	}
 
+	// skip empty query
+	if (q2.empty()) {
+		return CMD_RES_CONT;
+	}
+
 	// check to do OP_SCALE_WEIGHT
 	if (XS_CMD_BLEN1(cmd) == 2
-			&& (cmd->cmd == CMD_QUERY_TERM || cmd->cmd == CMD_QUERY_PARSE)) {
+			&& (cmd->cmd == CMD_QUERY_TERM || cmd->cmd == CMD_QUERY_TERMS || cmd->cmd == CMD_QUERY_PARSE)) {
 		unsigned char *buf1 = (unsigned char *) XS_CMD_BUF1(cmd);
 		double scale = GET_SCALE(buf1);
 		q2 = Xapian::Query(Xapian::Query::OP_SCALE_WEIGHT, q2, scale);
@@ -1892,6 +1952,7 @@ static zcmd_exec_tab zcmd_task_tab[] = {
 	{CMD_SEARCH_GET_RESULT, zcmd_task_get_result},
 	{CMD_SEARCH_GET_SYNONYMS, zcmd_task_get_synonyms},
 	{CMD_QUERY_TERM, zcmd_task_add_query},
+	{CMD_QUERY_TERMS, zcmd_task_add_query},
 	{CMD_QUERY_RANGE, zcmd_task_add_query},
 	{CMD_QUERY_VALCMP, zcmd_task_add_query},
 	{CMD_QUERY_PARSE, zcmd_task_add_query},

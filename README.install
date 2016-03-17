@@ -6,3 +6,24 @@ INSTALLATION of Xunsearch
 
 完整安装包地址：
 http://www.xunsearch.com/download/xunsearch-full-latest.tar.bz2
+
+
+Docker 方式安装服务端
+---------------------
+
+下载映像：
+
+```
+docker pull hightman/xunsearch`
+```
+
+启动映像：
+
+```
+docker run --name xunsearch -d \
+-p 8383:8383 -p 8384:8384 \
+-v /var/xunsearch/data:/usr/local/xunsearch/data \
+hightman/xunsearch:latest
+```
+
+> note: 以上启动参数可自行修改，该方式仅运行服务端，需要另外下载 PHP-SDK。

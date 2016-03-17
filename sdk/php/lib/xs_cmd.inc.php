@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2015/04/06 15:50 */
+/* Automatically generated at 2016/01/13 13:49 */
 define('XS_CMD_NONE',	0);
 define('XS_CMD_DEFAULT',	XS_CMD_NONE);
 define('XS_CMD_PROTOCOL',	20110707);
@@ -58,6 +58,7 @@ define('XS_CMD_SEARCH_SET_MISC',	200);
 define('XS_CMD_QUERY_INIT',	224);
 define('XS_CMD_QUERY_PARSE',	225);
 define('XS_CMD_QUERY_TERM',	226);
+define('XS_CMD_QUERY_TERMS',	232);
 define('XS_CMD_QUERY_RANGEPROC',	227);
 define('XS_CMD_QUERY_RANGE',	228);
 define('XS_CMD_QUERY_VALCMP',	229);
