@@ -56,6 +56,14 @@ class Database extends Object
 	}
 
 	/**
+	 * @return string database name (ini file)
+	 */
+	public function getName()
+	{
+		return pathinfo($this->iniFile, PATHINFO_FILENAME);
+	}
+
+	/**
 	 * @return \XSTokenizerScws get scws tokenizer
 	 * @throws \XSException
 	 */
