@@ -29,6 +29,7 @@ EXPOSE 8384
 
 WORKDIR /usr/local/xunsearch
 RUN echo "#!/bin/sh" > bin/xs-docker.sh
+RUN echo "rm -f tmp/pid.*" >> bin/xs-docker.sh
 RUN echo "echo -n > tmp/docker.log" >> bin/xs-docker.sh
 RUN echo "bin/xs-indexd -l tmp/docker.log -k start" >> bin/xs-docker.sh
 RUN echo "sleep 1" >> bin/xs-docker.sh
