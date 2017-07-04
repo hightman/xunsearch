@@ -138,6 +138,10 @@ class XTreeDB
 		if (0 != $base) $this->hash_base = $base;
 		if (0 != $prime) $this->hash_prime = $prime;
 	}
+	function __construct($base = 0, $prime = 0)
+	{
+		$this->XTreeDB($base, $prime);
+	}
 
 	// Open the database: read | write
 	function Open($fpath, $mode = 'r')
