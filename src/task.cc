@@ -744,6 +744,14 @@ static int zcmd_task_default(XS_CONN *conn)
 				} else {
 					conn->flag &= ~CONN_FLAG_MATCHED_TERM;
 				}
+			} else if (cmd->arg1 == CMD_SEARCH_MISC_WEIGHT_SCHEME) {
+				if (cmd->arg2 == 0) {
+					zarg->eq->set_weighting_scheme(Xapian::BM25Weight());
+				} else if (cmd->arg2 == 1) {
+					zarg->eq->set_weighting_scheme(Xapian::BoolWeight());
+				} else if (cmd->arg2 == 2) {
+					zarg->eq->set_weighting_scheme(Xapian::TradWeight());
+				}
 			}
 			break;
 		case CMD_QUERY_INIT:

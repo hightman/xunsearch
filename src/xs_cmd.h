@@ -424,8 +424,8 @@ struct xs_import_hdr
 
 /**
  * Set misc options of search
- * arg1:type(1:syn_scale|2:matched_term)
- * arg2:scale*10|0/1|
+ * arg1:type(1:syn_scale|2:matched_term|3:weight_scheme)
+ * arg2:scale*10|0/1|0=BM25/1=BOOL/2=TRAD
  */
 #define	CMD_SEARCH_SET_MISC		200
 
@@ -556,8 +556,9 @@ struct xs_import_hdr
 #define	CMD_INDEX_SYNONYMS_DEL		1
 
 // 11. search misc options
-#define	CMD_SEARCH_MISC_SYN_SCALE		1
-#define	CMD_SEARCH_MISC_MATCHED_TERM	2
+#define CMD_SEARCH_MISC_SYN_SCALE		1
+#define CMD_SEARCH_MISC_MATCHED_TERM	2
+#define CMD_SEARCH_MISC_WEIGHT_SCHEME	3
 
 /**
  * ----------------------------------

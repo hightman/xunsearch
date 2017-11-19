@@ -121,6 +121,20 @@ class XSSearch extends XSServer
 	}
 
 	/**
+	 * 设置检索匹配的权重方案
+	 * 目前支持三种权重方案: 0=BM25/1=Bool/2=Trad
+	 * @param int $scheme 匹配权重方案
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 */
+	public function setWeightingScheme($scheme) {
+		$arg1 = XS_CMD_SEARCH_MISC_WEIGHT_SCHEME;
+		$arg2 = intval($scheme);
+		$cmd = new XSCommand(XS_CMD_SEARCH_SET_MISC, $arg1, $arg2);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
 	 * 开启自动同义词搜索功能
 	 * @param bool $value 设为 true 表示开启同义词功能, 设为 false 关闭同义词功能
 	 * @return XSSearch 返回对象本身以支持串接操作

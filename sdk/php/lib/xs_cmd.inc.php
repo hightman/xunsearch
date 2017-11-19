@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2016/08/25 13:27 */
+/* Automatically generated at 2017/11/19 15:20 */
 define('XS_CMD_NONE',	0);
 define('XS_CMD_DEFAULT',	XS_CMD_NONE);
 define('XS_CMD_PROTOCOL',	20110707);
@@ -107,6 +107,7 @@ define('XS_CMD_INDEX_SYNONYMS_ADD',	0);
 define('XS_CMD_INDEX_SYNONYMS_DEL',	1);
 define('XS_CMD_SEARCH_MISC_SYN_SCALE',	1);
 define('XS_CMD_SEARCH_MISC_MATCHED_TERM',	2);
+define('XS_CMD_SEARCH_MISC_WEIGHT_SCHEME',	3);
 define('XS_CMD_SCWS_GET_VERSION',	1);
 define('XS_CMD_SCWS_GET_RESULT',	2);
 define('XS_CMD_SCWS_GET_TOPS',	3);
@@ -172,5 +173,5 @@ define('XS_PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('XS_PACKAGE_NAME',	"xunsearch");
 define('XS_PACKAGE_TARNAME',	"xunsearch");
 define('XS_PACKAGE_URL',	"");
-define('XS_PACKAGE_VERSION',	"1.4.10");
+define('XS_PACKAGE_VERSION',	"1.4.11-dev");
 /* end the cmd defination */

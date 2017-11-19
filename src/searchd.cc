@@ -792,7 +792,7 @@ int main(int argc, char *argv[])
 	}
 
 	// exit normally or gracefully
-	if (!CHECK_FLAG_SIG(EXIT_EXCEPTION)) {
+	if (!(CHECK_FLAG_SIG(EXIT_EXCEPTION))) {
 		main_flag |= FLAG_NO_ERROR;
 	}
 
