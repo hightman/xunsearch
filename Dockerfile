@@ -16,7 +16,7 @@ RUN apt-get install -qy --no-install-recommends \
 
 # Download & Install xunsearch-dev
 RUN cd /root && wget -qO - http://www.xunsearch.com/download/xunsearch-full-dev.tar.bz2 | tar xj
-RUN cd /root/xunsearch-full-dev && sh setup.sh --prefix=/usr/local/xunsearch
+RUN cd /root/xunsearch-full-* && sh setup.sh --prefix=/usr/local/xunsearch
 
 RUN echo '' >> /usr/local/xunsearch/bin/xs-ctl.sh \
     && echo 'tail -f /dev/null' >> /usr/local/xunsearch/bin/xs-ctl.sh
