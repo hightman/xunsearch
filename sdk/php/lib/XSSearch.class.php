@@ -125,6 +125,7 @@ class XSSearch extends XSServer
 	 * 目前支持三种权重方案: 0=BM25/1=Bool/2=Trad
 	 * @param int $scheme 匹配权重方案
 	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.4.11
 	 */
 	public function setWeightingScheme($scheme) {
 		$arg1 = XS_CMD_SEARCH_MISC_WEIGHT_SCHEME;
