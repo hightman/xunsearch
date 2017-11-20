@@ -875,9 +875,9 @@ static int zcmd_task_set_db(XS_CONN *conn)
 		 * archive database db_a was added automatically
 		 */
 		if (XS_CMD_BLEN(cmd) == 0) {
-			db = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
-			if (db != NULL) {
-				zarg->db->add_database(*db);
+			Xapian::Database *dba = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
+			if (dba != NULL) {
+				zarg->db->add_database(*dba);
 			}
 		}
 		zarg->db->add_database(*db);
@@ -2364,12 +2364,12 @@ void task_exec(void *arg)
 				db = fetch_conn_database(conn, DEFAULT_DB_NAME);
 			}
 			zarg.db = new Xapian::Database();
-			zarg.db->add_database(*db);
 			try {
-				db = fetch_conn_database(conn, DEFAULT_DB_NAME "_a");
-				zarg.db->add_database(*db);
+				Xapian::Database *dba = fetch_conn_database(conn, DEFAULT_DB_NAME "_a");
+				zarg.db->add_database(*dba);
 			} catch (...) {
 			}
+			zarg.db->add_database(*db);
 			zarg.qp->set_database(*zarg.db);
 			zarg.eq = new Xapian::Enquire(*zarg.db);
 			zarg.db_total = zarg.db->get_doccount();

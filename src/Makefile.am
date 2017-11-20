@@ -36,7 +36,7 @@ clean-generic:
 	-rm -f user_mm.c
 
 dist-hook:
-	-rm -f user_mm.c
+	-rm -f $(distdir)/user_mm.c
 
 install: install-am install-shell
 
