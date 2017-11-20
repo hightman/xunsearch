@@ -874,13 +874,13 @@ static int zcmd_task_set_db(XS_CONN *conn)
 		 * NOTE: when name == DEFAULT_DB_NAME (equal to calling XSSearch::setDb(null))
 		 * archive database db_a was added automatically
 		 */
-		zarg->db->add_database(*db);
 		if (XS_CMD_BLEN(cmd) == 0) {
 			db = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
 			if (db != NULL) {
 				zarg->db->add_database(*db);
 			}
 		}
+		zarg->db->add_database(*db);
 
 		zarg->qp->set_database(*zarg->db);
 		DELETE_PTR(zarg->eq);
