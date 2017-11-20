@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2017/11/19 15:34 */
+/* Automatically generated at 2017/11/20 18:42 */
 define('XS_CMD_NONE',	0);
 define('XS_CMD_DEFAULT',	XS_CMD_NONE);
 define('XS_CMD_PROTOCOL',	20110707);

@@ -24,7 +24,7 @@ do_clean()
 {
   echo -n "Cleaning ... "
   rm -rf setup.log
-  rm -rf xapian-core-scws-* scws-* libevent-* xunsearch-*
+  rm -rf libuuid-* xapian-core-scws-* scws-* libevent-* xunsearch-*
   echo "done"
 }
 
