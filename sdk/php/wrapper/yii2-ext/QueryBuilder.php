@@ -11,7 +11,7 @@
 namespace hightman\xunsearch;
 
 use Yii;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\base\InvalidParamException;
 
 /**
@@ -21,7 +21,7 @@ use yii\base\InvalidParamException;
  * @author hightman <hightman@twomice.net>
  * @since 1.4.9
  */
-class QueryBuilder extends Object
+class QueryBuilder extends BaseObject
 {
 	/**
 	 * @var Database the database to be used.
