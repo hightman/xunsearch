@@ -52,7 +52,7 @@ Indexer - 索引批量管理、导入工具 ($version)
 
 用法
     {$_SERVER['argv'][0]} [options] [-p|--project] <project> [--file] <file>
-	
+
 选项说明
     --project=<name|ini>
     -p <project> 用于指定要搜索的项目名称或项目配置文件的路径，
@@ -74,6 +74,7 @@ Indexer - 索引批量管理、导入工具 ($version)
     --sql=<sql>  当数据源为 sql 类型时指定 sql 搜索语句，默认情况下，
                  如果在 --source 包含 table 则载入该表数据。
                  警告：请勿在 SQL 语句中包含 `` 反引号，这在 SHELL 中有特殊函义可能会出错
+                 要使用反引号等特殊字符请以 \\ 开头, 如 \\`
     --filter <name|path>
                  指定数据过滤器，可为内置的 debug 或自定义的过滤器文件路径(不包含 .php)
                  过滤器必须实现接口 XSDataFilter
