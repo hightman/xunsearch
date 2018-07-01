@@ -1,5 +1,5 @@
 <?php
-/* Automatically generated at 2017/11/20 18:42 */
+/* Automatically generated at 2018/02/22 13:28 */
 define('XS_CMD_NONE',	0);
 define('XS_CMD_DEFAULT',	XS_CMD_NONE);
 define('XS_CMD_PROTOCOL',	20110707);
@@ -173,5 +173,5 @@ define('XS_PACKAGE_BUGREPORT',	"http://www.xunsearch.com/bugs");
 define('XS_PACKAGE_NAME',	"xunsearch");
 define('XS_PACKAGE_TARNAME',	"xunsearch");
 define('XS_PACKAGE_URL',	"");
-define('XS_PACKAGE_VERSION',	"1.4.11");
+define('XS_PACKAGE_VERSION',	"1.4.12-dev");
 /* end the cmd defination */
