@@ -20,10 +20,10 @@
  * @property string $query 默认搜索语句
  * @property-read int $dbTotal 数据库内的数据总量
  * @property-read int $lastCount 最近那次搜索的匹配总量估值
- * @property-read array $hotQuerys 热门搜索词列表
- * @property-read array $relatedQuerys 相关搜索词列表
- * @property-read array $expandedQuerys 展开前缀的搜索词列表
- * @property-read array $corredtedQuerys 修正后的建议搜索词列表
+ * @property-read array $hotQuery 热门搜索词列表
+ * @property-read array $relatedQuery 相关搜索词列表
+ * @property-read array $expandedQuery 展开前缀的搜索词列表
+ * @property-read array $corredtedQuery 修正后的建议搜索词列表
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
  * @package XS
