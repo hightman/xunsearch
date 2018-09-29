@@ -113,7 +113,7 @@ class XSServerTest extends PHPUnit_Framework_TestCase
 		$cmd = new XSCommand(array('cmd' => XS_CMD_QUERY_GET_STRING, 'buf' => 'hello'));
 		$res = $this->object->execCommand($cmd);
 		$this->assertEquals(XS_CMD_OK_QUERY_STRING, $res->arg);
-		$this->assertEquals('Xapian::Query(Zhello:(pos=1))', $res->buf);
+		$this->assertEquals('Query(Zhello@1)', $res->buf);
 
 		// test unimp cmd
 		try {

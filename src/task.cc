@@ -217,10 +217,10 @@ public:
 
 	TermCountMatchSpy(Xapian::valueno slot_) : Xapian::ValueCountMatchSpy(slot_) {
 	}
-	void operator()(const Xapian::Document &doc, Xapian::weight wt);
+	void operator()(const Xapian::Document &doc, double wt);
 };
 
-void TermCountMatchSpy::operator()(const Xapian::Document &doc, Xapian::weight wt) {
+void TermCountMatchSpy::operator()(const Xapian::Document &doc, double wt) {
 	++(internal->total);
 	string val(doc.get_value(internal->slot));
 	if (!val.empty()) {
@@ -784,18 +784,18 @@ static int zcmd_task_default(XS_CONN *conn)
 			break;
 		case CMD_QUERY_RANGEPROC:
 		{
-			Xapian::ValueRangeProcessor *vrp;
+			Xapian::RangeProcessor *vrp;
 
 			if (cmd->arg1 == CMD_RANGE_PROC_DATE) {
-				vrp = new Xapian::DateValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::DateRangeProcessor(cmd->arg2);
 			} else if (cmd->arg1 == CMD_RANGE_PROC_NUMBER) {
-				vrp = new Xapian::NumberValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::NumberRangeProcessor(cmd->arg2);
 			} else {
-				vrp = new Xapian::StringValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::RangeProcessor(cmd->arg2);
 			}
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
-			zarg->qp->add_valuerangeprocessor(vrp);
+			zarg->qp->add_rangeprocessor(vrp);
 			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
 		}
 			break;
