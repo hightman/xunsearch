@@ -583,8 +583,8 @@ static inline void zarg_cleanup(struct search_zarg *zarg)
 					oc->key == NULL ? "-" : oc->key);
 			DELETE_PTT(oc->val, Xapian::Database *);
 		} else if (oc->type == OTYPE_RANGER) {
-			log_debug("delete (Xapian::ValueRangeProcessor *) %p", oc->val);
-			DELETE_PTT(oc->val, Xapian::ValueRangeProcessor *);
+			log_debug("delete (Xapian::RangeProcessor *) %p", oc->val);
+			DELETE_PTT(oc->val, Xapian::RangeProcessor *);
 		} else if (oc->type == OTYPE_KEYMAKER) {
 			log_debug("delete (Xapian::KeyMaker *) %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::KeyMaker *);
@@ -796,7 +796,7 @@ static int zcmd_task_default(XS_CONN *conn)
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
 			zarg->qp->add_rangeprocessor(vrp);
-			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
+			log_debug_conn("new (Xapian::RangeProcessor *) %p", vrp);
 		}
 			break;
 		case CMD_SEARCH_SCWS_SET:

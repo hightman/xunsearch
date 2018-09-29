@@ -1,6 +1,6 @@
 -n
 *** xapian-core-1.4.7/configure.ac	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/configure.ac	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/configure.ac	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 1172,1177 ****
 --- 1172,1233 ----
@@ -67,7 +67,7 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.4.7/include/xapian/queryparser.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/queryparser.h	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/include/xapian/queryparser.h	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 1019,1024 ****
 --- 1019,1057 ----
@@ -111,7 +111,7 @@
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.4.7/include/xapian/termgenerator.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/termgenerator.h	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/include/xapian/termgenerator.h	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 123,128 ****
 --- 123,152 ----
@@ -145,8 +145,24 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
+*** xapian-core-1.4.7/api/queryinternal.cc	2018-07-20 07:30:23.000000000 +0800
+--- xapian-core-scws-1.4.7/api/queryinternal.cc	2018-09-30 01:55:05.000000000 +0800
+***************
+*** 1201,1206 ****
+--- 1201,1211 ----
+  	// MatchNothing subqueries should have been removed by done().
+  	Assert((*i).internal.get());
+  	(*i).internal->gather_terms(void_terms);
++ #ifdef HAVE_SCWS
++ 	// hightman: strip unused term for highlight/reform query log
++ 	if (get_op() == Query::OP_AND_MAYBE || get_op() == Query::OP_AND_NOT)
++ 	    break;
++ #endif
+      }
+  }
+  
 *** xapian-core-1.4.7/queryparser/queryparser_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.h	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser_internal.h	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -200,7 +216,7 @@
   };
   
 *** xapian-core-1.4.7/queryparser/termgenerator_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.h	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.h	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -244,7 +260,7 @@
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.4.7/queryparser/queryparser.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser.cc	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser.cc	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -309,7 +325,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.4.7/queryparser/queryparser_internal.cc	2018-07-20 07:32:15.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.cc	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser_internal.cc	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 165,170 ****
 --- 165,173 ----
@@ -381,7 +397,7 @@
   	Xapian::Database db = state->get_database();
 ***************
 *** 407,423 ****
---- 445,479 ----
+--- 445,480 ----
   	if (syn == end && stem != QueryParser::STEM_NONE) {
   	    // If that has no synonyms, try the stemmed form:
   	    term = 'Z';
@@ -397,8 +413,9 @@
   	}
 + #ifdef HAVE_SCWS
 + 	vector<Query> syn_subqs;
++ 	termcount _pos = pos + 66;
 + 	while (syn != end) {
-+ 	    Query qs = state->get_multi_synonyms_query(*syn, *piter, pos);
++ 	    Query qs = state->get_multi_synonyms_query(*syn, *piter, _pos++);
 + 	    if (state->should_syn_scale())
 + 		qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
 + 	    syn_subqs.push_back(qs);
@@ -419,12 +436,13 @@
   }
 ***************
 *** 529,534 ****
---- 585,625 ----
+--- 586,627 ----
       vector<Query> cjk_subqs;
       const list<string> & prefixes = field_info->prefixes;
       list<string>::const_iterator piter;
 + /* hightman.20111223: used CJKTERM for multi segment */
 + #ifdef HAVE_SCWS
++     termcount _pos = pos + 77;
 +     for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
 + 	Query q = Query(*piter + name, 1, pos);
 + 	/* hightman.20120104: get synonyms */
@@ -432,7 +450,7 @@
 + 	    vector<Query> multi_qs;
 + 	    vector<string>::const_iterator mi;
 + 	    for (mi = multi.begin(); mi != multi.end(); mi++) {
-+ 	    	multi_qs.push_back(Query(*piter + *mi, 1, pos));
++ 	    	multi_qs.push_back(Query(*piter + *mi, 1, _pos++));
 + 	    }
 + 	    Query qs = Query(state->default_op(), multi_qs.begin(), multi_qs.end());
 + 	    multi_qs.clear();
@@ -443,7 +461,7 @@
 + 	    Xapian::TermIterator syn = db.synonyms_begin(name);
 + 	    Xapian::TermIterator end = db.synonyms_end(name);
 + 	    while (syn != end) {
-+ 		Query qs = state->get_multi_synonyms_query(*syn, *piter, pos);
++ 		Query qs = state->get_multi_synonyms_query(*syn, *piter, _pos++);
 + 		if (state->should_syn_scale())
 + 		    qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
 + 		cjk_subqs.push_back(qs);
@@ -463,7 +481,7 @@
   	for (CJKTokenIterator tk(name); tk != CJKTokenIterator(); ++tk) {
 ***************
 *** 538,543 ****
---- 629,635 ----
+--- 631,637 ----
   				     cjk_subqs.begin(), cjk_subqs.end()));
   	cjk_subqs.clear();
       }
@@ -473,7 +491,7 @@
       delete this;
 ***************
 *** 715,726 ****
---- 807,885 ----
+--- 809,887 ----
      }
   }
   
@@ -555,7 +573,7 @@
       if (U_isupper(*it)) {
 ***************
 *** 805,810 ****
---- 964,970 ----
+--- 966,972 ----
   	    }
   	}
       }
@@ -565,18 +583,18 @@
   
 ***************
 *** 994,1002 ****
---- 1154,1184 ----
+--- 1156,1186 ----
   	    subqs2.clear();
   
   	    // Use the position of the first term for the synonyms.
 + #ifdef HAVE_SCWS
 + 	    string prefix;
-+ 	    termcount pos = (*begin)->pos;
++ 	    termcount _pos = (*begin)->pos + 88;
 + 	    const list<string> & prefixes = (*begin)->field_info->prefixes;
 + 	    if (prefixes.begin() != prefixes.end())
 + 		prefix = *(prefixes.begin());
 + 	    while (syn != end) {
-+ 		Query qs = state->get_multi_synonyms_query(*syn, prefix, pos);
++ 		Query qs = state->get_multi_synonyms_query(*syn, prefix, _pos++);
 + 		if (state->should_syn_scale())
 + 		    qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
 + 		subqs2.push_back(qs);
@@ -599,7 +617,7 @@
   	    begin = i;
 ***************
 *** 1153,1158 ****
---- 1335,1345 ----
+--- 1337,1347 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -613,7 +631,7 @@
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
 *** 1161,1166 ****
---- 1348,1354 ----
+--- 1350,1356 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -623,7 +641,7 @@
   
 ***************
 *** 2961,2966 ****
---- 3149,3179 ----
+--- 3151,3181 ----
   
       yyParser parser;
   
@@ -657,7 +675,7 @@
       enum {
 ***************
 *** 3369,3374 ****
---- 3582,3592 ----
+--- 3584,3594 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -671,7 +689,7 @@
   			(it != end && is_stem_preventer(*it))) {
 ***************
 *** 3382,3387 ****
---- 3600,3621 ----
+--- 3602,3623 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -696,7 +714,7 @@
   		continue;
 ***************
 *** 3512,3517 ****
---- 3746,3758 ----
+--- 3748,3760 ----
   	}
       }
   done:
@@ -711,7 +729,7 @@
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 *** xapian-core-1.4.7/queryparser/termgenerator.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator.cc	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator.cc	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -754,7 +772,7 @@
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.4.7/queryparser/termgenerator_internal.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.cc	2018-09-29 21:58:48.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.cc	2018-09-30 01:55:05.000000000 +0800
 ***************
 *** 232,237 ****
 --- 232,305 ----

@@ -190,8 +190,8 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 			array('subject:项目测试', 'Query((B项目@1 AND B测试@2))'),
 			array('subject2:测试', 'Query((Zsubject2@1 AND 测试@2))'),
 			array('subject2:Hello', 'Query((subject2@1 PHRASE 2 hello@2))'),
-			array('项目管理制度', 'Query((项目@1 AND (管理制度@2 SYNONYM (管理@2 AND 制度@2))))'),
-			array('subject:项目管理制度', 'Query((B项目@1 AND (B管理制度@2 SYNONYM (B管理@2 AND B制度@2))))'),
+			array('项目管理制度', 'Query((项目@1 AND (管理制度@2 SYNONYM (管理@79 AND 制度@80))))'),
+			array('subject:项目管理制度', 'Query((B项目@1 AND (B管理制度@2 SYNONYM (B管理@79 AND B制度@80))))'),
 			array('几句说明', 'Query((几句@1 AND 说明@2))'),
 			array('说明几句', 'Query((说明@1 AND 几句@2))'),
 			array('pid:1 AND pid:2', 'Query((0 * A1 AND 0 * A2))'),
@@ -521,7 +521,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// test fuzzy multi query
 		$search->setFuzzy();
-		$this->testQuery('中华人民共和国', 'Query((中华人民共和国@1 SYNONYM (中华@1 OR 人民@1 OR 共和国@1)))');
+		$this->testQuery('中华人民共和国', 'Query((中华人民共和国@1 SYNONYM (中华@78 OR 人民@79 OR 共和国@80)))');
 		$this->testQuery('"中华人民共和国"', 'Query(中华人民共和国@1)');
 		$search->setFuzzy(false);
 

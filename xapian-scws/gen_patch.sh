@@ -11,7 +11,7 @@ fi
 flist="configure.ac include/xapian/queryparser.h include/xapian/termgenerator.h"
 if test -f "$old_dir/api/omqueryinternal.cc" ; then
   flist="$flist api/omqueryinternal.cc"
-elif test -f "$old_Dir/api/queryinternal.cc" ; then
+elif test -f "$old_dir/api/queryinternal.cc" ; then
   flist="$flist api/queryinternal.cc"
 fi
 flist="$flist queryparser/queryparser_internal.h queryparser/termgenerator_internal.h"
