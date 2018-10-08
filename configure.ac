@@ -93,6 +93,7 @@ if test "x$prefix" != "xNONE" ; then
 	ac_search_dirs="$prefix/<name> $prefix $ac_search_dirs"
 fi
 
+PKG_PROG_PKG_CONFIG
 # Libevent package check
 AC_ARG_WITH(libevent,
 	AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
@@ -100,58 +101,7 @@ AC_ARG_WITH(libevent,
 	[ ], [with_libevent=yes]
 )
 if test "$with_libevent" != "no" ; then
-	AC_MSG_CHECKING([for event2/event.h of libevent])
-	LIBEVENT_DIR=""
-	if test "$with_libevent" = "yes" ; then
-        search_dirs=`echo $ac_search_dirs | sed 's#<name>#libevent#g'`
-		for tmpdir in $search_dirs; do
-			if test -f $tmpdir/include/event2/event.h ; then
-				LIBEVENT_DIR=$tmpdir
-				break
-			fi
-		done
-	elif test -f "$with_libevent/include/event2/event.h" ; then
-		LIBEVENT_DIR=$with_libevent
-	fi
-	if test "$LIBEVENT_DIR" = "" ; then
-		AC_MSG_RESULT(no)
-		AC_MSG_ERROR([event2/event.h NOT FOUND. please check your libevent install directory. >= 2.0.0])
-	else
-		AC_MSG_RESULT([yes: $LIBEVENT_DIR])
-	fi
-
-	# Check libevent version ( >= 2.0.0)
-	AC_MSG_CHECKING([for correct libevent version])
-	AC_EGREP_CPP(yes, [
-#include "$LIBEVENT_DIR/include/event2/event-config.h"
-#if _EVENT_NUMERIC_VERSION >= 0x02000000
-yes
-#endif
-	], [
-		AC_MSG_RESULT(ok)
-	], [
-		AC_MSG_ERROR([libevent 2.0.0 or greater required.])
-	])
-
-	# Check libevent library
-	AC_CHECK_LIB(event_core, event_base_new,
-		[
-            tmp_extra_added=`echo $ac_extra_added | sed "s#$LIBEVENT_DIR##"`
-			if test "$ac_extra_added" = "$tmp_extra_added" ; then
-              ac_extra_added="$ac_extra_added $LIBEVENT_DIR"
-			  ac_extra_added=`echo $ac_extra_added | sed "s#^\s*##"`
-			  LDFLAGS="$LDFLAGS -L$LIBEVENT_DIR/lib -Wl,-rpath,$LIBEVENT_DIR/lib"
-			  CFLAGS="$CFLAGS -I$LIBEVENT_DIR/include"
-			  CXXFLAGS="$CXXFLAGS -I$LIBEVENT_DIR/include"
-            fi
-		], [
-			AC_MSG_ERROR([event_base_new() NOT found in libevent, please check it first.])
-		], [
-			-L$LIBEVENT_DIR/lib
-		]
-	)
-else
-	AC_MSG_ERROR([libevent is required, get it from: http://libevent.org/])
+	PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0])
 fi
 
 # scws library check
@@ -217,73 +167,27 @@ AC_ARG_WITH(xapian,
 	[ ], [with_xapian=yes]
 )
 if test "$with_xapian" != "no" ; then
-	AC_MSG_CHECKING([for xapian.h of xapian-core])
-	XAPIAN_DIR=""
-	if test "$with_xapian" = "yes" ; then
-        search_dirs=`echo $ac_search_dirs | sed 's#<name>#xapian#g'`       
-		for tmpdir in $search_dirs; do
-			if test -f $tmpdir/include/xapian.h ; then
-				XAPIAN_DIR=$tmpdir
-				break
-			fi
-		done
-	elif test -f "$with_xapian/include/xapian.h" ; then
-		XAPIAN_DIR=$with_xapian
-	fi
-	if test "$XAPIAN_DIR" = "" ; then
-		AC_MSG_RESULT(no)
-		AC_MSG_ERROR([xapian.h NOT FOUND. Please check your xapian-core install directory.])
-	else
-		AC_MSG_RESULT([yes: $XAPIAN_DIR])
-	fi
-
-	# Check libxapian version ( >= 1.0.2)
-	AC_MSG_CHECKING([for correct xapian version])
-	AC_EGREP_CPP(yes, [
-#include "$XAPIAN_DIR/include/xapian/version.h"
-#if XAPIAN_MAJOR_VERSION >= 1 && (XAPIAN_MINOR_VERSION > 0 || XAPIAN_REVERSION >= 2)
-yes
-#endif
-	], [
-		AC_MSG_RESULT(ok)
-	], [
-		AC_MSG_ERROR([xapian-core 1.0.2 or greater required.])
-	])
-
-	# Check xapian-core library
-	AC_MSG_CHECKING([for library of xapian-core])
+	PKG_CHECK_MODULES([XAPIAN], [xapian-core >= 1.0.2], [XAPIAN_DIR=`pkg-config --variable=exec_prefix xapian-core`])
+	AC_DEFINE_UNQUOTED(XAPIAN_DIR, ["$XAPIAN_DIR"], [Xapian binary dir])
 	AC_LANG(C++)
-	saved_cxxflags=$CXXFLAGS
-	CXXFLAGS="$CXXFLAGS -I$XAPIAN_DIR/include"
-	saved_libs=$LIBS
-	LIBS="$LIBS -lxapian -L$XAPIAN_DIR/lib"
+	saved_LIBS=$LIBS
+	LIBS="$LIBS $XAPIAN_LIBS"
 	AC_LINK_IFELSE(
-		[
-			AC_LANG_PROGRAM([
-#include <xapian.h>
-			], [
+	[
+		AC_LANG_PROGRAM([
+		#include <xapian.h>
+		], [
 Xapian::Document doc;
 Xapian::TermGenerator indexer;
 indexer.load_scws(NULL, 0, 0);
 indexer.set_document(doc);
-			])
-		], [
-			LIBS=$saved_libs
-			CXXFLAGS=$saved_cxxflags
-            tmp_extra_added=`echo $ac_extra_added | sed "s#$XAPIAN_DIR##"`
-			if test "$ac_extra_added" = "$tmp_extra_added" ; then
-              ac_extra_added="$ac_extra_added $XAPIAN_DIR"
-			  ac_extra_added=`echo $ac_extra_added | sed "s#^\s*##"`
-			  CXXFLAGS="$CXXFLAGS -I$XAPIAN_DIR/include"
-			  LDFLAGS="$LDFLAGS -L$XAPIAN_DIR/lib -Wl,-rpath,$XAPIAN_DIR/lib"
-            fi
-			AC_DEFINE_UNQUOTED(XAPIAN_DIR, "$XAPIAN_DIR", [Install directory of xapian])
-			AC_MSG_RESULT(ok)
-		], [
+		])
+		], [], [
 			AC_MSG_RESULT(no)
-			AC_MSG_ERROR([Invalid xapian library, maybe not do the patch with scws?.]) 
+			AC_MSG_ERROR([Invalid xapian library, maybe not do the patch with scws?.])
 		]
 	)
+	LIBS=$saved_LIBS
 else
 	AC_MSG_ERROR([Xapian-core(scws patched) is required, get it from: http://www.xunsearch.com/download/packages/])
 fi
