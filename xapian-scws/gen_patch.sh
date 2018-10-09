@@ -15,8 +15,9 @@ elif test -f "$old_dir/api/queryinternal.cc" ; then
   flist="$flist api/queryinternal.cc"
 fi
 flist="$flist queryparser/queryparser_internal.h queryparser/termgenerator_internal.h"
-flist="$flist queryparser/queryparser.cc queryparser/queryparser_internal.cc "
+flist="$flist queryparser/queryparser.cc queryparser/queryparser_internal.cc"
 flist="$flist queryparser/termgenerator.cc queryparser/termgenerator_internal.cc"
+#flist="$flist queryparser/queryparser.lemony"
 
 if ! test -d $old_dir ; then
   echo "Not exists orig source directory: $old_dir"
@@ -31,7 +32,7 @@ if ! test -d $new_dir ; then
 fi
 
 echo "Start the patch generating for $version"
-mv -f $fpatch ${fpatch}.bak
+#mv -f $fpatch ${fpatch}.bak
 echo -n > $fpatch
 for f in $flist
 do

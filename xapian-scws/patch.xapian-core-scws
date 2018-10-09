@@ -1,9 +1,9 @@
 -n
 *** xapian-core-1.4.7/configure.ac	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/configure.ac	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/configure.ac	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 1172,1177 ****
---- 1172,1233 ----
+--- 1172,1236 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -24,6 +24,9 @@
 +   # Check header file
 +   if test "$with_scws" = "yes"; then
 + 	searchdirs="/usr /usr/local /usr/local/scws /opt/local"
++ 	if test "x$prefix" != "xNONE" ; then
++ 	  searchdirs="$prefix $prefix/scws $searchdirs"
++ 	fi
 + 	for tmpdir in $searchdirs ; do
 + 	  if test -f $tmpdir/include/scws/scws.h ; then
 + 		SCWS_DIR=$tmpdir
@@ -67,7 +70,7 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.4.7/include/xapian/queryparser.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/queryparser.h	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/include/xapian/queryparser.h	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 1019,1024 ****
 --- 1019,1057 ----
@@ -111,7 +114,7 @@
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.4.7/include/xapian/termgenerator.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/termgenerator.h	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/include/xapian/termgenerator.h	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 123,128 ****
 --- 123,152 ----
@@ -146,7 +149,7 @@
        *
        *  The new value of flags is: (flags & mask) ^ toggle
 *** xapian-core-1.4.7/api/queryinternal.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/api/queryinternal.cc	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/api/queryinternal.cc	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 1201,1206 ****
 --- 1201,1211 ----
@@ -162,7 +165,7 @@
   }
   
 *** xapian-core-1.4.7/queryparser/queryparser_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.h	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser_internal.h	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -216,7 +219,7 @@
   };
   
 *** xapian-core-1.4.7/queryparser/termgenerator_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.h	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.h	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -260,7 +263,7 @@
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.4.7/queryparser/queryparser.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser.cc	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser.cc	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -325,7 +328,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.4.7/queryparser/queryparser_internal.cc	2018-07-20 07:32:15.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.cc	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/queryparser_internal.cc	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 165,170 ****
 --- 165,173 ----
@@ -485,7 +488,7 @@
   				     cjk_subqs.begin(), cjk_subqs.end()));
   	cjk_subqs.clear();
       }
-+ #endif  /* HAVE_SCWS */
++ #endif	/* HAVE_SCWS */
       Query * q = new Query(Query::OP_OR,
   			  prefix_subqs.begin(), prefix_subqs.end());
       delete this;
@@ -557,7 +560,7 @@
 + 	it = Utf8Iterator(qptr + rcur->off);
 + 	term.append(it.raw(), rcur->len);
 + 	was_acronym = (rcur->attr[0] == 'n' && rcur->attr[1] == 'z') ? true : false;
-+ 	is_cjk_term = CJK::codepoint_is_cjk(*it);
++ 	is_cjk_term = (rcur->attr[0] == 'e' && rcur->attr[1] == 'n') ? false : true;
 + 	last_off = off = rcur->off + rcur->len;
 + 	rcur = rcur->next;
 + 
@@ -582,11 +585,11 @@
   }
   
 ***************
-*** 994,1002 ****
---- 1156,1186 ----
+*** 993,1002 ****
+--- 1155,1185 ----
+  	    }
   	    subqs2.clear();
   
-  	    // Use the position of the first term for the synonyms.
 + #ifdef HAVE_SCWS
 + 	    string prefix;
 + 	    termcount _pos = (*begin)->pos + 88;
@@ -607,7 +610,7 @@
 + 		subqs2.clear();
 + 	    }
 + #else
-+ 	    // Use the position of the first term for the synonyms.
+  	    // Use the position of the first term for the synonyms.
   	    Query q(Query::OP_SYNONYM,
   		    SynonymIterator(syn, (*begin)->pos, &q_original_terms),
   		    SynonymIterator(end));
@@ -617,7 +620,7 @@
   	    begin = i;
 ***************
 *** 1153,1158 ****
---- 1337,1347 ----
+--- 1336,1346 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -631,7 +634,7 @@
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
 *** 1161,1166 ****
---- 1350,1356 ----
+--- 1349,1355 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -641,7 +644,7 @@
   
 ***************
 *** 2961,2966 ****
---- 3151,3181 ----
+--- 3150,3180 ----
   
       yyParser parser;
   
@@ -675,7 +678,7 @@
       enum {
 ***************
 *** 3369,3374 ****
---- 3584,3594 ----
+--- 3583,3593 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -689,7 +692,7 @@
   			(it != end && is_stem_preventer(*it))) {
 ***************
 *** 3382,3387 ****
---- 3602,3623 ----
+--- 3601,3622 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -714,7 +717,7 @@
   		continue;
 ***************
 *** 3512,3517 ****
---- 3748,3760 ----
+--- 3747,3759 ----
   	}
       }
   done:
@@ -729,7 +732,7 @@
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 *** xapian-core-1.4.7/queryparser/termgenerator.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator.cc	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator.cc	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -772,10 +775,10 @@
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.4.7/queryparser/termgenerator_internal.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.cc	2018-09-30 01:55:05.000000000 +0800
+--- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.cc	2018-10-09 16:04:58.000000000 +0800
 ***************
 *** 232,237 ****
---- 232,305 ----
+--- 232,306 ----
       }
   }
   
@@ -794,6 +797,7 @@
 + 	    iterm.assign(text + cur->off, cur->len);
 + 	    if (Unicode::is_wordchar(*iterm)) {
 + 		string term(text + cur->off, cur->len);
++ 		bool is_cjk_term = (cur->attr[0] == 'e' && cur->attr[1] == 'n') ? false : true;
 + 		/// keep same termpos in multi-scws
 + 		if (with_positions) {
 + 		    if ((cur->off + cur->len) <= last_endpos) --pos;
@@ -804,7 +808,7 @@
 + 		    }
 + 		    last_off = cur->off;
 + 		}
-+ 		action(term, with_positions, iterm);
++ 		action(term, with_positions, is_cjk_term, itor);
 + 	    }
 + 	    cur = cur->next;
 + 	}
@@ -852,7 +856,7 @@
   				    const string & prefix, bool with_positions)
 ***************
 *** 245,252 ****
---- 313,327 ----
+--- 314,328 ----
   	current_stop_mode = stop_mode;
       }
   
@@ -860,7 +864,7 @@
 +     if (scws == NULL)
 + 	load_scws(NULL, false, 0);
 +     parse_terms_scws(itor, scws, termpos, with_positions,
-+ 	[=](const string & term, bool positional, const Utf8Iterator & itor) {
++ 	[=](const string & term, bool positional, bool is_cjk_term, const Utf8Iterator &) {
 + #else
       parse_terms(itor, cjk_ngram, with_positions,
   	[=](const string & term, bool positional, const Utf8Iterator &) {
@@ -870,13 +874,13 @@
   	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
 ***************
 *** 261,266 ****
---- 336,345 ----
+--- 337,346 ----
   		}
   	    }
   
 + #ifdef HAVE_SCWS
 + 	    /// hightman: Term start with CJK character needn't spell & stem
-+ 	    if (CJK::codepoint_is_cjk(*itor)) return true;
++ 	    if (is_cjk_term) return true;
 + #endif
   	    // MSVC seems to need "this->" on member variables in this
   	    // situation.
