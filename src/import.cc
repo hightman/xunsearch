@@ -924,7 +924,7 @@ int main(int argc, char *argv[])
 			log_info("rm -rf db_c");
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_c");
 			log_info("xapian-compact db + db_a = db_c");
-			system(XAPIAN_DIR "/bin/xapian-compact " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_c");
+			system(XAPIAN_DIR "/bin/xapian-compact -n " DEFAULT_DB_NAME "_a " DEFAULT_DB_NAME " " DEFAULT_DB_NAME "_c");
 			// 2. remove: db_o db
 			log_info("rm -rf db_o db");
 			system("/bin/rm -rf " DEFAULT_DB_NAME "_o " DEFAULT_DB_NAME);
