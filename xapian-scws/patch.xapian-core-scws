@@ -1,9 +1,9 @@
 -n
-*** xapian-core-1.4.7/configure.ac	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/configure.ac	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/configure.ac	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/configure.ac	2018-11-16 19:03:05.000000000 +0800
 ***************
-*** 1172,1177 ****
---- 1172,1236 ----
+*** 1190,1195 ****
+--- 1190,1254 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -69,11 +69,11 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.4.7/include/xapian/queryparser.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/queryparser.h	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/include/xapian/queryparser.h	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/queryparser.h	2018-11-16 19:03:05.000000000 +0800
 ***************
-*** 1019,1024 ****
---- 1019,1057 ----
+*** 1025,1030 ****
+--- 1025,1063 ----
        */
       XAPIAN_DEPRECATED(void set_max_wildcard_expansion(Xapian::termcount));
   
@@ -113,11 +113,11 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.4.7/include/xapian/termgenerator.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/include/xapian/termgenerator.h	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/include/xapian/termgenerator.h	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/termgenerator.h	2018-11-16 19:03:05.000000000 +0800
 ***************
-*** 123,128 ****
---- 123,152 ----
+*** 125,130 ****
+--- 125,154 ----
       /// Stopper strategies, for use with set_stopper_strategy().
       typedef enum { STOP_NONE, STOP_ALL, STOP_STEMMED } stop_strategy;
   
@@ -148,11 +148,11 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.4.7/api/queryinternal.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/api/queryinternal.cc	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/api/queryinternal.cc	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/api/queryinternal.cc	2018-11-16 19:03:05.000000000 +0800
 ***************
-*** 1201,1206 ****
---- 1201,1211 ----
+*** 1205,1210 ****
+--- 1205,1215 ----
   	// MatchNothing subqueries should have been removed by done().
   	Assert((*i).internal.get());
   	(*i).internal->gather_terms(void_terms);
@@ -164,8 +164,8 @@
       }
   }
   
-*** xapian-core-1.4.7/queryparser/queryparser_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.h	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/queryparser_internal.h	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.h	2018-11-16 19:03:05.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -218,8 +218,8 @@
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
   };
   
-*** xapian-core-1.4.7/queryparser/termgenerator_internal.h	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.h	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/termgenerator_internal.h	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.h	2018-11-16 19:07:28.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -242,7 +242,7 @@
 + #ifdef HAVE_SCWS
 +     scws_t scws;
 + #endif
-      termcount termpos;
+      termpos cur_pos;
       TermGenerator::flags flags;
       unsigned max_word_length;
 ***************
@@ -252,9 +252,9 @@
     public:
       Internal() : strategy(STEM_SOME), stopper(NULL), stop_mode(STOP_STEMMED),
 + #ifdef HAVE_SCWS
-+ 	scws(NULL),
++     scws(NULL),
 + #endif
-  	termpos(0), flags(TermGenerator::flags(0)), max_word_length(64) { }
+  	cur_pos(0), flags(TermGenerator::flags(0)), max_word_length(64) { }
 + #ifdef HAVE_SCWS
 +     ~Internal();
 +     void load_scws(const char *fpath, bool xmem, int multi);
@@ -262,8 +262,8 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.4.7/queryparser/queryparser.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser.cc	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/queryparser.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser.cc	2018-11-16 19:03:05.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -327,8 +327,8 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.4.7/queryparser/queryparser_internal.cc	2018-07-20 07:32:15.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/queryparser_internal.cc	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/queryparser_internal.cc	2018-11-03 06:07:55.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.cc	2018-11-16 19:10:30.000000000 +0800
 ***************
 *** 165,170 ****
 --- 165,173 ----
@@ -687,12 +687,12 @@
 + 		    // Don't stem CJK terms.
 + 		    stem_term = STEM_NONE;
 + #endif
-  		} else if (stem_term == STEM_SOME) {
+  		} else if (stem_term == STEM_SOME ||
+  			   stem_term == STEM_SOME_FULL_POS) {
   		    if (!should_stem(unstemmed_term) ||
-  			(it != end && is_stem_preventer(*it))) {
 ***************
-*** 3382,3387 ****
---- 3601,3622 ----
+*** 3383,3388 ****
+--- 3602,3623 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -716,8 +716,8 @@
   		if (it == end) break;
   		continue;
 ***************
-*** 3512,3517 ****
---- 3747,3759 ----
+*** 3513,3518 ****
+--- 3748,3760 ----
   	}
       }
   done:
@@ -731,8 +731,8 @@
       if (!state.error) {
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
-*** xapian-core-1.4.7/queryparser/termgenerator.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator.cc	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/termgenerator.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator.cc	2018-11-16 19:03:05.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -774,11 +774,11 @@
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.4.7/queryparser/termgenerator_internal.cc	2018-07-20 07:30:23.000000000 +0800
---- xapian-core-scws-1.4.7/queryparser/termgenerator_internal.cc	2018-10-09 16:04:58.000000000 +0800
+*** xapian-core-1.4.9/queryparser/termgenerator_internal.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.cc	2018-11-16 19:08:10.000000000 +0800
 ***************
-*** 232,237 ****
---- 232,306 ----
+*** 242,247 ****
+--- 242,316 ----
       }
   }
   
@@ -855,15 +855,15 @@
   TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
   				    const string & prefix, bool with_positions)
 ***************
-*** 245,252 ****
---- 314,328 ----
+*** 255,262 ****
+--- 324,338 ----
   	current_stop_mode = stop_mode;
       }
   
 + #ifdef HAVE_SCWS
 +     if (scws == NULL)
 + 	load_scws(NULL, false, 0);
-+     parse_terms_scws(itor, scws, termpos, with_positions,
++     parse_terms_scws(itor, scws, cur_pos, with_positions,
 + 	[=](const string & term, bool positional, bool is_cjk_term, const Utf8Iterator &) {
 + #else
       parse_terms(itor, cjk_ngram, with_positions,
@@ -873,8 +873,8 @@
   
   	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
 ***************
-*** 261,266 ****
---- 337,346 ----
+*** 272,277 ****
+--- 348,357 ----
   		}
   	    }
   
