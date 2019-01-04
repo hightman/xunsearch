@@ -185,6 +185,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	public function queryProvider()
 	{
 		return array(
+			array('DEMO', 'Query(demo@1)'),
 			array('测试', 'Query(测试@1)'),
 			array('subject:测试', 'Query(B测试@1)'),
 			array('subject:项目测试', 'Query((B项目@1 AND B测试@2))'),
@@ -402,6 +403,10 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	public function testSearch()
 	{
 		$search = self::$xs->search;
+
+		$docs = $search->search('DEMO');
+		$this->assertEquals(1, count($docs));
+		$this->assertEquals(3, $docs[0]->pid);
 	}
 
 	public function testHotQuery()

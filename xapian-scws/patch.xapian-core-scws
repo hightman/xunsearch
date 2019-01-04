@@ -1,6 +1,6 @@
 -n
 *** xapian-core-1.4.9/configure.ac	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/configure.ac	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/configure.ac	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 1190,1195 ****
 --- 1190,1254 ----
@@ -70,7 +70,7 @@
   dnl * Set special compiler flags *
   dnl ******************************
 *** xapian-core-1.4.9/include/xapian/queryparser.h	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/include/xapian/queryparser.h	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/queryparser.h	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 1025,1030 ****
 --- 1025,1063 ----
@@ -114,7 +114,7 @@
        *
        *  @param query_string  A free-text query as entered by a user
 *** xapian-core-1.4.9/include/xapian/termgenerator.h	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/include/xapian/termgenerator.h	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/termgenerator.h	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 125,130 ****
 --- 125,154 ----
@@ -149,7 +149,7 @@
        *
        *  The new value of flags is: (flags & mask) ^ toggle
 *** xapian-core-1.4.9/api/queryinternal.cc	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/api/queryinternal.cc	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/api/queryinternal.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 1205,1210 ****
 --- 1205,1215 ----
@@ -165,7 +165,7 @@
   }
   
 *** xapian-core-1.4.9/queryparser/queryparser_internal.h	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser_internal.h	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.h	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -219,7 +219,7 @@
   };
   
 *** xapian-core-1.4.9/queryparser/termgenerator_internal.h	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.h	2018-11-16 19:07:28.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.h	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -263,7 +263,7 @@
   		    termcount weight,
   		    const std::string & prefix,
 *** xapian-core-1.4.9/queryparser/queryparser.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser.cc	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -328,7 +328,7 @@
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
 *** xapian-core-1.4.9/queryparser/queryparser_internal.cc	2018-11-03 06:07:55.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser_internal.cc	2018-11-16 19:10:30.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 165,170 ****
 --- 165,173 ----
@@ -732,7 +732,7 @@
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
 *** xapian-core-1.4.9/queryparser/termgenerator.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator.cc	2018-11-16 19:03:05.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -775,10 +775,10 @@
   TermGenerator::set_flags(flags toggle, flags mask)
   {
 *** xapian-core-1.4.9/queryparser/termgenerator_internal.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.cc	2018-11-16 19:08:10.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.cc	2019-01-04 16:54:26.000000000 +0800
 ***************
 *** 242,247 ****
---- 242,316 ----
+--- 242,317 ----
       }
   }
   
@@ -789,6 +789,7 @@
 +     int last_endpos = 0, last_off = 0;
 +     scws_res_t res, cur;
 +     Utf8Iterator iterm;
++     string term;
 +     const char *text = itor.raw();
 + 
 +     scws_send_text(scws, text, itor.left());
@@ -796,8 +797,8 @@
 + 	while (cur != NULL) {
 + 	    iterm.assign(text + cur->off, cur->len);
 + 	    if (Unicode::is_wordchar(*iterm)) {
-+ 		string term(text + cur->off, cur->len);
-+ 		bool is_cjk_term = (cur->attr[0] == 'e' && cur->attr[1] == 'n') ? false : true;
++ 		term = Unicode::tolower(string(text + cur->off, cur->len));
++ 		bool is_cjk_term = CJK::codepoint_is_cjk(*iterm);
 + 		/// keep same termpos in multi-scws
 + 		if (with_positions) {
 + 		    if ((cur->off + cur->len) <= last_endpos) --pos;
@@ -856,7 +857,7 @@
   				    const string & prefix, bool with_positions)
 ***************
 *** 255,262 ****
---- 324,338 ----
+--- 325,339 ----
   	current_stop_mode = stop_mode;
       }
   
@@ -874,7 +875,7 @@
   	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
 ***************
 *** 272,277 ****
---- 348,357 ----
+--- 349,358 ----
   		}
   	    }
   
