@@ -12,7 +12,7 @@ fi
 
 if test -d xapian-core-${version} ; then
   echo "ERROR: Source directory exists: ./xapian-core-${version}"
-  exit;
+  exit
 fi
 
 echo "1. extracting the tar ball ..."

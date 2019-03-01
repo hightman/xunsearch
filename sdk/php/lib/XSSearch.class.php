@@ -20,10 +20,10 @@
  * @property string $query 默认搜索语句
  * @property-read int $dbTotal 数据库内的数据总量
  * @property-read int $lastCount 最近那次搜索的匹配总量估值
- * @property-read array $hotQuerys 热门搜索词列表
- * @property-read array $relatedQuerys 相关搜索词列表
- * @property-read array $expandedQuerys 展开前缀的搜索词列表
- * @property-read array $corredtedQuerys 修正后的建议搜索词列表
+ * @property-read array $hotQuery 热门搜索词列表
+ * @property-read array $relatedQuery 相关搜索词列表
+ * @property-read array $expandedQuery 展开前缀的搜索词列表
+ * @property-read array $corredtedQuery 修正后的建议搜索词列表
  * @author hightman <hightman@twomice.net>
  * @version 1.0.0
  * @package XS
@@ -115,6 +115,21 @@ class XSSearch extends XSServer
 	{
 		$arg1 = XS_CMD_SEARCH_MISC_MATCHED_TERM;
 		$arg2 = $value === true ? 1 : 0;
+		$cmd = new XSCommand(XS_CMD_SEARCH_SET_MISC, $arg1, $arg2);
+		$this->execCommand($cmd);
+		return $this;
+	}
+
+	/**
+	 * 设置检索匹配的权重方案
+	 * 目前支持三种权重方案: 0=BM25/1=Bool/2=Trad
+	 * @param int $scheme 匹配权重方案
+	 * @return XSSearch 返回对象本身以支持串接操作
+	 * @since 1.4.11
+	 */
+	public function setWeightingScheme($scheme) {
+		$arg1 = XS_CMD_SEARCH_MISC_WEIGHT_SCHEME;
+		$arg2 = intval($scheme);
 		$cmd = new XSCommand(XS_CMD_SEARCH_SET_MISC, $arg1, $arg2);
 		$this->execCommand($cmd);
 		return $this;

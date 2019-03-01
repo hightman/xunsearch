@@ -1,9 +1,9 @@
 -n
-*** xapian-core-1.2.22/configure.ac	2015-12-29 17:20:10.000000000 +0800
---- xapian-core-scws-1.2.22/configure.ac	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/configure.ac	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/configure.ac	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 1177,1182 ****
---- 1177,1238 ----
+*** 1190,1195 ****
+--- 1190,1254 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -24,6 +24,9 @@
 +   # Check header file
 +   if test "$with_scws" = "yes"; then
 + 	searchdirs="/usr /usr/local /usr/local/scws /opt/local"
++ 	if test "x$prefix" != "xNONE" ; then
++ 	  searchdirs="$prefix $prefix/scws $searchdirs"
++ 	fi
 + 	for tmpdir in $searchdirs ; do
 + 	  if test -f $tmpdir/include/scws/scws.h ; then
 + 		SCWS_DIR=$tmpdir
@@ -66,13 +69,13 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.2.22/include/xapian/queryparser.h	2015-12-29 17:20:10.000000000 +0800
---- xapian-core-scws-1.2.22/include/xapian/queryparser.h	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/include/xapian/queryparser.h	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/queryparser.h	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 575,580 ****
---- 575,613 ----
+*** 1025,1030 ****
+--- 1025,1063 ----
        */
-      void set_max_wildcard_expansion(Xapian::termcount limit);
+      XAPIAN_DEPRECATED(void set_max_wildcard_expansion(Xapian::termcount));
   
 + #if 1	/* HAVE_SCWS */
 +     /** Load scws dict and rule (hightman.070706)
@@ -110,13 +113,13 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.2.22/include/xapian/termgenerator.h	2015-12-29 17:20:10.000000000 +0800
---- xapian-core-scws-1.2.22/include/xapian/termgenerator.h	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/include/xapian/termgenerator.h	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/include/xapian/termgenerator.h	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 105,110 ****
---- 105,134 ----
-      /// Stemming strategies, for use with set_stemming_strategy().
-      typedef enum { STEM_NONE, STEM_SOME, STEM_ALL, STEM_ALL_Z } stem_strategy;
+*** 125,130 ****
+--- 125,154 ----
+      /// Stopper strategies, for use with set_stopper_strategy().
+      typedef enum { STOP_NONE, STOP_ALL, STOP_STEMMED } stop_strategy;
   
 + #if 1	/* HAVE_SCWS */
 +     /** Load scws dict and rule (hightman.070706)
@@ -145,24 +148,24 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.2.22/api/omqueryinternal.cc	2015-12-29 17:20:10.000000000 +0800
---- xapian-core-scws-1.2.22/api/omqueryinternal.cc	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/api/queryinternal.cc	2018-11-03 06:06:13.000000000 +0800
+--- xapian-core-scws-1.4.9/api/queryinternal.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 371,376 ****
---- 371,381 ----
-  	// Not a leaf, concatenate results from all subqueries.
-  	for (subquery_list::const_iterator i = subqs.begin(); i != end; ++i) {
-  	    (*i)->accumulate_terms(terms);
+*** 1205,1210 ****
+--- 1205,1215 ----
+  	// MatchNothing subqueries should have been removed by done().
+  	Assert((*i).internal.get());
+  	(*i).internal->gather_terms(void_terms);
 + #ifdef HAVE_SCWS
-+ 	    // hightman: strip unused term for highlight/reform query log
-+ 	    if (op == OP_AND_MAYBE || op == OP_AND_NOT)
-+ 		break;
++ 	// hightman: strip unused term for highlight/reform query log
++ 	if (get_op() == Query::OP_AND_MAYBE || get_op() == Query::OP_AND_NOT)
++ 	    break;
 + #endif
-  	}
       }
   }
-*** xapian-core-1.2.22/queryparser/queryparser_internal.h	2015-12-29 17:20:11.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/queryparser_internal.h	2016-01-13 13:41:48.000000000 +0800
+  
+*** xapian-core-1.4.9/queryparser/queryparser_internal.h	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.h	2019-01-04 16:14:49.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -178,11 +181,11 @@
   #include <map>
   
 ***************
-*** 63,68 ****
---- 68,80 ----
-      Stem stemmer;
-      stem_strategy stem_action;
-      const Stopper * stopper;
+*** 93,98 ****
+--- 98,111 ----
+      list<string> stoplist;
+      multimap<string, string> unstem;
+  
 + #ifdef HAVE_SCWS
 +     scws_t scws;
 +     scws_res_t rptr, rcur;
@@ -190,36 +193,38 @@
 +     int last_off;
 +     double syn_scale;
 + #endif
-      Query::op default_op;
-      const char * errmsg;
-      Database db;
++ 
+      // Map "from" -> "A" ; "subject" -> "C" ; "newsgroups" -> "G" ;
+      // "foobar" -> "XFOO". FIXME: it does more than this now!
+      map<string, FieldInfo> field_map;
 ***************
-*** 88,95 ****
---- 100,116 ----
-  
+*** 126,135 ****
+--- 139,156 ----
     public:
-      Internal() : stem_action(STEM_NONE), stopper(NULL),
+      Internal() : stem_action(STEM_SOME), stopper(NULL),
+  	default_op(Query::OP_OR), errmsg(NULL),
 + #ifdef HAVE_SCWS
 + 	scws(NULL), rptr(NULL), rcur(NULL),
 + 	syn_scale(1),
 + #endif
-  	default_op(Query::OP_OR), errmsg(NULL), max_wildcard_expansion(0) { }
+  	max_wildcard_expansion(0), max_partial_expansion(100),
+  	max_wildcard_type(Xapian::Query::WILDCARD_LIMIT_ERROR),
+  	max_partial_type(Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) { }
+  
 + #ifdef HAVE_SCWS
 +     ~Internal();
 +     void load_scws(const char *fpath, bool xmem, int multi);
 + #endif
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
-+ 
   };
   
-  }
-*** xapian-core-1.2.22/queryparser/termgenerator_internal.h	2015-12-29 17:20:11.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/termgenerator_internal.h	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/queryparser/termgenerator_internal.h	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.h	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 26,31 ****
---- 26,35 ----
-  #include <xapian/document.h>
+*** 27,32 ****
+--- 27,36 ----
   #include <xapian/termgenerator.h>
+  #include <xapian/queryparser.h> // For Xapian::Stopper
   #include <xapian/stem.h>
 + /// hightman.20070701: use scws as default tokneizer
 + #ifdef HAVE_SCWS
@@ -229,24 +234,27 @@
   namespace Xapian {
   
 ***************
-*** 38,50 ****
---- 42,64 ----
-      const Stopper * stopper;
+*** 39,44 ****
+--- 43,51 ----
+      Xapian::Internal::opt_intrusive_ptr<const Stopper> stopper;
+      stop_strategy stop_mode;
       Document doc;
-      termcount termpos;
 + #ifdef HAVE_SCWS
 +     scws_t scws;
 + #endif
+      termpos cur_pos;
       TermGenerator::flags flags;
       unsigned max_word_length;
-      WritableDatabase db;
+***************
+*** 46,52 ****
+--- 53,66 ----
   
     public:
-      Internal() : strategy(STEM_SOME), stopper(NULL), termpos(0),
+      Internal() : strategy(STEM_SOME), stopper(NULL), stop_mode(STOP_STEMMED),
 + #ifdef HAVE_SCWS
-+ 	scws(NULL),
++     scws(NULL),
 + #endif
-  	flags(TermGenerator::flags(0)), max_word_length(64) { }
+  	cur_pos(0), flags(TermGenerator::flags(0)), max_word_length(64) { }
 + #ifdef HAVE_SCWS
 +     ~Internal();
 +     void load_scws(const char *fpath, bool xmem, int multi);
@@ -254,22 +262,12 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.2.22/queryparser/queryparser.cc	2015-12-29 17:20:11.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/queryparser.cc	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/queryparser/queryparser.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 22,27 ****
---- 22,28 ----
-  
-  #include <config.h>
-  
-+ 
-  #include <xapian/queryparser.h>
-  #include <xapian/termiterator.h>
-  
-***************
-*** 110,115 ****
---- 111,170 ----
-      internal->max_wildcard_expansion = max;
+*** 157,162 ****
+--- 157,216 ----
+      }
   }
   
 + #if 1	/* HAVE_SCWS */
@@ -306,8 +304,8 @@
 + void
 + QueryParser::clear()
 + {
-+     internal->prefixmap.clear();
-+     internal->valrangeprocs.clear();
++     internal->field_map.clear();
++     internal->rangeprocs.clear();
 +     internal->stoplist.clear();
 +     internal->unstem.clear();
 +     internal->errmsg = NULL;
@@ -329,23 +327,23 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.2.22/queryparser/queryparser_internal.cc	2015-12-29 17:25:13.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/queryparser_internal.cc	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/queryparser/queryparser_internal.cc	2018-11-03 06:07:55.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/queryparser_internal.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 160,165 ****
---- 160,168 ----
+*** 165,170 ****
+--- 165,173 ----
       string unstemmed;
       QueryParser::stem_strategy stem;
       termpos pos;
 + #ifdef HAVE_SCWS
 +     vector<string> multi;
 + #endif
+      Query query;
   
-      Term(const string &name_, termpos pos_) : name(name_), stem(QueryParser::STEM_NONE), pos(pos_) { }
-      Term(const string &name_) : name(name_), stem(QueryParser::STEM_NONE), pos(0) { }
+      Term(const string &name_, termpos pos_)
 ***************
-*** 233,238 ****
---- 236,273 ----
+*** 241,246 ****
+--- 244,281 ----
   	return qpi->stemmer(term);
       }
   
@@ -359,7 +357,7 @@
 +  	return diff > 1e-15;
 +     }
 + 
-+     Query get_multi_synonyms_query(const string &raw, const string &prefix, Xapian::termpos pos) {
++     Query get_multi_synonyms_query(const string &raw, const string &prefix, const termcount pos) {
 + 	vector<Query> multi;
 + 	string::size_type pos1, pos2 = 0;
 + 	string::size_type len = raw.size();
@@ -379,21 +377,19 @@
 + 	}
 + 	return Query(qpi->default_op, multi.begin(), multi.end());
 +     }
-+ #endif
++ #endif	/* HAVE_SCWS */
 + 
       void add_to_stoplist(const Term * term) {
   	qpi->stoplist.push_back(term->name);
       }
 ***************
-*** 313,322 ****
---- 348,362 ----
+*** 395,404 ****
+--- 430,442 ----
       for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
   	// First try the unstemmed term:
   	string term;
 + 	/* hightman.111231: Synonym optimization　*/
-+ #ifdef HAVE_SCWS
-+ 	termpos mpos = pos + 77;
-+ #else
++ #ifndef HAVE_SCWS
   	if (!piter->empty()) {
   	    term += *piter;
   	    if (prefix_needs_colon(*piter, name[0])) term += ':';
@@ -403,8 +399,8 @@
   
   	Xapian::Database db = state->get_database();
 ***************
-*** 325,340 ****
---- 365,389 ----
+*** 407,423 ****
+--- 445,480 ----
   	if (syn == end && stem != QueryParser::STEM_NONE) {
   	    // If that has no synonyms, try the stemmed form:
   	    term = 'Z';
@@ -418,74 +414,87 @@
   	    syn = db.synonyms_begin(term);
   	    end = db.synonyms_end(term);
   	}
-  	while (syn != end) {
 + #ifdef HAVE_SCWS
-+ 	    Query qs = state->get_multi_synonyms_query(*syn, *piter, mpos++);
++ 	vector<Query> syn_subqs;
++ 	termcount _pos = pos + 66;
++ 	while (syn != end) {
++ 	    Query qs = state->get_multi_synonyms_query(*syn, *piter, _pos++);
 + 	    if (state->should_syn_scale())
-+ 	    	qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
-+ 	    q = Query(Query::OP_SYNONYM, q, qs);
++ 		qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
++ 	    syn_subqs.push_back(qs);
++ 	    ++syn;
++ 	} 
++ 	if (!syn_subqs.empty()) {
++ 	    syn_subqs.insert(syn_subqs.begin(), q);
++ 	    q = Query(q.OP_SYNONYM, syn_subqs.begin(), syn_subqs.end());
++ 	    syn_subqs.clear();
++ 	}
 + #else
-  	    q = Query(Query::OP_SYNONYM, q, Query(*syn, 1, pos));
+  	q = Query(q.OP_SYNONYM,
+  		  SynonymIterator(syn, pos, &q),
+  		  SynonymIterator(end));
 + #endif
-  	    ++syn;
-  	}
       }
+      return q;
+  }
 ***************
-*** 452,457 ****
---- 501,540 ----
-      vector<Query> prefix_cjk;
-      const list<string> & prefixes = prefix_info->prefixes;
+*** 529,534 ****
+--- 586,627 ----
+      vector<Query> cjk_subqs;
+      const list<string> & prefixes = field_info->prefixes;
       list<string>::const_iterator piter;
 + /* hightman.20111223: used CJKTERM for multi segment */
 + #ifdef HAVE_SCWS
++     termcount _pos = pos + 77;
 +     for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
-+ 	Query q = Query(*piter + name, 1, pos); 
-+ 	termpos mpos = pos + 88;
-+ 
++ 	Query q = Query(*piter + name, 1, pos);
 + 	/* hightman.20120104: get synonyms */
++ 	if (!multi.empty()) {
++ 	    vector<Query> multi_qs;
++ 	    vector<string>::const_iterator mi;
++ 	    for (mi = multi.begin(); mi != multi.end(); mi++) {
++ 	    	multi_qs.push_back(Query(*piter + *mi, 1, _pos++));
++ 	    }
++ 	    Query qs = Query(state->default_op(), multi_qs.begin(), multi_qs.end());
++ 	    multi_qs.clear();
++ 	    cjk_subqs.push_back(qs);
++ 	}
 + 	if (state->flags & QueryParser::FLAG_AUTO_SYNONYMS) {
 + 	    Xapian::Database db = state->get_database();
 + 	    Xapian::TermIterator syn = db.synonyms_begin(name);
 + 	    Xapian::TermIterator end = db.synonyms_end(name);
 + 	    while (syn != end) {
-+ 	    	Query qs = state->get_multi_synonyms_query(*syn, *piter, mpos++);
++ 		Query qs = state->get_multi_synonyms_query(*syn, *piter, _pos++);
 + 		if (state->should_syn_scale())
 + 		    qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
-+ 		q = Query(Query::OP_SYNONYM, q, qs);
++ 		cjk_subqs.push_back(qs);
 + 		++syn;
 + 	    }
 + 	}
-+ 	if (!multi.empty()) {
-+ 	    vector<string>::const_iterator mi;
-+ 	    vector<Query> multi_cjk;
-+ 	    for (mi = multi.begin(); mi != multi.end(); ++mi) {
-+ 		// hightman: force to sort behind for get_terms()
-+ 		multi_cjk.push_back(Query(*piter + *mi, 1, mpos++));
-+ 	    }
-+ 	    Query qs = Query(state->default_op(), multi_cjk.begin(), multi_cjk.end());
-+ 	    if (state->should_syn_scale())
-+ 		qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
-+ 	    q = Query(Query::OP_SYNONYM, q, qs);
++ 	if (!cjk_subqs.empty()) {
++ 	    cjk_subqs.insert(cjk_subqs.begin(), q);
++ 	    q = Query(q.OP_SYNONYM, cjk_subqs.begin(), cjk_subqs.end());
++ 	    cjk_subqs.clear();
 + 	}
-+ 	prefix_cjk.push_back(q);
++ 	prefix_subqs.push_back(q);
 +     }
 + #else
-      for (CJKTokenIterator tk(name); tk != CJKTokenIterator(); ++tk) {
-  	for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
-  	    string cjk = *piter;
+      for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
+  	const string& prefix = *piter;
+  	for (CJKTokenIterator tk(name); tk != CJKTokenIterator(); ++tk) {
 ***************
-*** 459,464 ****
---- 542,548 ----
-  	    prefix_cjk.push_back(Query(cjk, 1, pos));
-  	}
+*** 538,543 ****
+--- 631,637 ----
+  				     cjk_subqs.begin(), cjk_subqs.end()));
+  	cjk_subqs.clear();
       }
 + #endif	/* HAVE_SCWS */
-      Query * q = new Query(Query::OP_AND, prefix_cjk.begin(), prefix_cjk.end());
+      Query * q = new Query(Query::OP_OR,
+  			  prefix_subqs.begin(), prefix_subqs.end());
       delete this;
-      return q;
 ***************
-*** 572,583 ****
---- 656,733 ----
+*** 715,726 ****
+--- 809,887 ----
      }
   }
   
@@ -548,9 +557,10 @@
 + 	if (rcur->next && rcur->next->off == rcur->off && rcur->next->len > rcur->len)
 + 	    rcur = rcur->next;
 + 
-+ 	term.append(qptr + rcur->off, rcur->len);
++ 	it = Utf8Iterator(qptr + rcur->off);
++ 	term.append(it.raw(), rcur->len);
 + 	was_acronym = (rcur->attr[0] == 'n' && rcur->attr[1] == 'z') ? true : false;
-+ 	is_cjk_term = CJK::codepoint_is_cjk(*it);
++ 	is_cjk_term = (rcur->attr[0] == 'e' && rcur->attr[1] == 'n') ? false : true;
 + 	last_off = off = rcur->off + rcur->len;
 + 	rcur = rcur->next;
 + 
@@ -558,15 +568,15 @@
 + 	// 几句说搞笑 => 几句/句说/搞笑
 + 	if (rcur && off > rcur->off && (rcur->off + rcur->len) > off)
 + 	    off = rcur->off;
-+ 	while ((it.raw() - qptr) < off) it++;
++ 	it = Utf8Iterator(qptr + off);
 +     }
 + #else	/* HAVE_SCWS */
       // Look for initials separated by '.' (e.g. P.T.O., U.N.C.L.E).
       // Don't worry if there's a trailing '.' or not.
       if (U_isupper(*it)) {
 ***************
-*** 662,667 ****
---- 812,818 ----
+*** 805,810 ****
+--- 966,972 ----
   	    }
   	}
       }
@@ -575,10 +585,68 @@
   }
   
 ***************
-*** 713,718 ****
---- 864,894 ----
+*** 993,1002 ****
+--- 1155,1185 ----
+  	    }
+  	    subqs2.clear();
   
-      ParserHandler pParser(ParseAlloc());
++ #ifdef HAVE_SCWS
++ 	    string prefix;
++ 	    termcount _pos = (*begin)->pos + 88;
++ 	    const list<string> & prefixes = (*begin)->field_info->prefixes;
++ 	    if (prefixes.begin() != prefixes.end())
++ 		prefix = *(prefixes.begin());
++ 	    while (syn != end) {
++ 		Query qs = state->get_multi_synonyms_query(*syn, prefix, _pos++);
++ 		if (state->should_syn_scale())
++ 		    qs = Query(Query::OP_SCALE_WEIGHT, qs, state->get_syn_scale());
++ 		subqs2.push_back(qs);
++ 		++syn;
++ 	    }
++ 	    Query q = q_original_terms;
++ 	    if (subqs2.size() > 0) {
++ 		subqs2.insert(subqs2.begin(), q_original_terms);
++ 		q = Query(Query::OP_SYNONYM, subqs2.begin(), subqs2.end());
++ 		subqs2.clear();
++ 	    }
++ #else
+  	    // Use the position of the first term for the synonyms.
+  	    Query q(Query::OP_SYNONYM,
+  		    SynonymIterator(syn, (*begin)->pos, &q_original_terms),
+  		    SynonymIterator(end));
++ #endif
+  	    subqs.push_back(q);
+  
+  	    begin = i;
+***************
+*** 1153,1158 ****
+--- 1336,1346 ----
+  void
+  Term::as_positional_cjk_term(Terms * terms) const
+  {
++  #ifdef HAVE_SCWS
++     // Add SCWS term only
++     Term * c = new Term(state, name, field_info, unstemmed, stem, pos);
++     terms->add_positional_term(c);
++ #else
+      // Add each individual CJK character to the phrase.
+      string t;
+      for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
+***************
+*** 1161,1166 ****
+--- 1349,1355 ----
+  	terms->add_positional_term(c);
+  	t.resize(0);
+      }
++ #endif	/* HAVE_SCWS */
+  
+      // FIXME: we want to add the n-grams as filters too for efficiency.
+  
+***************
+*** 2961,2966 ****
+--- 3150,3180 ----
+  
+      yyParser parser;
   
 + #ifdef HAVE_SCWS
 +     /// Pre segmentation use scws
@@ -590,8 +658,8 @@
 + 	scws_free_result(rptr);
 + 	rptr = NULL;
 +     }
-+     qptr = qs.data();
-+     scws_send_text(scws, qptr, qs.size());
++     qptr = it.raw();
++     scws_send_text(scws, qptr, it.left());
 +     while ((res = scws_get_result(scws)) != NULL) {
 + 	if (rptr == NULL) { 
 + 	    rcur = rptr = res;
@@ -609,8 +677,8 @@
   main_lex_loop:
       enum {
 ***************
-*** 1110,1115 ****
---- 1286,1296 ----
+*** 3369,3374 ****
+--- 3583,3593 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -619,17 +687,17 @@
 + 		    // Don't stem CJK terms.
 + 		    stem_term = STEM_NONE;
 + #endif
-  		} else if (stem_term == STEM_SOME) {
+  		} else if (stem_term == STEM_SOME ||
+  			   stem_term == STEM_SOME_FULL_POS) {
   		    if (!should_stem(unstemmed_term) ||
-  			(it != end && is_stem_preventer(*it))) {
 ***************
-*** 1123,1128 ****
---- 1304,1325 ----
+*** 3383,3388 ****
+--- 3602,3623 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
 + #ifdef HAVE_SCWS
-+ 		if (stopper && (*stopper)(unstemmed_term)) {
++ 		if (stopper.get() && (*stopper)(unstemmed_term)) {
 + 		    delete term_obj;
 + 		    if (it == end) break;
 + 		    continue;
@@ -637,19 +705,19 @@
 + 		/* multi scws handler */
 + 		term_obj->multi.clear();
 + 		while (rcur && (rcur->off + rcur->len) <= last_off) {
-+ 			if (rcur->len > 3)
-+ 				term_obj->multi.push_back(string(qptr + rcur->off, rcur->len));
++ 		    if (rcur->len > 3)
++ 			term_obj->multi.push_back(string(qptr + rcur->off, rcur->len));
 + 		    rcur = rcur->next;
 + 		}
 + 		if (mode == IN_GROUP || mode == IN_GROUP2)
 + 		    mode = DEFAULT;
 + #endif
-  		Parse(pParser, CJKTERM, term_obj, &state);
+  		Parse(&parser, CJKTERM, term_obj, &state);
   		if (it == end) break;
   		continue;
 ***************
-*** 1253,1258 ****
---- 1450,1462 ----
+*** 3513,3518 ****
+--- 3748,3760 ----
   	}
       }
   done:
@@ -663,66 +731,11 @@
       if (!state.error) {
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
+*** xapian-core-1.4.9/queryparser/termgenerator.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator.cc	2019-01-04 16:14:49.000000000 +0800
 ***************
-*** 1456,1467 ****
---- 1660,1687 ----
-  
-  	    // Use the position of the first term for the synonyms.
-  	    Xapian::termpos pos = (*begin)->pos;
-+ #ifdef HAVE_SCWS
-+ 	    string prefix;
-+ 	    const list<string> & prefixes = (*begin)->prefix_info->prefixes;
-+ 	    if (prefixes.begin() != prefixes.end())
-+ 		prefix = *(prefixes.begin());
-+ 	    pos += 66;
-+ #endif
-  	    begin = i;
-  	    while (syn != end) {
-+ #ifdef HAVE_SCWS
-+ 		subqs2.push_back(state->get_multi_synonyms_query(*syn, prefix, pos++));
-+ #else
-  		subqs2.push_back(Query(*syn, 1, pos));
-+ #endif
-  		++syn;
-  	    }
-  	    Query q_synonym_terms(Query::OP_SYNONYM, subqs2.begin(), subqs2.end());
-+ #ifdef HAVE_SCWS
-+ 	    if (state->should_syn_scale()) {
-+ 		q_synonym_terms = Query(Query::OP_SCALE_WEIGHT, q_synonym_terms, state->get_syn_scale());
-+ 	    }
-+ #endif
-  	    subqs2.clear();
-  	    subqs.push_back(Query(Query::OP_SYNONYM,
-  				  q_original_terms, q_synonym_terms));
-***************
-*** 1623,1628 ****
---- 1843,1853 ----
-  void
-  Term::as_positional_cjk_term(Terms * terms) const
-  {
-+ #ifdef HAVE_SCWS
-+     // Add SCWS term only
-+     Term * c = new Term(state, name, prefix_info, unstemmed, stem, pos);
-+     terms->add_positional_term(c);
-+ #else
-      // Add each individual CJK character to the phrase.
-      string t;
-      for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
-***************
-*** 1631,1636 ****
---- 1856,1862 ----
-  	terms->add_positional_term(c);
-  	t.resize(0);
-      }
-+ #endif	/* HAVE_SCWS */
-  
-      // FIXME: we want to add the n-grams as filters too for efficiency.
-  
-*** xapian-core-1.2.22/queryparser/termgenerator.cc	2015-12-29 17:20:11.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/termgenerator.cc	2016-01-13 13:41:48.000000000 +0800
-***************
-*** 74,79 ****
---- 74,111 ----
+*** 79,84 ****
+--- 79,116 ----
       internal->db = db;
   }
   
@@ -761,14 +774,50 @@
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.2.22/queryparser/termgenerator_internal.cc	2015-12-29 17:20:11.000000000 +0800
---- xapian-core-scws-1.2.22/queryparser/termgenerator_internal.cc	2016-01-13 13:41:48.000000000 +0800
+*** xapian-core-1.4.9/queryparser/termgenerator_internal.cc	2018-11-03 06:06:14.000000000 +0800
+--- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.cc	2019-01-04 16:54:26.000000000 +0800
 ***************
-*** 117,122 ****
---- 117,156 ----
-  #define STOPWORDS_IGNORE 1
-  #define STOPWORDS_INDEX_UNSTEMMED_ONLY 2
+*** 242,247 ****
+--- 242,317 ----
+      }
+  }
   
++ #ifdef HAVE_SCWS
++ template<typename ACTION> void
++ parse_terms_scws(Utf8Iterator itor, scws_t scws, termcount & pos, bool with_positions, ACTION action)
++ {
++     int last_endpos = 0, last_off = 0;
++     scws_res_t res, cur;
++     Utf8Iterator iterm;
++     string term;
++     const char *text = itor.raw();
++ 
++     scws_send_text(scws, text, itor.left());
++     while ((res = cur = scws_get_result(scws)) != NULL) { 
++ 	while (cur != NULL) {
++ 	    iterm.assign(text + cur->off, cur->len);
++ 	    if (Unicode::is_wordchar(*iterm)) {
++ 		term = Unicode::tolower(string(text + cur->off, cur->len));
++ 		bool is_cjk_term = CJK::codepoint_is_cjk(*iterm);
++ 		/// keep same termpos in multi-scws
++ 		if (with_positions) {
++ 		    if ((cur->off + cur->len) <= last_endpos) --pos;
++ 		    else {
++ 			if (cur->off == last_off)
++ 			    --pos;
++ 			last_endpos = cur->off + cur->len;
++ 		    }
++ 		    last_off = cur->off;
++ 		}
++ 		action(term, with_positions, is_cjk_term, itor);
++ 	    }
++ 	    cur = cur->next;
++ 	}
++ 	scws_free_result(res); 
++     }
++ }
++ #endif  /* HAVE_SCWS */
++ 
 + /// hightman.20070701: load scws
 + #ifdef HAVE_SCWS
 + TermGenerator::Internal::~Internal()
@@ -807,78 +856,33 @@
   TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
   				    const string & prefix, bool with_positions)
 ***************
-*** 127,132 ****
---- 161,198 ----
-  
-      if (!stopper) stop_mode = STOPWORDS_NONE;
-  
-+ #ifdef HAVE_SCWS
-+     int last_endpos = 0, last_off = 0;
-+     scws_res_t res, cur;
-+     Utf8Iterator iterm;
-+     const char *text = itor.raw();
-+ 
-+     if (scws == NULL)
-+     	load_scws(NULL, false, 0);
-+     scws_send_text(scws, text, itor.left());
-+     while ((res = cur = scws_get_result(scws)) != NULL) { while (cur != NULL) {
-+ 	string term;
-+ 
-+ 	iterm.assign(text + cur->off, cur->len);
-+ 	if (!Unicode::is_wordchar(*iterm)) {
-+ 	    cur = cur->next;
-+ 	    continue;
-+ 	}
-+ 	term = Unicode::tolower(string(text + cur->off, cur->len));
-+ 	if (with_positions) {
-+ 	    /// for part word(short, duality)
-+ 	    if ((cur->off + cur->len) <= last_endpos)
-+ 		--termpos;
-+ 	    else {
-+ 		/// for dualities' first single word
-+ 		if (cur->off == last_off)
-+ 		    --termpos;
-+ 		last_endpos = cur->off + cur->len;
-+ 	    }
-+ 	}
-+ 	last_off = cur->off;
-+ 	cur = cur->next;
-+ #else
-      while (true) {
-  	// Advance to the start of the next term.
-  	unsigned ch;
-***************
-*** 265,270 ****
---- 331,337 ----
-  	}
-  
-  endofterm:
-+ #endif	/* HAVE_SCWS */
-  	if (term.size() > max_word_length) continue;
-  
-  	if (stop_mode == STOPWORDS_IGNORE && (*stopper)(term)) continue;
-***************
-*** 277,282 ****
---- 344,353 ----
-  		doc.add_term(prefix + term, wdf_inc);
-  	    }
-  	}
-+ #ifdef HAVE_SCWS
-+ 	/// hightman: Term start with CJK character needn't spell & stem
-+ 	if (CJK::codepoint_is_cjk(*iterm)) continue;
-+ #endif
-  	if ((flags & FLAG_SPELLING) && prefix.empty()) db.add_spelling(term);
-  
-  	if (strategy == TermGenerator::STEM_NONE ||
-***************
-*** 305,310 ****
---- 376,384 ----
-  	    doc.add_term(stem, wdf_inc);
-  	}
+*** 255,262 ****
+--- 325,339 ----
+  	current_stop_mode = stop_mode;
       }
-+ #ifdef HAVE_SCWS
-+     scws_free_result(res); }
-+ #endif
-  }
   
-  }
++ #ifdef HAVE_SCWS
++     if (scws == NULL)
++ 	load_scws(NULL, false, 0);
++     parse_terms_scws(itor, scws, cur_pos, with_positions,
++ 	[=](const string & term, bool positional, bool is_cjk_term, const Utf8Iterator &) {
++ #else
+      parse_terms(itor, cjk_ngram, with_positions,
+  	[=](const string & term, bool positional, const Utf8Iterator &) {
++ #endif
+  	    if (term.size() > max_word_length) return true;
+  
+  	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
+***************
+*** 272,277 ****
+--- 349,358 ----
+  		}
+  	    }
+  
++ #ifdef HAVE_SCWS
++ 	    /// hightman: Term start with CJK character needn't spell & stem
++ 	    if (is_cjk_term) return true;
++ #endif
+  	    // MSVC seems to need "this->" on member variables in this
+  	    // situation.
+  	    if ((this->flags & FLAG_SPELLING) && prefix.empty())

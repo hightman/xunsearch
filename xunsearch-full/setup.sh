@@ -24,7 +24,7 @@ do_clean()
 {
   echo -n "Cleaning ... "
   rm -rf setup.log
-  rm -rf xapian-core-scws-* scws-* libevent-* xunsearch-*
+  rm -rf libuuid-* xapian-core-scws-* scws-* libevent-* xunsearch-*
   echo "done"
 }
 
@@ -138,8 +138,12 @@ prefix=$set_prefix
 echo $prefix > $HOME/.xs_installed
 
 # compile flags
-export CFLAGS=-O2
-export CXXFLAGS=-O2
+cflags=-O2
+if test $(uname -s) = "FreeBSD" ; then
+  cflags="$cflags -fPIC"
+fi
+export CFLAGS=$cflags
+export CXXFLAGS=$cflags
 echo -n > setup.log
 
 # error function

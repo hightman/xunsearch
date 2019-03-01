@@ -87,3 +87,9 @@ type = numeric
 // add XS required
 require_once dirname(__FILE__) . '/../lib/XS.class.php';
 
+// compatiable of new version
+if (!class_exists('PHPUnit_Framework_TestCase')) {
+	class PHPUnit_Framework_TestCase extends \PHPUnit\Framework\TestCase {
+	}
+}
+

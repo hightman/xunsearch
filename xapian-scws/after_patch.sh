@@ -16,7 +16,7 @@ sh $gen $version
 
 echo "2. replace version & bug url ..."
 sed -i .bak \
-	-e 's#.org/bugs\]#.xungle.com/bugs\]#' \
+	-e 's#.org/bugs\]#.xunsearch.com/bugs\]#' \
 	-e 's#xapian-core\],#xapian-core-scws\],#' \
 	$srcdir/configure.ac 
 

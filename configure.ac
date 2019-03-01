@@ -5,7 +5,7 @@
 #
 
 AC_PREREQ([2.68])
-AC_INIT([xunsearch], [1.4.10], [http://www.xunsearch.com/bugs])
+AC_INIT([xunsearch], [1.4.13], [http://www.xunsearch.com/bugs])
 
 # for automake
 AM_INIT_AUTOMAKE
@@ -213,7 +213,7 @@ fi
 # Xapian-core package check
 AC_ARG_WITH(xapian,
 	AS_HELP_STRING([--with-xapian@<:@=DIR@:>@],
-		[specify the install directory of xapian-core(scws patched). The version should be 1.0.2 or greater.]),
+		[specify the install directory of xapian-core-scws. The version should be 1.4.0 or greater.]),
 	[ ], [with_xapian=yes]
 )
 if test "$with_xapian" != "no" ; then
@@ -237,17 +237,17 @@ if test "$with_xapian" != "no" ; then
 		AC_MSG_RESULT([yes: $XAPIAN_DIR])
 	fi
 
-	# Check libxapian version ( >= 1.0.2)
+	# Check libxapian version ( >= 1.4.0)
 	AC_MSG_CHECKING([for correct xapian version])
 	AC_EGREP_CPP(yes, [
 #include "$XAPIAN_DIR/include/xapian/version.h"
-#if XAPIAN_MAJOR_VERSION >= 1 && (XAPIAN_MINOR_VERSION > 0 || XAPIAN_REVERSION >= 2)
+#if XAPIAN_MAJOR_VERSION >= 1 && (XAPIAN_MINOR_VERSION > 4 || XAPIAN_REVERSION >= 0)
 yes
 #endif
 	], [
 		AC_MSG_RESULT(ok)
 	], [
-		AC_MSG_ERROR([xapian-core 1.0.2 or greater required.])
+		AC_MSG_ERROR([xapian-core 1.4.0 or greater required.])
 	])
 
 	# Check xapian-core library
@@ -285,7 +285,7 @@ indexer.set_document(doc);
 		]
 	)
 else
-	AC_MSG_ERROR([Xapian-core(scws patched) is required, get it from: http://www.xunsearch.com/download/packages/])
+	AC_MSG_ERROR([xapian-core-scws is required, get it from: http://www.xunsearch.com/download/packages/])
 fi
 
 # Pthread check

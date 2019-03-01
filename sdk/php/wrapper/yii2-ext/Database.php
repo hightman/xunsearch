@@ -10,7 +10,7 @@
  */
 namespace hightman\xunsearch;
 
-use yii\base\Object;
+use yii\base\BaseObject;
 
 /**
  * xunsearch Database is used to wrapper XS class
@@ -24,7 +24,7 @@ use yii\base\Object;
  * @author hightman <hightman@twomice.net>
  * @since 1.4.9
  */
-class Database extends Object
+class Database extends BaseObject
 {
 	public $iniFile;
 	public $charset;

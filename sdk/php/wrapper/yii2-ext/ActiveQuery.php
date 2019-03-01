@@ -184,10 +184,12 @@ class ActiveQuery extends Component implements ActiveQueryInterface
 	 * })->asArray()->all();
 	 * ```
 	 * @param callable $callable a PHP callable that contains setting before searching
+	 * @return static the query object itself.
 	 */
 	public function buildOther(callable $callable)
 	{
 		$this->buildOther = $callable;
+		return $this;
 	}
 
 	/**

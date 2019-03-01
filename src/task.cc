@@ -217,10 +217,10 @@ public:
 
 	TermCountMatchSpy(Xapian::valueno slot_) : Xapian::ValueCountMatchSpy(slot_) {
 	}
-	void operator()(const Xapian::Document &doc, Xapian::weight wt);
+	void operator()(const Xapian::Document &doc, double wt);
 };
 
-void TermCountMatchSpy::operator()(const Xapian::Document &doc, Xapian::weight wt) {
+void TermCountMatchSpy::operator()(const Xapian::Document &doc, double wt) {
 	++(internal->total);
 	string val(doc.get_value(internal->slot));
 	if (!val.empty()) {
@@ -583,8 +583,8 @@ static inline void zarg_cleanup(struct search_zarg *zarg)
 					oc->key == NULL ? "-" : oc->key);
 			DELETE_PTT(oc->val, Xapian::Database *);
 		} else if (oc->type == OTYPE_RANGER) {
-			log_debug("delete (Xapian::ValueRangeProcessor *) %p", oc->val);
-			DELETE_PTT(oc->val, Xapian::ValueRangeProcessor *);
+			log_debug("delete (Xapian::RangeProcessor *) %p", oc->val);
+			DELETE_PTT(oc->val, Xapian::RangeProcessor *);
 		} else if (oc->type == OTYPE_KEYMAKER) {
 			log_debug("delete (Xapian::KeyMaker *) %p", oc->val);
 			DELETE_PTT(oc->val, Xapian::KeyMaker *);
@@ -744,6 +744,14 @@ static int zcmd_task_default(XS_CONN *conn)
 				} else {
 					conn->flag &= ~CONN_FLAG_MATCHED_TERM;
 				}
+			} else if (cmd->arg1 == CMD_SEARCH_MISC_WEIGHT_SCHEME) {
+				if (cmd->arg2 == 0) {
+					zarg->eq->set_weighting_scheme(Xapian::BM25Weight());
+				} else if (cmd->arg2 == 1) {
+					zarg->eq->set_weighting_scheme(Xapian::BoolWeight());
+				} else if (cmd->arg2 == 2) {
+					zarg->eq->set_weighting_scheme(Xapian::TradWeight());
+				}
 			}
 			break;
 		case CMD_QUERY_INIT:
@@ -776,19 +784,19 @@ static int zcmd_task_default(XS_CONN *conn)
 			break;
 		case CMD_QUERY_RANGEPROC:
 		{
-			Xapian::ValueRangeProcessor *vrp;
+			Xapian::RangeProcessor *vrp;
 
 			if (cmd->arg1 == CMD_RANGE_PROC_DATE) {
-				vrp = new Xapian::DateValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::DateRangeProcessor(cmd->arg2);
 			} else if (cmd->arg1 == CMD_RANGE_PROC_NUMBER) {
-				vrp = new Xapian::NumberValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::NumberRangeProcessor(cmd->arg2);
 			} else {
-				vrp = new Xapian::StringValueRangeProcessor(cmd->arg2);
+				vrp = new Xapian::RangeProcessor(cmd->arg2);
 			}
 
 			zarg_add_object(zarg, OTYPE_RANGER, NULL, vrp);
-			zarg->qp->add_valuerangeprocessor(vrp);
-			log_debug_conn("new (Xapian::ValueRangeProcessor *) %p", vrp);
+			zarg->qp->add_rangeprocessor(vrp);
+			log_debug_conn("new (Xapian::RangeProcessor *) %p", vrp);
 		}
 			break;
 		case CMD_SEARCH_SCWS_SET:
@@ -866,13 +874,13 @@ static int zcmd_task_set_db(XS_CONN *conn)
 		 * NOTE: when name == DEFAULT_DB_NAME (equal to calling XSSearch::setDb(null))
 		 * archive database db_a was added automatically
 		 */
-		zarg->db->add_database(*db);
 		if (XS_CMD_BLEN(cmd) == 0) {
-			db = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
-			if (db != NULL) {
-				zarg->db->add_database(*db);
+			Xapian::Database *dba = (Xapian::Database *) zarg_get_object(zarg, OTYPE_DB, DEFAULT_DB_NAME "_a");
+			if (dba != NULL) {
+				zarg->db->add_database(*dba);
 			}
 		}
+		zarg->db->add_database(*db);
 
 		zarg->qp->set_database(*zarg->db);
 		DELETE_PTR(zarg->eq);
@@ -2356,12 +2364,12 @@ void task_exec(void *arg)
 				db = fetch_conn_database(conn, DEFAULT_DB_NAME);
 			}
 			zarg.db = new Xapian::Database();
-			zarg.db->add_database(*db);
 			try {
-				db = fetch_conn_database(conn, DEFAULT_DB_NAME "_a");
-				zarg.db->add_database(*db);
+				Xapian::Database *dba = fetch_conn_database(conn, DEFAULT_DB_NAME "_a");
+				zarg.db->add_database(*dba);
 			} catch (...) {
 			}
+			zarg.db->add_database(*db);
 			zarg.qp->set_database(*zarg.db);
 			zarg.eq = new Xapian::Enquire(*zarg.db);
 			zarg.db_total = zarg.db->get_doccount();

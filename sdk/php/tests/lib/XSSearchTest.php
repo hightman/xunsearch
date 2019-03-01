@@ -185,17 +185,18 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	public function queryProvider()
 	{
 		return array(
-			array('测试', 'Xapian::Query(测试:(pos=1))'),
-			array('subject:测试', 'Xapian::Query(B测试:(pos=1))'),
-			array('subject:项目测试', 'Xapian::Query((B项目:(pos=1) AND B测试:(pos=2)))'),
-			array('subject2:测试', 'Xapian::Query((Zsubject2:(pos=1) AND 测试:(pos=2)))'),
-			array('subject2:Hello', 'Xapian::Query((subject2:(pos=1) PHRASE 2 hello:(pos=2)))'),
-			array('项目管理制度', 'Xapian::Query((项目:(pos=1) AND (管理制度:(pos=2) SYNONYM (管理:(pos=90) AND 制度:(pos=91)))))'),
-			array('subject:项目管理制度', 'Xapian::Query((B项目:(pos=1) AND (B管理制度:(pos=2) SYNONYM (B管理:(pos=90) AND B制度:(pos=91)))))'),
-			array('几句说明', 'Xapian::Query((几句:(pos=1) AND 说明:(pos=2)))'),
-			array('说明几句', 'Xapian::Query((说明:(pos=1) AND 几句:(pos=2)))'),
-			array('pid:1 AND pid:2', 'Xapian::Query((0 * A1 AND 0 * A2))'),
-			array('(pid:1 AND pid:2) OR pid:3', 'Xapian::Query(((0 * A1 AND 0 * A2) OR 0 * A3))'),
+			array('DEMO', 'Query(demo@1)'),
+			array('测试', 'Query(测试@1)'),
+			array('subject:测试', 'Query(B测试@1)'),
+			array('subject:项目测试', 'Query((B项目@1 AND B测试@2))'),
+			array('subject2:测试', 'Query((Zsubject2@1 AND 测试@2))'),
+			array('subject2:Hello', 'Query((subject2@1 PHRASE 2 hello@2))'),
+			array('项目管理制度', 'Query((项目@1 AND (管理制度@2 SYNONYM (管理@79 AND 制度@80))))'),
+			array('subject:项目管理制度', 'Query((B项目@1 AND (B管理制度@2 SYNONYM (B管理@79 AND B制度@80))))'),
+			array('几句说明', 'Query((几句@1 AND 说明@2))'),
+			array('说明几句', 'Query((说明@1 AND 几句@2))'),
+			array('pid:1 AND pid:2', 'Query((0 * A1 AND 0 * A2))'),
+			array('(pid:1 AND pid:2) OR pid:3', 'Query(((0 * A1 AND 0 * A2) OR 0 * A3))'),
 		);
 	}
 
@@ -402,6 +403,10 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	public function testSearch()
 	{
 		$search = self::$xs->search;
+
+		$docs = $search->search('DEMO');
+		$this->assertEquals(1, count($docs));
+		$this->assertEquals(3, $docs[0]->pid);
 	}
 
 	public function testHotQuery()
@@ -414,7 +419,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$search = self::$xs->search;
 
 		$empty = $search->setQuery(null)->getQuery();
-		$this->assertEquals($empty, 'Xapian::Query(<alldocuments>)');
+		$this->assertEquals($empty, 'Query(<alldocuments>)');
 		$this->assertEquals(array(), $search->terms());
 		$this->assertEquals(3, count($search->search()));
 
@@ -521,18 +526,18 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		// test fuzzy multi query
 		$search->setFuzzy();
-		$this->testQuery('中华人民共和国', 'Xapian::Query((中华人民共和国:(pos=1) SYNONYM (中华:(pos=89) OR 人民:(pos=90) OR 共和国:(pos=91))))');
-		$this->testQuery('"中华人民共和国"', 'Xapian::Query(中华人民共和国:(pos=1))');
+		$this->testQuery('中华人民共和国', 'Query((中华人民共和国@1 SYNONYM (中华@78 OR 人民@79 OR 共和国@80)))');
+		$this->testQuery('"中华人民共和国"', 'Query(中华人民共和国@1)');
 		$search->setFuzzy(false);
 
 		// test without synonyms
 		$queries = array(
-			'项目test' => 'Xapian::Query((项目:(pos=1) AND Ztest:(pos=2)))',
-			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND ZBtest:(pos=3)))',
-			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND Zhello:(pos=2) AND Zworld:(pos=3)))',
-			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND 迅搜:(pos=2)))',
-			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
-			'testing' => 'Xapian::Query(Ztest:(pos=1))',
+			'项目test' => 'Query((项目@1 AND Ztest@2))',
+			'俗话 subject:(项目 test)' => 'Query((俗话@1 AND (B项目@2 AND ZBtest@3)))',
+			'爱写hello world' => 'Query((爱写@1 AND Zhello@2 AND Zworld@3))',
+			'demo 迅搜' => 'Query((Zdemo@1 AND 迅搜@2))',
+			'"demo 迅搜"' => 'Query((demo@1 PHRASE 2 迅搜@2))',
+			'testing' => 'Query(Ztest@1)',
 		);
 		foreach ($queries as $raw => $expect) {
 			$this->testQuery($raw, $expect);
@@ -541,12 +546,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		// test synonym query
 		$search->setAutoSynonyms();
 		$queries = array(
-			'项目test' => 'Xapian::Query((项目:(pos=1) AND (Ztest:(pos=2) SYNONYM quiz:(pos=79) SYNONYM 测试:(pos=80))))',
-			'俗话 subject:(项目 test)' => 'Xapian::Query((俗话:(pos=1) AND B项目:(pos=2) AND (ZBtest:(pos=3) SYNONYM Bquiz:(pos=80) SYNONYM B测试:(pos=81))))',
-			'爱写hello world' => 'Xapian::Query((爱写:(pos=1) AND ((Zhello:(pos=2) AND Zworld:(pos=3)) SYNONYM 有意思:(pos=68))))',
-			'demo 迅搜' => 'Xapian::Query((Zdemo:(pos=1) AND (迅搜:(pos=2) SYNONYM xunsearch:(pos=90))))',
-			'"demo 迅搜"' => 'Xapian::Query((demo:(pos=1) PHRASE 2 迅搜:(pos=2)))',
-			'testing' => 'Xapian::Query((Ztest:(pos=1) SYNONYM Zquiz:(pos=78) SYNONYM 测试:(pos=79)))',
+			'项目test' => 'Query((项目@1 AND (Ztest@2 SYNONYM quiz@79 SYNONYM 测试@80)))',
+			'俗话 subject:(项目 test)' => 'Query((俗话@1 AND B项目@2 AND (ZBtest@3 SYNONYM Bquiz@80 SYNONYM B测试@81)))',
+			'爱写hello world' => 'Query((爱写@1 AND ((Zhello@2 AND Zworld@3) SYNONYM 有意思@68)))',
+			'demo 迅搜' => 'Query((Zdemo@1 AND (迅搜@2 SYNONYM xunsearch@90)))',
+			'"demo 迅搜"' => 'Query((demo@1 PHRASE 2 迅搜@2))',
+			'testing' => 'Query((Ztest@1 SYNONYM Zquiz@78 SYNONYM 测试@79))',
 		);
 		foreach ($queries as $raw => $expect) {
 			$this->testQuery($raw, $expect);
@@ -629,7 +634,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		// without custom dict
 		$index->setCustomDict('');
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Xapian::Query((去:(pos=1) AND 测测:(pos=2) AND 看:(pos=3)))', $query);
+		$this->assertEquals('Query((去@1 AND 测测@2 AND 看@3))', $query);
 
 		// with custom dict
 		$dict = <<<EOF
@@ -638,7 +643,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Xapian::Query((去:(pos=1) AND (测测看:(pos=2) SYNONYM (测测:(pos=90) AND 测看:(pos=91)))))', $query);
+		$this->assertEquals('Query((去@1 AND (测测看@2 SYNONYM (测测@90 AND 测看@91))))', $query);
 	}
 
 	public function testScwsMulti()
@@ -659,21 +664,21 @@ EOF;
 		$search = self::$xs->search;
 		// add term
 		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_XOR);
-		$this->assertEquals('Xapian::Query((Ztest:(pos=1) XOR B管理+制度))', $search->query);
+		$this->assertEquals('Query((Ztest@1 XOR B管理+制度))', $search->query);
 		$search->setQuery('test')->addQueryTerm('subject', '管理+制度', XS_CMD_QUERY_OP_AND, 0.5);
-		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND 0.5 * B管理+制度))', $search->query);
+		$this->assertEquals('Query((Ztest@1 AND 0.5 * B管理+制度))', $search->query);
 		// add terms
 		$search->setFuzzy(true)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE);
-		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE (B管理+制度 OR B测测看 OR B对不对)))', $search->query);
+		$this->assertEquals('Query((Ztest@1 AND_MAYBE (B管理+制度 OR B测测看 OR B对不对)))', $search->query);
 		$search->setFuzzy(false)->setQuery('test')->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'), XS_CMD_QUERY_OP_AND_MAYBE, 0.1);
-		$this->assertEquals('Xapian::Query((Ztest:(pos=1) AND_MAYBE 0.10000000000000000555 * (B管理+制度 AND B测测看 AND B对不对)))', $search->query);
+		$this->assertEquals('Query((Ztest@1 AND_MAYBE 0.10000000000000000555 * (B管理+制度 AND B测测看 AND B对不对)))', $search->query);
 		// set fuzzy = true
 		$search->setQuery(null)->setFuzzy(true)->addQueryString('');
 		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
-		$this->assertEquals('Xapian::Query((B管理+制度 OR B测测看 OR B对不对))', $search->query);
+		$this->assertEquals('Query((B管理+制度 OR B测测看 OR B对不对))', $search->query);
 		// set fuzzy = false
 		$search->setQuery(null)->setFuzzy(false)->addQueryString('');
 		$search->addQueryTerm('subject', array('管理+制度', '测测看', '对不对'));
-		$this->assertEquals('Xapian::Query((B管理+制度 AND B测测看 AND B对不对))', $search->query);
+		$this->assertEquals('Query((B管理+制度 AND B测测看 AND B对不对))', $search->query);
 	}
 }

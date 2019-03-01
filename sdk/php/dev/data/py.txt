@@ -78169,7 +78169,7 @@
 鯆 pu
 圤 pu
 匍 pu
-莆 fu
+莆 pu
 菩 pu
 菐 pu
 葡 pu
@@ -82535,7 +82535,7 @@
 疜 xia
 夏 xia
 梺 xia
-厦 sha
+厦 xia sha
 睱 xia
 諕 hu
 嚇 he
