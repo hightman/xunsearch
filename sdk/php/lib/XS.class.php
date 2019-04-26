@@ -640,9 +640,9 @@ class XS extends XSComponent
 		$cache_write = '';
 		if (strlen($file) < 255 && file_exists($file)) {
 			$cache_key = md5(__CLASS__ . '::ini::' . realpath($file));
-			if (function_exists('apc_fetch')) {
-				$cache = apc_fetch($cache_key);
-				$cache_write = 'apc_store';
+			if (function_exists('apcu_fetch')) {
+				$cache = apcu_fetch($cache_key);
+				$cache_write = 'apcu_store';
 			} elseif (function_exists('xcache_get') && php_sapi_name() !== 'cli') {
 				$cache = xcache_get($cache_key);
 				$cache_write = 'xcache_set';
