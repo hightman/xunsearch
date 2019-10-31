@@ -1,9 +1,9 @@
 -n
-*** xapian-core-1.4.9/configure.ac	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/configure.ac	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/configure.ac	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/configure.ac	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 1190,1195 ****
---- 1190,1254 ----
+*** 1209,1214 ****
+--- 1209,1273 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -69,11 +69,11 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.4.9/include/xapian/queryparser.h	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/include/xapian/queryparser.h	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/include/xapian/queryparser.h	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/include/xapian/queryparser.h	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 1025,1030 ****
---- 1025,1063 ----
+*** 1029,1034 ****
+--- 1029,1067 ----
        */
       XAPIAN_DEPRECATED(void set_max_wildcard_expansion(Xapian::termcount));
   
@@ -113,11 +113,11 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.4.9/include/xapian/termgenerator.h	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/include/xapian/termgenerator.h	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/include/xapian/termgenerator.h	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/include/xapian/termgenerator.h	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 125,130 ****
---- 125,154 ----
+*** 126,131 ****
+--- 126,155 ----
       /// Stopper strategies, for use with set_stopper_strategy().
       typedef enum { STOP_NONE, STOP_ALL, STOP_STEMMED } stop_strategy;
   
@@ -148,11 +148,11 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.4.9/api/queryinternal.cc	2018-11-03 06:06:13.000000000 +0800
---- xapian-core-scws-1.4.9/api/queryinternal.cc	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/api/queryinternal.cc	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/api/queryinternal.cc	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 1205,1210 ****
---- 1205,1215 ----
+*** 1249,1254 ****
+--- 1249,1259 ----
   	// MatchNothing subqueries should have been removed by done().
   	Assert((*i).internal.get());
   	(*i).internal->gather_terms(void_terms);
@@ -164,8 +164,8 @@
       }
   }
   
-*** xapian-core-1.4.9/queryparser/queryparser_internal.h	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser_internal.h	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/queryparser/queryparser_internal.h	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/queryparser_internal.h	2019-10-31 18:10:22.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -218,8 +218,8 @@
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
   };
   
-*** xapian-core-1.4.9/queryparser/termgenerator_internal.h	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.h	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/queryparser/termgenerator_internal.h	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/termgenerator_internal.h	2019-10-31 18:10:22.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -262,8 +262,8 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.4.9/queryparser/queryparser.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser.cc	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/queryparser/queryparser.cc	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/queryparser.cc	2019-10-31 18:10:22.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -327,11 +327,11 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.4.9/queryparser/queryparser_internal.cc	2018-11-03 06:07:55.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/queryparser_internal.cc	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/queryparser/queryparser_internal.cc	2019-10-14 08:49:13.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/queryparser_internal.cc	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 165,170 ****
---- 165,173 ----
+*** 166,171 ****
+--- 166,174 ----
       string unstemmed;
       QueryParser::stem_strategy stem;
       termpos pos;
@@ -342,8 +342,8 @@
   
       Term(const string &name_, termpos pos_)
 ***************
-*** 241,246 ****
---- 244,281 ----
+*** 242,247 ****
+--- 245,282 ----
   	return qpi->stemmer(term);
       }
   
@@ -383,8 +383,8 @@
   	qpi->stoplist.push_back(term->name);
       }
 ***************
-*** 395,404 ****
---- 430,442 ----
+*** 396,405 ****
+--- 431,443 ----
       for (piter = prefixes.begin(); piter != prefixes.end(); ++piter) {
   	// First try the unstemmed term:
   	string term;
@@ -399,8 +399,8 @@
   
   	Xapian::Database db = state->get_database();
 ***************
-*** 407,423 ****
---- 445,480 ----
+*** 408,424 ****
+--- 446,481 ----
   	if (syn == end && stem != QueryParser::STEM_NONE) {
   	    // If that has no synonyms, try the stemmed form:
   	    term = 'Z';
@@ -438,8 +438,8 @@
       return q;
   }
 ***************
-*** 529,534 ****
---- 586,627 ----
+*** 542,547 ****
+--- 599,640 ----
       vector<Query> cjk_subqs;
       const list<string> & prefixes = field_info->prefixes;
       list<string>::const_iterator piter;
@@ -483,8 +483,8 @@
   	const string& prefix = *piter;
   	for (CJKTokenIterator tk(name); tk != CJKTokenIterator(); ++tk) {
 ***************
-*** 538,543 ****
---- 631,637 ----
+*** 551,556 ****
+--- 644,650 ----
   				     cjk_subqs.begin(), cjk_subqs.end()));
   	cjk_subqs.clear();
       }
@@ -493,8 +493,8 @@
   			  prefix_subqs.begin(), prefix_subqs.end());
       delete this;
 ***************
-*** 715,726 ****
---- 809,887 ----
+*** 728,739 ****
+--- 822,900 ----
      }
   }
   
@@ -575,8 +575,8 @@
       // Don't worry if there's a trailing '.' or not.
       if (U_isupper(*it)) {
 ***************
-*** 805,810 ****
---- 966,972 ----
+*** 820,825 ****
+--- 981,987 ----
   	    }
   	}
       }
@@ -585,8 +585,8 @@
   }
   
 ***************
-*** 993,1002 ****
---- 1155,1185 ----
+*** 1011,1020 ****
+--- 1173,1203 ----
   	    }
   	    subqs2.clear();
   
@@ -619,8 +619,8 @@
   
   	    begin = i;
 ***************
-*** 1153,1158 ****
---- 1336,1346 ----
+*** 1171,1176 ****
+--- 1354,1364 ----
   void
   Term::as_positional_cjk_term(Terms * terms) const
   {
@@ -633,8 +633,8 @@
       string t;
       for (Utf8Iterator it(name); it != Utf8Iterator(); ++it) {
 ***************
-*** 1161,1166 ****
---- 1349,1355 ----
+*** 1179,1184 ****
+--- 1367,1373 ----
   	terms->add_positional_term(c);
   	t.resize(0);
       }
@@ -643,8 +643,8 @@
       // FIXME: we want to add the n-grams as filters too for efficiency.
   
 ***************
-*** 2961,2966 ****
---- 3150,3180 ----
+*** 2993,2998 ****
+--- 3182,3212 ----
   
       yyParser parser;
   
@@ -677,8 +677,8 @@
   main_lex_loop:
       enum {
 ***************
-*** 3369,3374 ****
---- 3583,3593 ----
+*** 3400,3405 ****
+--- 3614,3624 ----
   		if (!stemmer.internal.get()) {
   		    // No stemmer is set.
   		    stem_term = STEM_NONE;
@@ -691,8 +691,8 @@
   			   stem_term == STEM_SOME_FULL_POS) {
   		    if (!should_stem(unstemmed_term) ||
 ***************
-*** 3383,3388 ****
---- 3602,3623 ----
+*** 3414,3419 ****
+--- 3633,3654 ----
   				       unstemmed_term, stem_term, term_pos++);
   
   	    if (is_cjk_term) {
@@ -716,8 +716,8 @@
   		if (it == end) break;
   		continue;
 ***************
-*** 3513,3518 ****
---- 3748,3760 ----
+*** 3544,3549 ****
+--- 3779,3791 ----
   	}
       }
   done:
@@ -731,8 +731,8 @@
       if (!state.error) {
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
-*** xapian-core-1.4.9/queryparser/termgenerator.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator.cc	2019-01-04 16:14:49.000000000 +0800
+*** xapian-core-1.4.13/queryparser/termgenerator.cc	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/termgenerator.cc	2019-10-31 18:10:22.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -774,11 +774,11 @@
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.4.9/queryparser/termgenerator_internal.cc	2018-11-03 06:06:14.000000000 +0800
---- xapian-core-scws-1.4.9/queryparser/termgenerator_internal.cc	2019-01-04 16:54:26.000000000 +0800
+*** xapian-core-1.4.13/queryparser/termgenerator_internal.cc	2019-10-14 08:47:43.000000000 +0800
+--- xapian-core-scws-1.4.13/queryparser/termgenerator_internal.cc	2019-10-31 18:10:22.000000000 +0800
 ***************
-*** 242,247 ****
---- 242,317 ----
+*** 246,251 ****
+--- 246,321 ----
       }
   }
   
@@ -856,8 +856,8 @@
   TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
   				    const string & prefix, bool with_positions)
 ***************
-*** 255,262 ****
---- 325,339 ----
+*** 259,266 ****
+--- 329,343 ----
   	current_stop_mode = stop_mode;
       }
   
@@ -874,8 +874,8 @@
   
   	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
 ***************
-*** 272,277 ****
---- 349,358 ----
+*** 276,281 ****
+--- 353,362 ----
   		}
   	    }
   
