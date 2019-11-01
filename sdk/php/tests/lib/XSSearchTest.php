@@ -404,7 +404,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	{
 		$search = self::$xs->search;
 
-		$docs = $search->search('DEMO');
+		$docs = $search->search('subject:DEMO');
 		$this->assertEquals(1, count($docs));
 		$this->assertEquals(3, $docs[0]->pid);
 	}
@@ -534,7 +534,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		$queries = array(
 			'项目test' => 'Query((项目@1 AND Ztest@2))',
 			'俗话 subject:(项目 test)' => 'Query((俗话@1 AND (B项目@2 AND ZBtest@3)))',
-			'爱写hello world' => 'Query((爱写@1 AND Zhello@2 AND Zworld@3))',
+			'爱写hello world ok' => 'Query((爱写@1 AND (Zhello@2 AND Zworld@3 AND Zok@4)))',
 			'demo 迅搜' => 'Query((Zdemo@1 AND 迅搜@2))',
 			'"demo 迅搜"' => 'Query((demo@1 PHRASE 2 迅搜@2))',
 			'testing' => 'Query(Ztest@1)',
@@ -546,12 +546,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		// test synonym query
 		$search->setAutoSynonyms();
 		$queries = array(
-			'项目test' => 'Query((项目@1 AND (Ztest@2 SYNONYM quiz@79 SYNONYM 测试@80)))',
-			'俗话 subject:(项目 test)' => 'Query((俗话@1 AND B项目@2 AND (ZBtest@3 SYNONYM Bquiz@80 SYNONYM B测试@81)))',
-			'爱写hello world' => 'Query((爱写@1 AND ((Zhello@2 AND Zworld@3) SYNONYM 有意思@68)))',
-			'demo 迅搜' => 'Query((Zdemo@1 AND (迅搜@2 SYNONYM xunsearch@90)))',
+			'项目test' => 'Query((项目@1 AND (Ztest@2 SYNONYM quiz@68 SYNONYM 测试@69)))',
+			'俗话 subject:(项目 test)' => 'Query((俗话@1 AND (B项目@2 AND (ZBtest@3 SYNONYM Bquiz@69 SYNONYM B测试@70))))',
+			'爱写hello world' => 'Query((爱写@1 AND ((Zhello@2 AND Zworld@3) SYNONYM 有意思@90)))',
+			'demo 迅搜' => 'Query((Zdemo@1 AND (迅搜@2 SYNONYM xunsearch@79)))',
 			'"demo 迅搜"' => 'Query((demo@1 PHRASE 2 迅搜@2))',
-			'testing' => 'Query((Ztest@1 SYNONYM Zquiz@78 SYNONYM 测试@79))',
+			'testing' => 'Query((Ztest@1 SYNONYM Zquiz@67 SYNONYM 测试@68))',
 		);
 		foreach ($queries as $raw => $expect) {
 			$this->testQuery($raw, $expect);
@@ -643,7 +643,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 EOF;
 		$index->setCustomDict($dict);
 		$query = $search->reopen(true)->getQuery('去测测看');
-		$this->assertEquals('Query((去@1 AND (测测看@2 SYNONYM (测测@90 AND 测看@91))))', $query);
+		$this->assertEquals('Query((去@1 AND (测测看@2 SYNONYM (测测@79 AND 测看@80))))', $query);
 	}
 
 	public function testScwsMulti()

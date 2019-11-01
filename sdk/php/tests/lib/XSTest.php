@@ -60,26 +60,18 @@ class XSTest extends PHPUnit_Framework_TestCase
 	public function testSetScheme()
 	{
 		try {
-			// check null
-			$this->xs2->scheme = null;
-		} catch (XSErrorException $e) {
-			$this->assertRegExp('/instance of XSFieldScheme, null given/', $e->getMessage());
-			try {
-				// check invalid scheme
-				$scheme = new XSFieldScheme;
-				$this->xs2->setScheme($scheme);
-			} catch (XSException $e) {
-				$this->assertEquals('Missing field of type ID', $e->getMessage());
-				$this->assertEquals(0, $e->getCode());
-			}
-
-			// test valid scheme
-			$scheme1 = $this->xs1->scheme;
-			$this->xs2->scheme = $scheme1;
-			$this->assertEquals($this->xs1->getScheme(), $this->xs2->getScheme());
-			return;
+			// check invalid scheme
+			$scheme = new XSFieldScheme;
+			$this->xs2->setScheme($scheme);
+		} catch (XSException $e) {
+			$this->assertEquals('Missing field of type ID', $e->getMessage());
+			$this->assertEquals(0, $e->getCode());
 		}
-		$this->fail('XS::setScheme(null) must throw XSErrorException!');
+
+		// test valid scheme
+		$scheme1 = $this->xs1->scheme;
+		$this->xs2->scheme = $scheme1;
+		$this->assertEquals($this->xs1->getScheme(), $this->xs2->getScheme());
 	}
 
 	public function testRestoreScheme()
@@ -199,16 +191,18 @@ class XSTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(XSFieldScheme::MIXED_VNO, $f->vno);
 	}
 
+	/**
+	 * @expectedException XSException
+	 */
 	public function testGetField()
 	{
 		$this->assertEquals('chrono', $this->xs1->getField('chrono')->name);
-		$this->setExpectedException('XSException');
 		$this->xs1->getField('not-exists');
 	}
 
 	public function testGetAllFields()
 	{
-		$this->assertEquals(6, count($this->xs1->getAllFields()));
+		$this->assertEquals(7, count($this->xs1->getAllFields()));
 		$this->assertArrayHasKey('pid', $this->xs1->getAllFields());
 		$this->assertArrayNotHasKey('pid2', $this->xs1->getAllFields());
 	}

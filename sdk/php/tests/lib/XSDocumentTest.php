@@ -260,7 +260,9 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		// test search result about terms
 		$this->assertEquals(1, $xs->search->count('date:Y2006'));
 		$this->assertEquals(1, $xs->search->count('date:md1016'));
-		$this->assertEquals(1, $xs->search->count('subject:马明练'));
+		$this->assertEquals(0, $xs->search->count('subject:马明练'));
+		$xs->search->setQuery(null)->addQueryTerm('subject', '马明练');
+		$this->assertEquals(1, $xs->search->count());
 		$this->assertEquals(1, $xs->search->count('subject:twomic'));
 		$xs->index->clean();
 		sleep(1);
