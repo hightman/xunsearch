@@ -5,7 +5,7 @@
 #
 
 AC_PREREQ([2.68])
-AC_INIT([xunsearch], [1.4.14], [http://www.xunsearch.com/bugs])
+AC_INIT([xunsearch], [1.4.15], [http://www.xunsearch.com/bugs])
 
 # for automake
 AM_INIT_AUTOMAKE
@@ -125,6 +125,9 @@ if test "$with_libevent" != "no" ; then
 	AC_EGREP_CPP(yes, [
 #include "$LIBEVENT_DIR/include/event2/event-config.h"
 #if _EVENT_NUMERIC_VERSION >= 0x02000000
+yes
+#endif
+#if EVENT__NUMERIC_VERSION >= 0x02000000
 yes
 #endif
 	], [
