@@ -40,7 +40,7 @@ Xunsearch 全面开源，并使用最流行的开源许可协议 GPL 发布。�
 SDK 开发文档
 -----------
 
-请阅读 [PHP-SDK 文档](sdk/php/README)
+请阅读 [PHP-SDK 文档](sdk/php/README.md)
 
 
 架构说明
