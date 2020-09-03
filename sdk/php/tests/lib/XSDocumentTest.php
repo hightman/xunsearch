@@ -15,7 +15,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 	 */
 	protected $doc1, $doc2, $doc3, $doc4;
 
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
 		self::$data = array(
 			'pid' => 1234,
@@ -26,7 +26,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		self::$data_gbk = XS::convert(self::$data, 'GBK', 'UTF-8');
 	}
 
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
 		
 	}
@@ -35,7 +35,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		// doc1: input-UTF-8, index-doc
 		$this->doc1 = new XSDocument('UTF-8');
@@ -59,7 +59,7 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		
 	}
@@ -88,21 +88,17 @@ class XSDocumentTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('Another', $this->doc1->subject);
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Call to undefined method `XSDocument::docid()'
-	 */
 	public function test__call1()
 	{
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Call to undefined method `XSDocument::docid()\'');
 		$this->doc1->docid();
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Call to undefined method `XSDocument::docid2()'
-	 */
 	public function test__call2()
 	{
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Call to undefined method `XSDocument::docid2()\'');
 		$this->doc3->docid();
 		$this->doc3->docid2();
 	}

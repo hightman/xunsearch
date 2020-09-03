@@ -12,7 +12,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 */
 	protected static $xs;
 
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
 		$data = array(
 			array(
@@ -94,7 +94,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 		sleep(2);
 	}
 
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
 		// clean testing data
 		self::$xs->index->reopen(true);
@@ -110,7 +110,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		self::$xs->search->setCharset('UTF8')->setFuzzy(false)->reopen(true);
 		self::$xs->search->setDb(null)->setTimeout(30);
@@ -121,7 +121,7 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 
 	}
@@ -265,14 +265,14 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		}
 		$this->assertInstanceOf('XSException', $e);
-		$this->assertContains('should be an array', $e->getMessage());
+		$this->assertStringContainsString('should be an array', $e->getMessage());
 		try {
 			$search->setGeodistSort(array('pid' => 1, 'lat' => 33.1));
 		} catch (Exception $e) {
 
 		}
 		$this->assertInstanceOf('XSException', $e);
-		$this->assertContains('shoud be numeric', $e->getMessage());
+		$this->assertStringContainsString('shoud be numeric', $e->getMessage());
 
 		// normal test
 		$geo = array('lon' => 116.45, 'lat' => '39.96');
@@ -589,12 +589,12 @@ class XSSearchTest extends PHPUnit_Framework_TestCase
 
 		}
 		$this->assertInstanceOf('XSException', $e);
-		$this->assertContains('undefined method', $e->getMessage());
+		$this->assertStringContainsString('undefined method', $e->getMessage());
 		// with matched
 		$docs = $search->setFuzzy()->setSort('chrono')->setRequireMatchedTerm()
 				->setQuery('subject:项目测试')->setLimit(1)->search();
 		$terms = $docs[0]->matched();
-		$this->assertInternalType('array', $terms);
+		$this->assertIsArray($terms);
 		$this->assertEquals(1, count($terms));
 		$this->assertEquals('测试', $terms[0]);
 	}

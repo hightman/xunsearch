@@ -16,7 +16,7 @@ class XSTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		global $fixIniData;
 		reset($fixIniData);
@@ -28,12 +28,12 @@ class XSTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		
 	}
 
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
 		global $fixIniData;
 		foreach ($fixIniData as $key => $value) {
@@ -41,7 +41,7 @@ class XSTest extends PHPUnit_Framework_TestCase
 		}
 	}
 
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
 		global $fixIniData;
 		foreach ($fixIniData as $key => $value) {
@@ -191,11 +191,9 @@ class XSTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(XSFieldScheme::MIXED_VNO, $f->vno);
 	}
 
-	/**
-	 * @expectedException XSException
-	 */
 	public function testGetField()
 	{
+		$this->expectException(XSException::class);
 		$this->assertEquals('chrono', $this->xs1->getField('chrono')->name);
 		$this->xs1->getField('not-exists');
 	}

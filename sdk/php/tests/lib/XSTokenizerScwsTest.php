@@ -21,7 +21,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 	/**
 	 * Create an XS instance first for scws connection
 	 */
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
 		$xs = new XS(end($GLOBALS['fixIniData']));
 	}
@@ -30,7 +30,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		$this->object = new XSTokenizerScws;
 		$this->object->setCharset('UTF-8')->setIgnore(true)->setMulti(3);
@@ -41,7 +41,7 @@ class XSTokenizerScwsTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		$this->doc = null;
 	}

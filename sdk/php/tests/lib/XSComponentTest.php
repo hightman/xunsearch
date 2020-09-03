@@ -56,7 +56,7 @@ class XSComponentTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		$this->object = new XSSample;
 	}
@@ -65,16 +65,11 @@ class XSComponentTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Undefined property: XSSample::$test
-	 * @expectedExceptionCode 0
-	 */
 	public function test__get()
 	{
 		// normal
@@ -85,25 +80,21 @@ class XSComponentTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('_tradition', $this->object->getTradition());
 
 		// undefined
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Undefined property: XSSample::$test');
+		$this->expectExceptionCode(0);
 		$test = $this->object->test;
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Write-only property: XSSample::$writeOnly
-	 * @expectedExceptionCode 0
-	 */
 	public function test__get2()
 	{
 		// write-only
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Write-only property: XSSample::$writeOnly');
+		$this->expectExceptionCode(0);
 		$test = $this->object->writeOnly;
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Undefined property: XSSample::$test
-	 * @expectedExceptionCode 0
-	 */
 	public function test__set()
 	{
 		// normal
@@ -112,17 +103,18 @@ class XSComponentTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('disnormal', $this->object->normal);
 
 		// undefiend
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Undefined property: XSSample::$test');
+		$this->expectExceptionCode(0);
 		$this->object->test = 'test';
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Read-only property: XSSample::$readOnly
-	 * @expectedExceptionCode 0
-	 */
 	public function test__set2()
 	{
 		// readonly
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Read-only property: XSSample::$readOnly');
+		$this->expectExceptionCode(0);
 		$this->object->readOnly = false;
 	}
 

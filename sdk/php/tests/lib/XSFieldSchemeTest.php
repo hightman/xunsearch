@@ -22,7 +22,7 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		$this->xs = new XS(end($GLOBALS['fixIniData']));
 		$this->object = $this->xs->scheme;
@@ -32,27 +32,23 @@ class XSFieldSchemeTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		$this->object = null;
 		$this->xs = null;
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Duplicated field name: `pid'
-	 */
 	public function testAddField1()
 	{
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Duplicated field name: `pid\'');
 		$this->object->addField(new XSFieldMeta('pid'));
 	}
 
-	/**
-	 * @expectedException XSException
-	 * @expectedExceptionMessage Duplicated TITLE field: `subject2' and `subject'
-	 */
 	public function testAddField2()
 	{
+		$this->expectException(XSException::class);
+		$this->expectExceptionMessage('Duplicated TITLE field: `subject2\' and `subject\'');
 		$this->object->addField('subject2', array('type' => 'title'));
 	}
 

@@ -13,7 +13,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	protected $object;
 	protected static $data, $data_gbk;
 
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
 		self::$data = array(
 			'pid' => 1234,
@@ -24,7 +24,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 		self::$data_gbk = XS::convert(self::$data, 'GBK', 'UTF-8');
 	}
 
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
 		
 	}
@@ -33,7 +33,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	 * Sets up the fixture, for example, opens a network connection.
 	 * This method is called before a test is executed.
 	 */
-	protected function setUp()
+	protected function setUp(): void
 	{
 		$xs = new XS(end($GLOBALS['fixIniData']));
 		$this->object = $xs->index;
@@ -44,7 +44,7 @@ class XSIndexTest extends PHPUnit_Framework_TestCase
 	 * Tears down the fixture, for example, closes a network connection.
 	 * This method is called after a test is executed.
 	 */
-	protected function tearDown()
+	protected function tearDown(): void
 	{
 		$this->object->clean();
 		$this->object->xs = null;
