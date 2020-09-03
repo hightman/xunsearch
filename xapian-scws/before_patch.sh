@@ -2,10 +2,17 @@
 # usage ./before_patch.sh [version]
 #
 version=$1
-srcfile="xapian-core-${version}.tar.xz"
+if test -z $version; then
+  srcfile=`ls -t xapian-core-*.tar.xz 2> /dev/null | head -1`
+  version=${srcfile##*-}
+  version=${version%.*}
+  version=${version%.*}
+else
+  srcfile="xapian-core-${version}.tar.xz"
+fi
 
-if ! test -f $srcfile ; then
-  echo "Not exists source file: $srcfile"
+if test -z $srcfile || ! test -f $srcfile; then
+  echo "Non-exists source file: $srcfile"
   echo "Usage $0 [version]"
   exit
 fi
@@ -15,7 +22,7 @@ if test -d xapian-core-${version} ; then
   exit
 fi
 
-echo "1. extracting the tar ball ..."
+echo "1. extracting the tar ball, v${version} ..."
 tar xzf $srcfile
 
 echo "2. copy the new dir ..."
