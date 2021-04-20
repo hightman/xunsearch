@@ -238,8 +238,8 @@ if test -z "$uuid_place" ; then
   uuid_place=$prefix
   echo "no, try to install it"
   echo "Extracting libuuid package ..."
-  tar -xjf ./packages/libuuid-1.0.0.tar.bz2
-  cd libuuid-1.0.0
+  tar -xjf ./packages/libuuid-1.0.3.tar.bz2
+  cd libuuid-1.0.3
   echo "Configuring libuuid ..."
   ./configure --prefix=$prefix >> ../setup.log 2>&1
   if test $? -ne 0 ; then
