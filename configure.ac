@@ -4,8 +4,8 @@
 # xunsearch-0.0.x configure autoconf script
 #
 
-AC_PREREQ([2.68])
-AC_INIT([xunsearch], [1.4.15], [http://www.xunsearch.com/bugs])
+AC_PREREQ([2.71])
+AC_INIT([xunsearch],[1.4.16],[http://www.xunsearch.com/bugs])
 
 # for automake
 AM_INIT_AUTOMAKE
@@ -35,11 +35,11 @@ AC_SYS_LARGEFILE
 
 # Checks for union semnum
 AC_CACHE_CHECK([union semun for semaphore...], ac_cv_union_semun,
-	AC_TRY_COMPILE([
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
-	], [union semun arg;], [ac_cv_union_semun=yes], [ac_cv_union_semun=no])
+	]], [[union semun arg;]])],[ac_cv_union_semun=yes],[ac_cv_union_semun=no])
 )
 if test "$ac_cv_union_semun" = "yes" ; then
 	AC_DEFINE(HAVE_UNION_SEMUN, 1, [Define to 1 if you have union semun])
@@ -351,4 +351,5 @@ AM_CONDITIONAL([ENABLE_PHP], [test ${enable_php} = yes])
 
 # Generate the make file
 AC_CONFIG_FILES([Makefile src/Makefile sdk/Makefile])
-AC_OUTPUT([src/xs-ctl.sh src/xs-optimize.sh])
+AC_CONFIG_FILES([src/xs-ctl.sh src/xs-optimize.sh])
+AC_OUTPUT
