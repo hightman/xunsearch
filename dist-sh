@@ -4,7 +4,7 @@
 
 # update subtree
 echo "Updating substree xs-sdk-php ..."
-git subtree push --prefix=sdk/php --squash local-sdk-php master > /dev/null 2>&1
+git subtree push --prefix=sdk/php local-sdk-php master > /dev/null 2>&1
 (cd ../xs-sdk-php; git push)
 
 # get fileinfo & version
