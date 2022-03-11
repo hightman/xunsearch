@@ -269,6 +269,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	/**
 	 * IteratorAggregate 接口, 以支持 foreach 遍历访问字段列表
 	 */
+	#[ReturnTypeWillChange]
 	public function getIterator()
 	{
 		if ($this->_charset !== null && $this->_charset !== 'UTF-8') {
@@ -284,6 +285,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * @param string $name 字段名称
 	 * @return bool 存在返回 true, 若不存在返回 false
 	 */
+	#[ReturnTypeWillChange]
 	public function offsetExists($name)
 	{
 		return isset($this->_data[$name]);
@@ -306,6 +308,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * @param mixed $value 字段值
 	 * @see __set
 	 */
+	#[ReturnTypeWillChange]
 	public function offsetSet($name, $value)
 	{
 		if (!is_null($name)) {
@@ -317,6 +320,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * ArrayAccess 接口, 删除字段值, 勿直接调用
 	 * @param string $name 字段名称
 	 */
+	#[ReturnTypeWillChange]
 	public function offsetUnset($name)
 	{
 		unset($this->_data[$name]);

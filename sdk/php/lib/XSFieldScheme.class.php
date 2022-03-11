@@ -186,6 +186,7 @@ class XSFieldScheme implements IteratorAggregate
 	/**
 	 * IteratorAggregate 接口, 以支持 foreach 遍历访问所有字段
 	 */
+	#[ReturnTypeWillChange]
 	public function getIterator()
 	{
 		return new ArrayIterator($this->_fields);
