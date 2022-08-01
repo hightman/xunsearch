@@ -478,7 +478,7 @@ class XSServer extends XSComponent
 		}
 
 		// set socket options
-		$timeout = (int)trim(ini_get('max_execution_time'),'s');
+		$timeout = intval(ini_get('max_execution_time'));
 		$timeout = $timeout > 0 ? ($timeout - 1) : 30;
 		stream_set_blocking($sock, true);
 		stream_set_timeout($sock, $timeout);
