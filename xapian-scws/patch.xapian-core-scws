@@ -1,9 +1,9 @@
 -n
-*** xapian-core-1.4.19/configure.ac	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/configure.ac	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/configure.ac	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/configure.ac	2022-08-11 20:04:40.000000000 +0800
 ***************
-*** 1169,1174 ****
---- 1169,1233 ----
+*** 1177,1182 ****
+--- 1177,1241 ----
       [Define if you want a log of methods called and other debug messages])
   fi
   
@@ -69,8 +69,8 @@
   dnl ******************************
   dnl * Set special compiler flags *
   dnl ******************************
-*** xapian-core-1.4.19/include/xapian/queryparser.h	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/include/xapian/queryparser.h	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/include/xapian/queryparser.h	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/include/xapian/queryparser.h	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 1063,1068 ****
 --- 1063,1101 ----
@@ -113,8 +113,8 @@
       /** Parse a query.
        *
        *  @param query_string  A free-text query as entered by a user
-*** xapian-core-1.4.19/include/xapian/termgenerator.h	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/include/xapian/termgenerator.h	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/include/xapian/termgenerator.h	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/include/xapian/termgenerator.h	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 126,131 ****
 --- 126,155 ----
@@ -148,11 +148,11 @@
       /** Set flags.
        *
        *  The new value of flags is: (flags & mask) ^ toggle
-*** xapian-core-1.4.19/api/queryinternal.cc	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/api/queryinternal.cc	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/api/queryinternal.cc	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/api/queryinternal.cc	2022-08-11 20:04:40.000000000 +0800
 ***************
-*** 1238,1243 ****
---- 1238,1248 ----
+*** 1243,1248 ****
+--- 1243,1253 ----
   	// MatchNothing subqueries should have been removed by done().
   	Assert((*i).internal.get());
   	(*i).internal->gather_terms(void_terms);
@@ -164,8 +164,8 @@
       }
   }
   
-*** xapian-core-1.4.19/queryparser/queryparser_internal.h	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/queryparser_internal.h	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/queryparser_internal.h	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/queryparser_internal.h	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 29,34 ****
 --- 29,39 ----
@@ -218,8 +218,8 @@
       Query parse_query(const string & query_string, unsigned int flags, const string & default_prefix);
   };
   
-*** xapian-core-1.4.19/queryparser/termgenerator_internal.h	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/termgenerator_internal.h	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/termgenerator_internal.h	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/termgenerator_internal.h	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 27,32 ****
 --- 27,36 ----
@@ -262,8 +262,8 @@
       void index_text(Utf8Iterator itor,
   		    termcount weight,
   		    const std::string & prefix,
-*** xapian-core-1.4.19/queryparser/queryparser.cc	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/queryparser.cc	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/queryparser.cc	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/queryparser.cc	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 157,162 ****
 --- 157,216 ----
@@ -327,8 +327,8 @@
   Query
   QueryParser::parse_query(const string &query_string, unsigned flags,
   			 const string &default_prefix)
-*** xapian-core-1.4.19/queryparser/queryparser_internal.cc	2022-01-01 07:08:18.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/queryparser_internal.cc	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/queryparser_internal.cc	2022-07-04 14:01:11.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/queryparser_internal.cc	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 166,171 ****
 --- 166,174 ----
@@ -734,8 +734,8 @@
       if (!state.error) {
   	// Implicitly close any unclosed quotes.
   	if (mode == IN_QUOTES || mode == IN_PREFIXED_QUOTES)
-*** xapian-core-1.4.19/queryparser/termgenerator.cc	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/termgenerator.cc	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/termgenerator.cc	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/termgenerator.cc	2022-08-11 20:04:40.000000000 +0800
 ***************
 *** 79,84 ****
 --- 79,116 ----
@@ -777,8 +777,8 @@
   TermGenerator::flags
   TermGenerator::set_flags(flags toggle, flags mask)
   {
-*** xapian-core-1.4.19/queryparser/termgenerator_internal.cc	2022-01-01 07:06:40.000000000 +0800
---- xapian-core-scws-1.4.19/queryparser/termgenerator_internal.cc	2022-03-08 18:47:44.000000000 +0800
+*** xapian-core-1.4.20/queryparser/termgenerator_internal.cc	2022-07-04 13:59:40.000000000 +0800
+--- xapian-core-scws-1.4.20/queryparser/termgenerator_internal.cc	2022-08-11 20:14:49.000000000 +0800
 ***************
 *** 246,251 ****
 --- 246,321 ----
@@ -859,8 +859,8 @@
   TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
   				    const string & prefix, bool with_positions)
 ***************
-*** 259,266 ****
---- 329,343 ----
+*** 259,264 ****
+--- 329,346 ----
   	current_stop_mode = stop_mode;
       }
   
@@ -868,17 +868,30 @@
 +     if (scws == NULL)
 + 	load_scws(NULL, false, 0);
 +     parse_terms_scws(itor, scws, cur_pos, with_positions,
-+ 	[=](const string & term, bool positional, bool is_cjk_term, const Utf8Iterator &) {
++ 	[=
++ #if __cplusplus >= 201907L
++ // C++20 no longer supports implicit `this` in lambdas but older C++ versions
++ // don't allow `this` here.
++ 	, this
++ #endif
++ 	](const string & term, bool positional, bool is_cjk_term, const Utf8Iterator &) {
 + #else
       parse_terms(itor, cjk_ngram, with_positions,
-  	[=](const string & term, bool positional, const Utf8Iterator &) {
-+ #endif
+  	[=
+  #if __cplusplus >= 201907L
+***************
+*** 267,272 ****
+--- 349,355 ----
+  	, this
+  #endif
+  	](const string & term, bool positional, const Utf8Iterator &) {
++ #endif /* HAVE_SCWS */
   	    if (term.size() > max_word_length) return true;
   
-  	    if (current_stop_mode == TermGenerator::STOP_ALL && (*stopper)(term))
+  	    if (current_stop_mode == TermGenerator::STOP_ALL &&
 ***************
-*** 276,281 ****
---- 353,362 ----
+*** 284,289 ****
+--- 367,376 ----
   		}
   	    }
   
