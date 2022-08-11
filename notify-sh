@@ -5,7 +5,7 @@
 # install notify
 if test -x "/usr/bin/nc" || test -x "/bin/nc" ; then
   t_type=install
-  t_ver=`cat VERSION`
+  t_ver=`cat VERSION.inc`
   t_host=`hostname 2> /dev/null`
   if test -x "$1/bin/xs-searchd" ; then
     t_oldver=`$1/bin/xs-searchd -v | cut -d / -f 2 | cut -d ' ' -f 1`

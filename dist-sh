@@ -12,7 +12,7 @@ fileinfo=
 filetype=BETA
 devel=`cat config.h | grep PACKAGE_VERSION | cut -d \" -f 2 | grep "dev$"`
 if test -z "$devel" ; then
-  fileinfo=`cat VERSION`
+  fileinfo=`cat VERSION.inc`
   git tag $fileinfo -a -m "Release: $fileinfo" 
   if test $? -ne 0 ; then
     exit -1
@@ -37,18 +37,18 @@ echo "Uploading file to web server ($filetype) ..."
 if test "$fileinfo" = "dev" ; then
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download
   scp xunsearch-full/packages/xunsearch-sdk-*-dev.zip xunsearch:./web/download/xunsearch-sdk-dev.zip
-  scp VERSION xunsearch:./web/protected/data
+  scp VERSION.inc xunsearch:./web/protected/data/VERSION
 else
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full
   if test "$filetype" = "RELEASE" ; then
     ssh xunsearch ln -sf xunsearch-full/xunsearch-full-$fileinfo.tar.bz2 ./web/download/xunsearch-full-latest.tar.bz2 
 	scp xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip xunsearch:./web/download/xunsearch-sdk-latest.zip
   fi
-  scp VERSION xunsearch:./web/protected/data/$filetype
+  scp VERSION.inc xunsearch:./web/protected/data/$filetype
   # also update dev
   scp xunsearch-full-$fileinfo.tar.bz2 xunsearch:./web/download/xunsearch-full-dev.tar.bz2
   scp xunsearch-full/packages/xunsearch-sdk-$fileinfo.zip xunsearch:./web/download/xunsearch-sdk-dev.zip
-  scp VERSION xunsearch:./web/protected/data
+  scp VERSION.inc xunsearch:./web/protected/data/VERSION
 fi
 
 # clean local file

@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Generate VERSION file
+# Generate VERSION.inc file
 
 # package version
 version=`cat config.h | grep PACKAGE_VERSION | cut -d \" -f 2`

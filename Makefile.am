@@ -16,7 +16,7 @@ sysconf_DATA = etc/py.xdb
 customdir = ${sysconfdir}
 custom_DATA = etc/dict_user.txt etc/stopwords.txt
 
-EXTRA_DIST = README.md README.arch VERSION notify-sh $(sysconf_DATA) $(custom_DATA)
+EXTRA_DIST = README.md README.arch VERSION.inc notify-sh $(sysconf_DATA) $(custom_DATA)
 
 py_xdb_DEPS =
 version_DEPS =
@@ -30,9 +30,9 @@ etc/py.xdb: $(py_xdb_DEPS)
 	@echo "Generating pinyin dict by php ..."
 	php sdk/php/dev/build.php pinyin make > /dev/null 2>&1
 
-VERSION: $(version_DEPS)
+VERSION.inc: $(version_DEPS)
 	@echo "Generating version info ..."
-	sh version-sh > VERSION
+	sh version-sh > VERSION.inc
 
 install-customDATA:
 	@$(NORMAL_INSTALL)
