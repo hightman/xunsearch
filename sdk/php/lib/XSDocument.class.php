@@ -297,6 +297,7 @@ class XSDocument implements ArrayAccess, IteratorAggregate
 	 * @return mixed 字段值, 若不存在返回 null
 	 * @see __get
 	 */
+	#[ReturnTypeWillChange]
 	public function offsetGet($name)
 	{
 		return $this->__get($name);
