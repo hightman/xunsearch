@@ -1,11 +1,10 @@
-# 基于Alpine镜像去构建
-FROM alpine:3.21
+# alpine
+# stage: build
+FROM alpine:3.21 as build
 
-# 设定时区和工作目录
-ENV TZ Asia/Chongqing
+# install
 WORKDIR /usr/local/xunsearch
 
-# 安装迅搜
 RUN apk add --no-cache \
       tzdata zlib-dev libgcc libstdc++ \
     && apk add --no-cache --virtual \
@@ -17,12 +16,41 @@ RUN wget -qO - https://www.xunsearch.com/download/xunsearch-full-latest.tar.bz2 
     && apk del .build-deps wget bzip2 make g++ gcc \
     && rm -rf /var/cache/apk/*
 
-# 暴露端口
-EXPOSE 8383
-EXPOSE 8384
+RUN wget -qO /usr/bin/dumb-init \
+      https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
+    && chmod +x /usr/bin/dumb-init
 
-#启动脚本
+# --------------
+# stage: runtime
+# --------------
+FROM alpine:3.21 as runtime
+
+# env
+ENV TZ Asia/Chongqing
+
+# copy built files
+COPY --from=build /usr/bin/dumb-init /usr/bin/
+COPY --from=build /usr/share/zoneinfo/ /usr/share/zoneinfo
+COPY --from=build /usr/local/xunsearch /usr/local/xunsearch
+COPY --from=build \
+    /usr/lib/libgcc_s.so.1 \
+    /usr/lib/libstdc++.so.6 \
+    /usr/lib/
+
+# remove unused
+RUN rm -rf /usr/local/xunsearch/include \
+      /usr/local/xunsearch/sdk \
+      /usr/local/xunsearch/bin/xs-php
+
+# volume
+VOLUME /usr/local/xunsearch/data
+WORKDIR /usr/local/xunsearch
+
+# ports
+EXPOSE 8383 8384
+
+# entry
 COPY docker-entrypoint.sh entry.sh
 RUN chmod +x entry.sh
-
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["./entry.sh"]
