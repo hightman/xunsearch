@@ -10,15 +10,15 @@ RUN apk add --no-cache \
     && apk add --no-cache --virtual \
       .build-deps wget bzip2 make g++ gcc
 
+RUN wget -qO /usr/bin/dumb-init \
+      https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
+    && chmod +x /usr/bin/dumb-init
+
 RUN wget -qO - https://www.xunsearch.com/download/xunsearch-full-latest.tar.bz2 | tar -xj \
     && cd xunsearch-full-* && sh setup.sh --prefix=/usr/local/xunsearch \
     && cd .. && rm -rf xunsearch-full-* \
     && apk del .build-deps wget bzip2 make g++ gcc \
     && rm -rf /var/cache/apk/*
-
-RUN wget -qO /usr/bin/dumb-init \
-      https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
-    && chmod +x /usr/bin/dumb-init
 
 # --------------
 # stage: runtime

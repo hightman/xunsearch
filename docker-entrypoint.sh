@@ -11,7 +11,7 @@ sig_stop() {
   bin/xs-indexd -k stop
   bin/xs-searchd -k stop
 }
-trap sig_stop SIGTERM SIGINT SIGQUIT
+trap sig_stop TERM INT QUIT
 
 echo "ENTRY-POINT: starting servers..."
 echo -n > tmp/docker.log
