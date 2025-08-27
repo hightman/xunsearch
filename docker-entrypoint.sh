@@ -15,6 +15,7 @@ trap sig_stop TERM INT QUIT
 
 echo "ENTRY-POINT: starting servers..."
 echo -n > tmp/docker.log
+rm -f /tmp/pid.*
 bin/xs-indexd -l tmp/docker.log -k start
 bin/xs-searchd -l tmp/docker.log -k start
 tail -f tmp/docker.log &
